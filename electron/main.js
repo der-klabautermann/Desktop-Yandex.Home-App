@@ -12,6 +12,7 @@ import {
     validateStoredXToken,
 } from './yandex-x-token-auth.js';
 import { clearQuasarSessionCache } from './yandex-quasar.js';
+import { setMainLanguage, tm } from './i18n.js';
 import keytar from 'keytar';
 
 // Установка __dirname и __filename для ES Modules
@@ -102,7 +103,7 @@ function createTray() {
         }
     }
     
-    appTray.setToolTip(isDev ? '[DEV] Управление Умным Домом Яндекс' : 'Управление Умным Домом Яндекс');
+    appTray.setToolTip(isDev ? `[DEV] ${tm('trayTooltip')}` : tm('trayTooltip'));
     
     // На macOS: левый клик — только показать/скрыть окно, правый клик — контекстное меню
     // На других платформах: левый клик — показать/скрыть окно + контекстное меню через setContextMenu
@@ -188,7 +189,7 @@ function buildTrayMenu() {
 
     return Menu.buildFromTemplate([
         { 
-            label: 'Открыть приложение', 
+            label: tm('openApp'), 
             click: () => {
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.show();
@@ -202,7 +203,7 @@ function buildTrayMenu() {
         ...favoriteMenuItems,
         { type: 'separator' },
         { 
-            label: 'Выход', 
+            label: tm('quit'), 
             click: () => {
                 if (mainWindow) {
                     mainWindow.removeListener('close', minimizeToTray);
@@ -317,6 +318,14 @@ if (!gotTheLock) {
         createWindow();
         createTray(); // Создаем Tray
 
+        ipcMain.on('app:set-language', (_event, lang) => {
+            setMainLanguage(lang);
+            if (appTray) {
+                appTray.setToolTip(isDev ? `[DEV] ${tm('trayTooltip')}` : tm('trayTooltip'));
+            }
+            updateTrayMenu();
+        });
+
         const makeRetryCallback = (action) => {
             return (attempt, maxAttempts) => {
                 if (mainWindow && !mainWindow.isDestroyed()) {
@@ -324,7 +333,7 @@ if (!gotTheLock) {
                         action,
                         attempt,
                         maxAttempts,
-                        message: `Попытка повторного подключения ${attempt} из ${maxAttempts}...`,
+                        message: tm('retryAttempt', { attempt, max: maxAttempts }),
                     });
                 }
                 console.log(`${action}: повторная попытка ${attempt}/${maxAttempts}...`);
@@ -408,7 +417,7 @@ if (!gotTheLock) {
             try {
                 const iotToken = await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
                 if (!iotToken) {
-                    throw new Error('Токен не найден');
+                    throw new Error('ERR_AUTH');
                 }
                 const xToken = await getStoredXToken();
                 return await yandexApi.setCameraPrivacyMode(
@@ -528,10 +537,10 @@ if (!gotTheLock) {
             }
 
             const notification = new Notification({
-                title: `${deviceName} — нет видео`,
+                title: tm('cameraNoVideo', { name: deviceName }),
                 body: message,
-                actions: [{ type: 'button', text: 'Повторить' }],
-                closeButtonText: 'Закрыть',
+                actions: [{ type: 'button', text: tm('retry') }],
+                closeButtonText: tm('close'),
             });
 
             notification.on('action', () => {
