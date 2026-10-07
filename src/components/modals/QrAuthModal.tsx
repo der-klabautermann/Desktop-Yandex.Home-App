@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Loader2, QrCode, X, Smartphone } from 'lucide-react';
 import { cleanErrorMessage } from '../../utils/errors';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface QrAuthModalProps {
   isOpen: boolean;
@@ -16,9 +17,10 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  title = 'Вход для камер',
-  description = 'Отсканируйте QR-код приложением Яндекс или Яндекс.Ключ — это нужно один раз для доступа к видеопотоку.',
+  title,
+  description,
 }) => {
+  const { t } = useI18n();
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrUrl, setQrUrl] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
@@ -108,19 +110,19 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
             <div className="p-2 rounded-full bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:bg-primary/20 text-[color:var(--accent)] dark:text-primary">
               <QrCode className="w-5 h-5" />
             </div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-card-fg">{title}</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-card-fg">{title ?? t('camera.qr.title')}</h2>
           </div>
           <button
             onClick={handleClose}
             className="p-2 rounded-lg text-gray-500 dark:text-muted hover:bg-gray-100 dark:hover:bg-surface transition-colors"
-            title="Закрыть"
+            title={t('common.close')}
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          <p className="text-sm text-slate-600 dark:text-muted text-center">{description}</p>
+          <p className="text-sm text-slate-600 dark:text-muted text-center">{description ?? t('camera.qr.description')}</p>
 
           <div className="flex flex-col items-center gap-3">
             {isStarting && (
@@ -132,7 +134,7 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
             {!isStarting && qrDataUrl && (
               <img
                 src={qrDataUrl}
-                alt="QR-код для входа в Яндекс"
+                alt={t('camera.qr.alt')}
                 className="w-64 h-64 rounded-xl border border-gray-200 dark:border-border-soft"
               />
             )}
@@ -140,7 +142,7 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
             {isPolling && !error && (
               <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-muted">
                 <Smartphone className="w-4 h-4" />
-                <span>Ожидание подтверждения входа...</span>
+                <span>{t('camera.qr.waiting')}</span>
               </div>
             )}
           </div>
@@ -152,14 +154,14 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
                 onClick={startAuth}
                 className="mt-2 w-full text-xs font-medium text-red-600 dark:text-red-400 hover:underline"
               >
-                Попробовать снова
+                {t('common.retry')}
               </button>
             </div>
           )}
 
           {qrUrl && (
             <p className="text-[10px] text-center text-gray-400 dark:text-muted break-all">
-              Если QR не сканируется, откройте ссылку на телефоне: {qrUrl}
+              {t('camera.qr.fallback', { url: qrUrl ?? '' })}
             </p>
           )}
         </div>

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { compareVersions } from '../utils/dataUtils';
 import { getCheckUpdatesOnStartup } from '../utils/updateSettings';
 import packageJson from '../../package.json';
+import { RELEASES_API_URL } from '../constants/app';
 
 interface UpdateInfo {
     latestVersion: string;
@@ -17,11 +18,10 @@ interface UseUpdateNotificationReturn {
 
 const checkForUpdates = async (): Promise<UpdateInfo | null> => {
     try {
-        const response = await fetch(
-            'https://api.github.com/repos/onegamerstory/Desktop-Yandex.Home-App/releases/latest'
-        );
+        const response = await fetch(RELEASES_API_URL);
+        if (response.status === 404) return null;
         if (!response.ok) {
-            throw new Error('Не удалось получить информацию о последней версии');
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
         const data = await response.json();
         const latestVersion = data.tag_name || null;
@@ -31,7 +31,7 @@ const checkForUpdates = async (): Promise<UpdateInfo | null> => {
             return {
                 latestVersion,
                 releaseUrl: data.html_url,
-                releaseDate: new Date(data.published_at).toLocaleDateString('ru-RU'),
+                releaseDate: data.published_at,
             };
         }
         return null;

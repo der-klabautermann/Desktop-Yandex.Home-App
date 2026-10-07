@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Download } from 'lucide-react';
 import { ToggleSwitch } from '../ToggleSwitch';
 import { getCheckUpdatesOnStartup, setCheckUpdatesOnStartup } from '../../utils/updateSettings';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface UpdateNotificationModalProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
   releaseDate,
 }) => {
   const [checkOnStartup, setCheckOnStartup] = useState(getCheckUpdatesOnStartup);
+  const { t, lang } = useI18n();
 
   if (!isOpen) return null;
 
@@ -29,11 +31,11 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
       <div className="bg-white dark:bg-surface rounded-lg shadow-xl max-w-md w-full mx-4 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-border-soft">
-          <h2 className="text-xl font-bold text-slate-900 dark:text-card-fg">Обновление доступно</h2>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-card-fg">{t('modals.update.title')}</h2>
           <button
             onClick={onClose}
             className="p-1 hover:bg-gray-100 dark:hover:bg-surface rounded-lg transition-colors"
-            title="Закрыть"
+            title={t('common.close')}
           >
             <X className="w-5 h-5 text-slate-600 dark:text-muted" />
           </button>
@@ -43,7 +45,7 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Current Version */}
           <div>
-            <p className="text-sm text-slate-600 dark:text-muted mb-2">Текущая версия</p>
+            <p className="text-sm text-slate-600 dark:text-muted mb-2">{t('modals.info.currentVersion')}</p>
             <div className="bg-gray-100 dark:bg-surface rounded-lg p-4">
               <p className="text-lg font-semibold text-slate-900 dark:text-card-fg">v{currentVersion}</p>
             </div>
@@ -51,13 +53,13 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
 
           {/* New Version Available */}
           <div>
-            <p className="text-sm text-slate-600 dark:text-muted mb-2">Новая версия</p>
+            <p className="text-sm text-slate-600 dark:text-muted mb-2">{t('modals.update.newVersion')}</p>
             <div className="bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 rounded-lg p-4">
               <p className="text-lg font-semibold text-blue-900 dark:text-blue-400 mb-2">
                 {latestVersion}
               </p>
               <p className="text-xs text-blue-700 dark:text-blue-400">
-                Выпущено: {releaseDate}
+                {t('modals.info.released', { date: new Date(releaseDate).toLocaleDateString(lang) })}
               </p>
             </div>
           </div>
@@ -65,7 +67,7 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
           {/* Update Description */}
           <div className="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg p-4">
             <p className="text-sm text-yellow-900 dark:text-yellow-400">
-              Доступна новая версия приложения. Рекомендуется обновиться для получения последних функций и исправлений ошибок.
+              {t('modals.update.text')}
             </p>
           </div>
 
@@ -76,7 +78,7 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
                 setCheckOnStartup(enabled);
                 setCheckUpdatesOnStartup(enabled);
               }}
-              label="Проверять наличие обновлений при запуске"
+              label={t('modals.info.checkOnStartup')}
             />
           </div>
         </div>
@@ -90,13 +92,13 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white rounded-lg transition-colors font-medium text-sm"
           >
             <Download className="w-4 h-4" />
-            Скачать
+            {t('modals.info.download')}
           </a>
           <button
             onClick={onClose}
             className="flex-1 px-4 py-2 bg-gray-200 dark:bg-surface hover:bg-gray-300 dark:hover:bg-surface-warm text-slate-900 dark:text-card-fg rounded-lg transition-colors font-medium text-sm"
           >
-            Позже
+            {t('modals.update.later')}
           </button>
         </div>
       </div>

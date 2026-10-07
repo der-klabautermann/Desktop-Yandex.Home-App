@@ -14,6 +14,8 @@ import {
 import { attachVideoAudioBoost, VideoAudioBoost } from '../../utils/videoAudioBoost';
 import { debugLog, debugWarn } from '../../utils/debugLog';
 import { X, RefreshCw, Loader2, Video, AlertCircle, Eye, EyeOff, Maximize2, Settings2, PictureInPicture2 } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
+import { describeCameraError } from '../../utils/cameraErrors';
 
 const QUALITY_PRESETS = [
   { label: 'High', width: 2560, height: 1440 },
@@ -25,14 +27,15 @@ const MAX_STREAM_RETRIES = 10;
 const STREAM_RETRY_DELAY_MS = 3000;
 
 const normalizeStreamErrorMessage = (err: unknown): string => {
-  const raw = err instanceof Error ? err.message : 'Не удалось получить видеопоток';
+  const raw = err instanceof Error ? err.message : 'CAM_NO_STREAM';
   const marker = 'Error: ';
   const idx = raw.lastIndexOf(marker);
   return idx >= 0 ? raw.slice(idx + marker.length) : raw;
 };
 
 const isNonRetryableStreamError = (message: string): boolean =>
-  message.includes('приват')
+  message.includes('CAM_NO_VIDEO')
+  || message.includes('приват')
   || message.includes('не умеет')
   || message.includes('X_TOKEN')
   || message.includes('Quasar auth')
@@ -57,6 +60,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
   onSetPrivacy,
   onPrivacyChanged,
 }) => {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const stagingVideoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<Hls | null>(null);
@@ -128,7 +132,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
     cameraDeviceRef.current = cameraDevice;
   }, [cameraDevice]);
 
-  const PRIVACY_ON_NOTICE = 'Режим приватности включён. Камера не передаёт видео.';
+  const PRIVACY_ON_NOTICE = 'camera.privacyOnNotice';
 
   const isSessionAlive = useCallback((session: number) => session === sessionRef.current, []);
 
@@ -217,10 +221,10 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       void window.api.showCameraStreamErrorNotification({
         deviceId: device.id,
         deviceName: cameraDeviceRef.current.name,
-        message,
+        message: describeCameraError(message, t),
       });
     }
-  }, [device.id, exitPiPIfActive]);
+  }, [device.id, exitPiPIfActive, t]);
 
   const scheduleStreamRetry = useCallback((session: number, message: string) => {
     if (!isSessionAlive(session)) return;
@@ -235,7 +239,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
     setError(null);
     setPrivacyNotice(null);
     setReconnectNotice(
-      `Переподключение… (попытка ${streamRetryCountRef.current}/${MAX_STREAM_RETRIES})`,
+      t('camera.reconnecting', { attempt: streamRetryCountRef.current, max: MAX_STREAM_RETRIES }),
     );
 
     reconnectTimerRef.current = scheduleSessionTimer(session, () => {
@@ -243,7 +247,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       if (!isSessionAlive(session)) return;
       loadStreamRef.current?.(true);
     }, STREAM_RETRY_DELAY_MS);
-  }, [blankPiPIfVideo, isSessionAlive, reportStreamError, scheduleSessionTimer]);
+  }, [blankPiPIfVideo, isSessionAlive, reportStreamError, scheduleSessionTimer, t]);
 
   const enterPrivacyWaitingState = useCallback((silent = false) => {
     if (!silent) {
@@ -329,7 +333,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       let retryScheduled = false;
 
       const isTooManyPeers = (err: unknown) =>
-        err instanceof Error && /слишком много|too.?many/i.test(err.message);
+        err instanceof Error && /CAM_TOO_MANY|too.?many/i.test(err.message);
 
       try {
         const mainVideo = videoRef.current;
@@ -498,7 +502,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
 
       const streamUrl = stream.streamUrl;
       if (!streamUrl) {
-        throw new Error('URL видеопотока не получен');
+        throw new Error('CAM_NO_STREAM');
       }
 
       if (stream.protocol === 'hls' && Hls.isSupported()) {
@@ -514,7 +518,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
         });
         hls.on(Hls.Events.ERROR, (_event, data) => {
           if (!data.fatal || !isSessionAlive(session)) return;
-          scheduleStreamRetry(session, 'Не удалось воспроизвести HLS-поток');
+          scheduleStreamRetry(session, 'CAM_HLS_FAILED');
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = streamUrl;
@@ -522,14 +526,14 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       } else {
         video.src = streamUrl;
         await video.play().catch(() => {
-          setError('Браузер не поддерживает воспроизведение этого формата потока');
+          setError('CAM_FORMAT');
         });
       }
     } catch (err) {
       if (!isSessionAlive(session)) return;
       const message = normalizeStreamErrorMessage(err);
-      if (privacyEnabled || message.includes('приват') || message.includes('не умеет')) {
-        setPrivacyNotice('Камера может быть в режиме приватности. Отключите его кнопкой ниже.');
+      if (privacyEnabled || message.includes('CAM_NO_VIDEO') || message.includes('приват') || message.includes('не умеет')) {
+        setPrivacyNotice('camera.privacyMaybe');
         reportStreamError(message);
         return;
       }
@@ -564,10 +568,10 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       } else {
         cleanupPlayer();
         setStreamProtocol(null);
-        setPrivacyNotice('Режим приватности включён. Камера не передаёт видео.');
+        setPrivacyNotice(PRIVACY_ON_NOTICE);
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Не удалось изменить режим приватности';
+      const message = err instanceof Error ? err.message : 'CAM_PRIVACY_TOGGLE';
       setError(message);
     } finally {
       setIsTogglingPrivacy(false);
@@ -866,10 +870,10 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
               </h2>
               <p className="text-xs text-gray-500 dark:text-slate-400">
                 {privacyEnabled
-                  ? 'Режим приватности включён'
+                  ? t('camera.privacyOn')
                   : streamProtocol
-                    ? `Протокол: ${streamProtocol.toUpperCase()}`
-                    : 'Получение видеопотока...'}
+                    ? t('camera.protocol', { protocol: streamProtocol.toUpperCase() })
+                    : t('camera.gettingStream')}
               </p>
             </div>
           </div>
@@ -883,7 +887,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                     ? 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-500/20'
                     : 'bg-gray-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-gray-200 dark:hover:bg-slate-700'
                 }`}
-                title={privacyEnabled ? 'Отключить режим приватности' : 'Включить режим приватности'}
+                title={privacyEnabled ? t('camera.privacyDisableHint') : t('camera.privacyEnableHint')}
               >
                 {isTogglingPrivacy ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -892,7 +896,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                 ) : (
                   <EyeOff className="w-4 h-4" />
                 )}
-                {privacyEnabled ? 'Отключить приватность' : 'Включить приватность'}
+                {privacyEnabled ? t('camera.privacyDisable') : t('camera.privacyEnable')}
               </button>
             )}
             {pipSupported && (
@@ -904,7 +908,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                     ? 'text-[color:var(--accent)] dark:text-primary bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:bg-primary/20'
                     : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
-                title={isPictureInPicture ? 'Закрыть окно поверх других' : 'Окно поверх других приложений'}
+                title={isPictureInPicture ? t('camera.pipClose') : t('camera.pipOpen')}
               >
                 <PictureInPicture2 className="w-5 h-5" />
               </button>
@@ -913,7 +917,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
               onClick={() => videoRef.current?.requestFullscreen?.()}
               disabled={isLoading || !streamProtocol}
               className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-              title="Полноэкранный режим"
+              title={t('camera.fullscreen')}
             >
               <Maximize2 className="w-5 h-5" />
             </button>
@@ -921,14 +925,14 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
               onClick={loadStream}
               disabled={isLoading || isTogglingPrivacy}
               className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
-              title="Обновить поток"
+              title={t('camera.reload')}
             >
               <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={onClose}
               className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-              title="Закрыть"
+              title={t('common.close')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -958,17 +962,17 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
           {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/70 text-white">
               <Loader2 className="w-10 h-10 animate-spin" />
-              <p className="text-sm">Подключение к камере...</p>
+              <p className="text-sm">{t('camera.connecting')}</p>
             </div>
           )}
 
-          {/* Quality selector — shown only when WebRTC stream is active */}
+          {/* Quality selector: shown only when WebRTC stream is active */}
           {streamProtocol === 'webrtc' && !isLoading && !error && (
             <div ref={qualityMenuRef} className="absolute top-3 right-3 z-10">
               <button
                 onClick={() => setShowQualityMenu(v => !v)}
                 className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-black/60 hover:bg-black/80 text-white text-xs font-medium backdrop-blur-sm transition-colors"
-                title="Качество видео"
+                title={t('camera.quality')}
               >
                 <Settings2 className="w-3.5 h-3.5" />
                 {selectedQuality.label}
@@ -1002,16 +1006,16 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
 
           {privacyNotice && !error && !isLoading && !reconnectNotice && (
             <div className="absolute bottom-3 left-3 right-3 px-3 py-2 rounded-lg bg-amber-500/90 text-white text-xs text-center">
-              {privacyNotice}
+              {t(privacyNotice)}
             </div>
           )}
 
           {error && !isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-black/80 text-white px-6 text-center">
               <AlertCircle className="w-10 h-10 text-red-400" />
-              <p className="text-sm">{error}</p>
+              <p className="text-sm">{describeCameraError(error, t)}</p>
               {privacyNotice && (
-                <p className="text-xs text-amber-200">{privacyNotice}</p>
+                <p className="text-xs text-amber-200">{t(privacyNotice)}</p>
               )}
               <div className="flex flex-wrap items-center justify-center gap-2 mt-2">
                 {showPrivacyButton && privacyEnabled && (
@@ -1025,14 +1029,14 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                     ) : (
                       <Eye className="w-4 h-4" />
                     )}
-                    Отключить приватность
+                    {t('camera.privacyDisable')}
                   </button>
                 )}
                 <button
                   onClick={loadStream}
                   className="px-4 py-2 rounded-lg bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white text-sm font-medium"
                 >
-                  Повторить
+                  {t('common.retry')}
                 </button>
               </div>
             </div>

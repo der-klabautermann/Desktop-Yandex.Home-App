@@ -39,14 +39,14 @@ const waitForWsOpen = (ws: WebSocket) => new Promise<void>((resolve, reject) => 
     ws.addEventListener('open', () => { log('WS opened'); resolve(); }, { once: true });
     ws.addEventListener('error', (e) => {
         logErr('WS open error', e);
-        reject(new Error('Не удалось подключиться к WebRTC-серверу'));
+        reject(new Error('CAM_CONNECT_FAILED'));
     }, { once: true });
 });
 
 const readWsMessage = (ws: WebSocket) => new Promise<string>((resolve, reject) => {
     const onMessage = (event: MessageEvent) => { cleanup(); resolve(typeof event.data === 'string' ? event.data : ''); };
-    const onError = () => { cleanup(); reject(new Error('Ошибка WebSocket-соединения')); };
-    const onClose = () => { cleanup(); reject(new Error('WebSocket-соединение закрыто')); };
+    const onError = () => { cleanup(); reject(new Error('CAM_CONNECT_FAILED')); };
+    const onClose = () => { cleanup(); reject(new Error('CAM_CONNECT_FAILED')); };
     const cleanup = () => {
         ws.removeEventListener('message', onMessage);
         ws.removeEventListener('error', onError);
@@ -66,7 +66,7 @@ const waitForPeerConnected = (pc: RTCPeerConnection) => new Promise<void>((resol
         done = true;
         cleanup();
         logErr('WebRTC connection timeout, last connectionState:', pc.connectionState, 'ICE:', pc.iceConnectionState);
-        reject(new Error('Таймаут WebRTC-подключения'));
+        reject(new Error('CAM_CONNECT_FAILED'));
     }, CONNECTION_TIMEOUT_MS);
 
     let iceConnectedAt = 0;
@@ -120,7 +120,7 @@ const waitForVideoFrame = (video: HTMLVideoElement) => new Promise<void>((resolv
     const timeout = window.setTimeout(() => {
         cleanup();
         logErr('No video frames after', VIDEO_TIMEOUT_MS / 1000, 's. videoWidth:', video.videoWidth, 'readyState:', video.readyState);
-        reject(new Error('Камера не передаёт видео. Возможно, включён режим приватности.'));
+        reject(new Error('CAM_NO_VIDEO'));
     }, VIDEO_TIMEOUT_MS);
 
     const checkReady = () => {
@@ -234,8 +234,8 @@ const handleSignalingMessage = async (
             const isTooManyPeers = /too.?many.?peer/i.test(reason);
             throw new Error(
                 isTooManyPeers
-                    ? 'Слишком много подключений к камере — подождите несколько секунд и повторите'
-                    : `Ошибка сервера: ${reason}`,
+                    ? 'CAM_TOO_MANY'
+                    : `CAM_SERVER_ERROR ${reason}`,
             );
         }
     }
@@ -380,12 +380,12 @@ export const connectYandexGoloomWebRtc = async (
             const isTooManyPeers = /too.?many.?peer/i.test(serverError);
             throw new Error(
                 isTooManyPeers
-                    ? 'Слишком много подключений к камере — подождите несколько секунд и повторите'
-                    : `Сервер отклонил подключение: ${serverError}`,
+                    ? 'CAM_TOO_MANY'
+                    : `CAM_SERVER_ERROR ${serverError}`,
             );
         }
     } catch (e) {
-        if (e instanceof Error && (e.message.startsWith('Слишком') || e.message.startsWith('Сервер'))) throw e;
+        if (e instanceof Error && (e.message.startsWith('CAM_TOO_MANY') || e.message.startsWith('CAM_SERVER_ERROR'))) throw e;
         log('serverHello (raw):', serverHelloRaw.slice(0, 200));
     }
 
@@ -470,7 +470,7 @@ export const connectYandexGoloomWebRtc = async (
 
         // Wait for slotsConfig with a real mid assigned — or actual video frames
         const slotsTimeout = new Promise<string>((_, reject) =>
-            window.setTimeout(() => reject(new Error('Сервер не подтвердил настройку слотов')), VIDEO_TIMEOUT_MS));
+            window.setTimeout(() => reject(new Error('CAM_SERVER_ERROR slots')), VIDEO_TIMEOUT_MS));
 
         const videoFramePromise = waitForVideoFrame(video).then(() => '');
 

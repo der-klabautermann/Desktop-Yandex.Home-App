@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { YandexUserInfoResponse } from '../types/index';
 import { isCameraDevice } from '../constants';
+import { useI18n } from '../i18n/I18nContext';
 
 const yandexApi = window.api;
 
@@ -13,6 +14,7 @@ interface UseCameraAuthReturn {
 }
 
 export function useCameraAuth(showNotification: (message: string, type?: 'error' | 'success') => void): UseCameraAuthReturn {
+    const { t } = useI18n();
     const [showQrAuth, setShowQrAuth] = useState(false);
     const qrAuthPromiseRef = useRef<{ resolve: (value: boolean) => void } | null>(null);
 
@@ -36,8 +38,8 @@ export function useCameraAuth(showNotification: (message: string, type?: 'error'
         setShowQrAuth(false);
         qrAuthPromiseRef.current?.resolve(true);
         qrAuthPromiseRef.current = null;
-        showNotification('Доступ к камерам настроен', 'success');
-    }, [showNotification]);
+        showNotification(t('camera.qr.success'), 'success');
+    }, [showNotification, t]);
 
     const handleQrAuthClose = useCallback(() => {
         setShowQrAuth(false);
