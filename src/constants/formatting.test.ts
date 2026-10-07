@@ -50,3 +50,45 @@ describe('formatFloatValue', () => {
         expect(formatFloatValue(0.00005, 4)).toBe('0.0001');
     });
 });
+
+import { localizeBoolean, localizeEvent, localizeUnit } from './formatting';
+
+// Заглушка t: знает только несколько ключей, остальные возвращает как есть
+const stubT = (key: string) => ({
+    'units.cubicMeter': ' м³',
+    'units.events.opened': 'Открыто',
+    'common.yes': 'Да',
+} as Record<string, string>)[key] ?? key;
+
+describe('localizeUnit', () => {
+    it('übersetzt sprachabhängige Einheiten', () => {
+        expect(localizeUnit('unit.cubic_meter', stubT)).toBe(' м³');
+    });
+    it('gibt sprachneutrale Einheiten direkt zurück', () => {
+        expect(localizeUnit('unit.temperature.celsius', stubT)).toBe(' °C');
+    });
+    it('liefert leeren Text für unbekannte Einheiten', () => {
+        expect(localizeUnit('unit.unknown', stubT)).toBe('');
+        expect(localizeUnit(undefined, stubT)).toBe('');
+    });
+});
+
+describe('localizeEvent', () => {
+    const events = [{ value: 'opened', name: 'открыто' }, { value: 'closed', name: 'закрыто' }];
+    it('nimmt das eigene Wörterbuch zuerst', () => {
+        expect(localizeEvent('opened', events, stubT)).toBe('Открыто');
+    });
+    it('fällt auf den Namen des Dienstes zurück', () => {
+        expect(localizeEvent('closed', events, stubT)).toBe('закрыто');
+    });
+    it('fällt auf den Rohwert zurück', () => {
+        expect(localizeEvent('tilt', undefined, stubT)).toBe('tilt');
+    });
+});
+
+describe('localizeBoolean', () => {
+    it('übersetzt Ja und hat einen englischen Rückfall', () => {
+        expect(localizeBoolean(true, stubT)).toBe('Да');
+        expect(localizeBoolean(false, stubT)).toBe('No');
+    });
+});

@@ -1,32 +1,64 @@
-/**
- * Unit localization map for Yandex Smart Home API
- * Maps technical unit codes to user-friendly display strings
- */
-export const UNIT_LOCALIZATION_MAP: Record<string, string> = {
-    'unit.cubic_meter': ' м³',
-    'unit.kilowatt_hour': ' кВт/ч',
+import type { Translate } from '../i18n/core';
+
+/** Единицы, которые одинаково пишутся на всех языках. */
+const UNIT_SYMBOLS: Record<string, string> = {
     'unit.temperature.celsius': ' °C',
-    'unit.illumination.lux': ' лк',
+    'unit.temperature.kelvin': ' K',
     'unit.percent': ' %',
+    'unit.ppm': ' ppm',
+};
+
+/** Единицы, которые зависят от языка: код Яндекса -> ключ словаря. */
+const UNIT_KEYS: Record<string, string> = {
+    'unit.cubic_meter': 'units.cubicMeter',
+    'unit.kilowatt_hour': 'units.kilowattHour',
+    'unit.illumination.lux': 'units.lux',
+    'unit.pressure.mmhg': 'units.mmHg',
+    'unit.pressure.pascal': 'units.pascal',
+    'unit.pressure.bar': 'units.bar',
+    'unit.pressure.atm': 'units.atm',
+    'unit.watt': 'units.watt',
+    'unit.volt': 'units.volt',
+    'unit.ampere': 'units.ampere',
+    'unit.density.mcg_m3': 'units.mcgPerM3',
+};
+
+/** Текст из словаря или запасной вариант, если ключа нет. */
+const translateOr = (t: Translate | undefined, key: string, fallback: string): string => {
+    if (!t) return fallback;
+    const text = t(key);
+    return text === key ? fallback : text;
 };
 
 /**
  * Localizes a technical unit code to a user-friendly display string
  * @param unitCode - The technical unit code (e.g., 'unit.cubic_meter')
- * @returns The localized display string (e.g., 'м³') or the original code if not found
+ * @param t - Translate function of the current language
+ * @returns The localized display string (e.g., ' m³') or '' if unknown
  */
-export const localizeUnit = (unitCode: string | undefined): string => {
-    if (!unitCode) {
-        return '';
-    }
-
-    // Check if the unit code exists in the localization map
-    if (UNIT_LOCALIZATION_MAP[unitCode]) {
-        return UNIT_LOCALIZATION_MAP[unitCode];
-    }
-
-    return '';
+export const localizeUnit = (unitCode: string | undefined, t?: Translate): string => {
+    if (!unitCode) return '';
+    if (UNIT_SYMBOLS[unitCode]) return UNIT_SYMBOLS[unitCode];
+    const key = UNIT_KEYS[unitCode];
+    return key ? translateOr(t, key, '') : '';
 };
+
+/**
+ * Name of an event value (e.g. 'opened') in the current language.
+ * Falls back to the name the service sent, then to the raw value.
+ */
+export const localizeEvent = (
+    value: string,
+    events: Array<{ value: string; name: string }> | undefined,
+    t?: Translate,
+): string => {
+    const serviceName = Array.isArray(events) ? events.find(e => e.value === value)?.name : undefined;
+    return translateOr(t, `units.events.${value}`, serviceName ?? value);
+};
+
+/** Да/Нет для логических значений датчиков. */
+export const localizeBoolean = (value: boolean, t?: Translate): string =>
+    value ? translateOr(t, 'common.yes', 'Yes') : translateOr(t, 'common.no', 'No');
 
 /**
  * Formats a float value to a fixed number of decimal places, removing trailing zeros.
@@ -42,7 +74,7 @@ export function formatFloatValue(value: number, decimalPlaces: number = 1): stri
 /**
  * Formats a sensor value for display, handling both event and float properties
  * @param device - The Yandex device containing properties
- * @returns Formatted sensor value string (e.g., "24.5 °C", "закрыто", "3758.142 м³") or null if no sensor value found
+ * @returns Formatted sensor value string (e.g., "24.5 °C", "Closed", "3758.142 m³") or null if no sensor value found
  */
 export const formatSensorValue = (device: { properties?: Array<{
     type?: string;
@@ -56,7 +88,7 @@ export const formatSensorValue = (device: { properties?: Array<{
         value?: unknown;
         unit?: string;
     };
-}> }): string | null => {
+}> }, t?: Translate): string | null => {
     if (!device.properties || device.properties.length === 0) {
         return null;
     }
@@ -88,21 +120,14 @@ export const formatSensorValue = (device: { properties?: Array<{
     // Check if this is an event property that needs localization
     const isEventProperty = propertyType === 'devices.properties.event';
 
-    // Localize event status: find the Russian name from parameters.events array
+    // Localize event status (our dictionary first, then the service's own name)
     if (isEventProperty && typeof rawSensorValue === 'string') {
         const events = sensorProperty?.parameters?.events as Array<{ value: string; name: string }> | undefined;
-        if (events && Array.isArray(events)) {
-            const matchingEvent = events.find(event => event.value === rawSensorValue);
-            if (matchingEvent) {
-                return matchingEvent.name;
-            }
-        }
-        // Fallback to original value if no matching event found
-        return rawSensorValue;
+        return localizeEvent(rawSensorValue, events, t);
     }
 
     // Handle float properties with unit localization
-    const localizedUnit = localizeUnit(rawSensorUnit);
+    const localizedUnit = localizeUnit(rawSensorUnit, t);
 
     // Fallback to instance-based unit if no unit code is provided
     const resolvedUnit =
@@ -181,7 +206,8 @@ export const formatSensorValueForTray = (
             unit?: string;
         };
     }> },
-    displayConfig?: TraySensorDisplayConfig | null
+    displayConfig?: TraySensorDisplayConfig | null,
+    t?: Translate,
 ): string | null => {
     if (!device.properties || device.properties.length === 0) return null;
 
@@ -220,25 +246,21 @@ export const formatSensorValueForTray = (
 
         // Event properties → localized name
         if (p.type === 'devices.properties.event' && typeof p.value === 'string') {
-            if (p.events && Array.isArray(p.events)) {
-                const match = p.events.find(e => e.value === p.value);
-                if (match) return `${emoji} ${match.name}`;
-            }
-            return `${emoji} ${p.value}`;
+            return `${emoji} ${localizeEvent(p.value, p.events, t)}`;
         }
 
         // Numbers → toFixed(2)
         if (typeof p.value === 'number') {
-            const locUnit = localizeUnit(p.unit) || (TRAY_UNIT_FALLBACK[p.instance] ? ` ${TRAY_UNIT_FALLBACK[p.instance]}` : '');
+            const locUnit = localizeUnit(p.unit, t) || (TRAY_UNIT_FALLBACK[p.instance] ? ` ${TRAY_UNIT_FALLBACK[p.instance]}` : '');
             return `${emoji} ${Number(p.value).toFixed(2)}${locUnit}`;
         }
 
         // Boolean
         if (typeof p.value === 'boolean') {
-            return `${emoji} ${p.value ? 'Да' : 'Нет'}`;
+            return `${emoji} ${localizeBoolean(p.value, t)}`;
         }
 
-        return `${emoji} ${String(p.value ?? '—')}`;
+        return `${emoji} ${String(p.value ?? '-')}`;
     };
 
     let ordered: typeof extracted = [];

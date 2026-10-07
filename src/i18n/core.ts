@@ -3,6 +3,8 @@
 export type Language = 'de' | 'en' | 'ru';
 export const LANGUAGES: Language[] = ['de', 'en', 'ru'];
 
+export type Translate = (key: string, vars?: Record<string, string | number>) => string;
+
 export type PluralForms = { one: string; few?: string; many?: string; other: string };
 export interface Dictionary {
   [key: string]: string | PluralForms | Dictionary;

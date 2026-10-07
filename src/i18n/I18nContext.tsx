@@ -2,12 +2,12 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { de } from './de';
 import { en } from './en';
 import { ru } from './ru';
-import { Dictionary, Language, detectLanguage, interpolate, pickPlural, resolveKey } from './core';
+import { Dictionary, Language, Translate, detectLanguage, interpolate, pickPlural, resolveKey } from './core';
 
 const DICTIONARIES: Record<Language, Dictionary> = { de, en, ru };
 const STORAGE_KEY = 'app_language';
 
-export type Translate = (key: string, vars?: Record<string, string | number>) => string;
+export type { Translate };
 export type TranslatePlural = (key: string, count: number, vars?: Record<string, string | number>) => string;
 
 interface I18nContextType {

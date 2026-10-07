@@ -1,12 +1,14 @@
 import React from 'react';
 import { YandexDevice } from '../../types/index';
-import { getIconForDevice, localizeUnit } from '../../constants';
+import { getIconForDevice, localizeBoolean, localizeEvent, localizeUnit } from '../../constants';
+import type { Translate } from '../../i18n/core';
 import { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import {
   Star, Eye, EyeOff, Settings, Thermometer, Droplets, Sun, Gauge, Wind, BatteryFull,
   Waves, Footprints, DoorOpen, AlarmSmoke, Flame, Vibrate, Droplet,
   MousePointerClick, CircleDot
 } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
 
 const INSTANCE_ICON_COMPONENTS: Record<string, React.ElementType> = {
   temperature: Thermometer,
@@ -95,29 +97,25 @@ const LOCALIZED_UNIT_FALLBACK: Record<string, string> = {
   temperature: ' °C',
 };
 
-const resolveUnit = (instance: string, unit?: string): string => {
-  return localizeUnit(unit) || LOCALIZED_UNIT_FALLBACK[instance] || '';
+const resolveUnit = (instance: string, unit: string | undefined, t: Translate): string => {
+  return localizeUnit(unit, t) || LOCALIZED_UNIT_FALLBACK[instance] || '';
 };
 
-const formatMainValue = (prop: PropertyData): string => {
+const formatMainValue = (prop: PropertyData, t: Translate): string => {
   if (prop.type === 'devices.properties.event' && typeof prop.rawValue === 'string') {
-    if (prop.events && Array.isArray(prop.events)) {
-      const matchingEvent = prop.events.find(e => e.value === prop.rawValue);
-      if (matchingEvent) return matchingEvent.name;
-    }
-    return prop.rawValue;
+    return localizeEvent(prop.rawValue, prop.events, t);
   }
   
   if (typeof prop.rawValue === 'number') {
-    const unit = resolveUnit(prop.instance, prop.unit);
+    const unit = resolveUnit(prop.instance, prop.unit, t);
     return `${Number(prop.rawValue).toFixed(2)}${unit}`;
   }
   
   if (typeof prop.rawValue === 'boolean') {
-    return prop.rawValue ? 'Да' : 'Нет';
+    return localizeBoolean(prop.rawValue, t);
   }
   
-  return String(prop.rawValue ?? '—');
+  return String(prop.rawValue ?? '-');
 };
 
 export const SensorCard: React.FC<SensorCardProps> = ({
@@ -132,6 +130,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
   onToggleVisibility,
   sensorDisplayConfig,
 }) => {
+  const { t } = useI18n();
   const allProps = extractProperties(device);
 
   // Determine which properties to show based on saved config, with fallback
@@ -207,7 +206,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
               onClick={(e) => { e.stopPropagation(); onOpenSettings(device); }}
               style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               className="settings-btn"
-              title="Настройки отображения"
+              title={t('cards.displaySettings')}
             >
               <Settings className="w-3.5 h-3.5" />
             </div>
@@ -228,7 +227,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
           {secondaryProps.map((prop, idx) => (
             <span key={prop.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: idx > 0 ? 6 : 0 }}>
               {getIconForInstance(prop.instance, 'w-3.5 h-3.5')}
-              {formatMainValue(prop)}
+              {formatMainValue(prop, t)}
             </span>
           ))}
         </div>
@@ -242,7 +241,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
             {getIconForInstance(primaryProp.instance, 'w-4 h-4')}
           </span>
           <span className="sensor-main-text">
-            {formatMainValue(primaryProp)}
+            {formatMainValue(primaryProp, t)}
           </span>
         </div>
       )}

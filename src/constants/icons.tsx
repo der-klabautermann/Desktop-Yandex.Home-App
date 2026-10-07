@@ -49,19 +49,19 @@ export const getIconForScenario = (iconName?: string, scenarioName?: string): Re
   }
   
   const lowerName = (scenarioName || '').toLowerCase();
-  if (lowerName.includes('свет') || lowerName.includes('light')) return <Lightbulb className="w-8 h-8" />;
-  if (lowerName.includes('музык') || lowerName.includes('music')) return <Music className="w-8 h-8" />;
+  if (lowerName.includes('свет') || lowerName.includes('light') || lowerName.includes('licht')) return <Lightbulb className="w-8 h-8" />;
+  if (lowerName.includes('музык') || lowerName.includes('music') || lowerName.includes('musik')) return <Music className="w-8 h-8" />;
   if (lowerName.includes('тв') || lowerName.includes('tv') || lowerName.includes('кино')) return <Tv className="w-8 h-8" />;
-  if (lowerName.includes('утро') || lowerName.includes('morning')) return <Sun className="w-8 h-8" />;
-  if (lowerName.includes('ноч') || lowerName.includes('night') || lowerName.includes('спать')) return <Moon className="w-8 h-8" />;
-  if (lowerName.includes('вечер')) return <Sunset className="w-8 h-8" />;
+  if (lowerName.includes('утро') || lowerName.includes('morning') || lowerName.includes('morgen')) return <Sun className="w-8 h-8" />;
+  if (lowerName.includes('ноч') || lowerName.includes('night') || lowerName.includes('спать') || lowerName.includes('nacht') || lowerName.includes('schlaf')) return <Moon className="w-8 h-8" />;
+  if (lowerName.includes('вечер') || lowerName.includes('evening') || lowerName.includes('abend')) return <Sunset className="w-8 h-8" />;
   if (lowerName.includes('колонк') || lowerName.includes('speaker') ) return <Speaker className="w-8 h-8" />;
   if (lowerName.includes('гост') || lowerName.includes('тусов') || lowerName.includes('вечерин') || lowerName.includes('party') ) return <PartyPopper className="w-8 h-8" />;
   if (lowerName.includes('выкл') || lowerName.includes('off')) return <Power className="w-8 h-8" />;
   if (lowerName.includes('откр') || lowerName.includes('open')) return <Unlock className="w-8 h-8" />;
   if (lowerName.includes('закр') || lowerName.includes('close')) return <Lock className="w-8 h-8" />;
-  if (lowerName.includes('вентилят') || lowerName.includes('fan')) return <Fan className="w-8 h-8" />;
-  if (lowerName.includes('кондиц') || lowerName.includes('condit')) return <AirVent className="w-8 h-8" />;
+  if (lowerName.includes('вентилят') || lowerName.includes('fan') || lowerName.includes('lüfter') || lowerName.includes('ventilator')) return <Fan className="w-8 h-8" />;
+  if (lowerName.includes('кондиц') || lowerName.includes('condit') || lowerName.includes('klima')) return <AirVent className="w-8 h-8" />;
 
   return SCENARIO_ICON_MAP['default'];
 };

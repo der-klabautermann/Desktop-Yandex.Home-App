@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { YandexGroup, YandexDevice } from '../../types/index';
 import { DeviceCardAdapter } from './DeviceCardAdapter';
 import { Loader2, Power, ChevronDown, ChevronRight, Settings, Star } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
 
 
 interface GroupCardProps {
@@ -38,6 +39,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
   onToggleDeviceVisibility,
 }) => {
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const groupDevices = useMemo(() => {
@@ -111,7 +113,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
             <button
               onClick={() => onOpenGroupSettings(group)}
               className="group-power-btn"
-              title="Настройки"
+              title={t('cards.settings')}
             >
               <Settings />
             </button>
@@ -121,7 +123,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
               onClick={handleToggleGroup}
               disabled={loading}
               className={`group-power-btn ${groupInfo.groupIsOn ? 'is-on' : ''}`}
-              title={groupInfo.groupIsOn ? 'Выключить' : 'Включить'}
+              title={groupInfo.groupIsOn ? t('cards.turnOff') : t('cards.turnOn')}
             >
               {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Power />}
             </button>
@@ -138,13 +140,13 @@ export const GroupCard: React.FC<GroupCardProps> = ({
               ))}
             </div>
           ) : (
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>Все устройства в этой группе скрыты</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{t('cards.groupAllHidden')}</p>
           )}
         </>
       )}
 
       {groupDevices.length === 0 && (
-        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>В этой группе нет устройств</p>
+        <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)' }}>{t('dashboard.groupEmpty')}</p>
       )}
     </div>
   );

@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { YandexDevice } from '../../types/index';
-import { getIconForDevice, localizeUnit, isCameraDevice, isAlwaysOnDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
+import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, isAlwaysOnDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
 import { Loader2, Star, Settings, Eye, EyeOff, Video, Mic, MicOff, Thermometer, Droplets } from 'lucide-react';
 import { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
+import { useI18n } from '../../i18n/I18nContext';
 
 const loggedCameraCardIds = new Set<string>();
 
@@ -22,6 +23,7 @@ export interface DeviceCardProps {
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavorite, onToggleFavorite, onOpenSettings, onOpenCameraStream, isEditMode = false, iconHiddenState = false, onToggleVisibility }) => {
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
 
   const isThermostat = device.type === 'devices.types.thermostat.ac' || device.type === 'devices.types.thermostat';
   const isLight = device.type.startsWith('devices.types.light');
@@ -80,16 +82,16 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
 
   const temperatureValue: number | null = temperatureProperty?.state?.value ?? null;
   const temperatureUnit = temperatureProperty?.parameters?.unit
-    ? localizeUnit(temperatureProperty.parameters.unit)
+    ? localizeUnit(temperatureProperty.parameters.unit, t)
     : temperatureProperty?.state?.unit
-      ? localizeUnit(temperatureProperty.state.unit)
+      ? localizeUnit(temperatureProperty.state.unit, t)
       : ' °C';
 
   const humidityValue: number | null = humidityProperty?.state?.value ?? null;
   const humidityUnit = humidityProperty?.parameters?.unit
-    ? localizeUnit(humidityProperty.parameters.unit)
+    ? localizeUnit(humidityProperty.parameters.unit, t)
     : humidityProperty?.state?.unit
-      ? localizeUnit(humidityProperty.state.unit)
+      ? localizeUnit(humidityProperty.state.unit, t)
       : ' %';
 
   const isSensor = !isToggleable && !!sensorProperty;
@@ -103,9 +105,9 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
     : micStateStr === 'on' || micStateStr === 'true' || micStateStr.includes('unmuted');
   const micTitle = hwMuteProperty
     ? (isHwMuteOn
-      ? 'Аппаратный микрофон выключен (кнопка на камере / настройки в приложении Дом)'
-      : 'Аппаратный микрофон включен')
-    : (isMicOn ? 'Микрофон включен' : 'Микрофон выключен');
+      ? t('cards.hwMicOff')
+      : t('cards.hwMicOn'))
+    : (isMicOn ? t('cards.micOn') : t('cards.micOff'));
 
   if (isCamera && !loggedCameraCardIds.has(device.id)) {
     loggedCameraCardIds.add(device.id);
@@ -139,14 +141,10 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
   let localizedEventValue: string | null = null;
   if (isEventProperty && typeof rawSensorValue === 'string') {
     const events = (sensorProperty as any)?.parameters?.events as Array<{ value: string; name: string }> | undefined;
-    if (events && Array.isArray(events)) {
-      const matchingEvent = events.find(event => event.value === rawSensorValue);
-      if (matchingEvent) localizedEventValue = matchingEvent.name;
-    }
-    if (!localizedEventValue) localizedEventValue = rawSensorValue;
+    localizedEventValue = localizeEvent(rawSensorValue, events, t);
   }
 
-  const localizedUnit = localizeUnit(rawSensorUnit);
+  const localizedUnit = localizeUnit(rawSensorUnit, t);
   const resolvedUnit = localizedUnit ||
     (sensorInstance === 'humidity' ? ' %' : sensorInstance === 'temperature' ? ' °C' : '');
 
@@ -212,7 +210,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
               onClick={(e) => { e.stopPropagation(); onOpenSettings(device); }}
               style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               className="settings-btn"
-              title={isThermostat ? 'Настройки климата' : isFan ? 'Настройки вентилятора' : 'Настройки яркости'}
+              title={isThermostat ? t('cards.climateSettings') : isFan ? t('cards.fanSettings') : t('cards.lightSettings')}
             >
               <Settings className="w-3.5 h-3.5" />
             </div>
@@ -228,7 +226,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
 
       <div className="device-name">{device.name}</div>
       <div className="device-type-label">
-        {loading ? 'Обновление...' : (
+        {loading ? t('cards.updating') : (
           temperatureValue !== null || humidityValue !== null ? (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
               {temperatureValue !== null && (
@@ -237,7 +235,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
                   {`${formatFloatValue(temperatureValue)}${temperatureUnit}`}
                 </span>
               )}
-              {temperatureValue !== null && humidityValue !== null && <span style={{ margin: '0 3px' }}>·</span>}
+              {temperatureValue !== null && humidityValue !== null && <span style={{ margin: '0 3px', opacity: 0.5 }}>/</span>}
               {humidityValue !== null && (
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 2 }}>
                   <Droplets className="w-3.5 h-3.5" style={{ opacity: 0.75 }} />
@@ -245,7 +243,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
                 </span>
               )}
             </span>
-          ) : isCamera ? 'Нажмите для просмотра' : isToggleable ? (isOn ? 'Включено' : 'Отключено') : ''
+          ) : isCamera ? t('cards.tapToView') : isToggleable ? (isOn ? t('cards.on') : t('cards.off')) : ''
         )}
       </div>
 
