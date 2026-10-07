@@ -26,3 +26,6 @@ yarn-error.log*
 
 /analysis
 .code-graph/
+
+# Сгенерированный бандл ядра
+/electron/core.js
