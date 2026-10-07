@@ -56,6 +56,10 @@ export const localizeEvent = (
     return translateOr(t, `units.events.${value}`, serviceName ?? value);
 };
 
+/** Name of a device mode (e.g. 'heat') in the current language, service name as fallback. */
+export const localizeMode = (value: string, serviceName: string | undefined, t?: Translate): string =>
+    translateOr(t, `modes.${value}`, serviceName || value);
+
 /** Да/Нет для логических значений датчиков. */
 export const localizeBoolean = (value: boolean, t?: Translate): string =>
     value ? translateOr(t, 'common.yes', 'Yes') : translateOr(t, 'common.no', 'No');

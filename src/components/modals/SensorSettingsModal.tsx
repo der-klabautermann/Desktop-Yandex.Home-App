@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { YandexDevice } from '../../types/index';
-import { localizeUnit } from '../../constants/formatting';
+import { localizeBoolean, localizeEvent, localizeUnit } from '../../constants/formatting';
+import type { Translate } from '../../i18n/core';
 import {
   X, Settings, Thermometer, Droplets, Sun, Gauge, Wind, BatteryFull,
   Waves, Footprints, DoorOpen, AlarmSmoke, Flame, Vibrate, Droplet,
   MousePointerClick, CircleDot
 } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
 
 export interface SensorDisplayConfig {
   /** Index in device.properties array to use as the main (primary) value */
@@ -52,26 +54,6 @@ const INSTANCE_ICON_COMPONENTS: Record<string, React.ElementType> = {
   button: MousePointerClick,
 };
 
-const INSTANCE_LABELS: Record<string, string> = {
-  temperature: 'Температура',
-  humidity: 'Влажность',
-  illumination: 'Освещённость',
-  pressure: 'Давление',
-  co2_level: 'CO₂',
-  pm1_density: 'PM1',
-  pm2_5_density: 'PM2.5',
-  pm10_density: 'PM10',
-  tvoc: 'TVOC',
-  battery_level: 'Заряд батареи',
-  water_level: 'Уровень воды',
-  motion: 'Движение',
-  open: 'Открытие',
-  smoke: 'Дым',
-  gas: 'Газ',
-  vibration: 'Вибрация',
-  water_leak: 'Протечка',
-  button: 'Кнопка',
-};
 
 const INSTANCE_UNIT_FALLBACK: Record<string, string> = {
   humidity: ' %',
@@ -83,8 +65,10 @@ const getIconForInstance = (instance: string, className: string = 'w-5 h-5'): Re
   return <IconComponent className={className} />;
 };
 
-const getInstanceLabel = (instance: string): string => {
-  return INSTANCE_LABELS[instance] ?? instance;
+const getInstanceLabel = (instance: string, t: Translate): string => {
+  const key = `sensors.${instance}`;
+  const text = t(key);
+  return text === key ? instance : text;
 };
 
 const extractModalProperties = (device: YandexDevice): SensorPropertyEntry[] => {
@@ -114,25 +98,21 @@ const extractModalProperties = (device: YandexDevice): SensorPropertyEntry[] => 
   return result;
 };
 
-const formatPreviewValue = (prop: SensorPropertyEntry): string => {
+const formatPreviewValue = (prop: SensorPropertyEntry, t: Translate): string => {
   if (prop.type === 'devices.properties.event' && typeof prop.rawValue === 'string') {
-    if (prop.events && Array.isArray(prop.events)) {
-      const matchingEvent = prop.events.find(e => e.value === prop.rawValue);
-      if (matchingEvent) return matchingEvent.name;
-    }
-    return prop.rawValue;
+    return localizeEvent(prop.rawValue, prop.events, t);
   }
 
   if (typeof prop.rawValue === 'number') {
-    const unit = localizeUnit(prop.unit) || INSTANCE_UNIT_FALLBACK[prop.instance] || '';
+    const unit = localizeUnit(prop.unit, t) || INSTANCE_UNIT_FALLBACK[prop.instance] || '';
     return `${Number(prop.rawValue).toFixed(2)}${unit}`;
   }
 
   if (typeof prop.rawValue === 'boolean') {
-    return prop.rawValue ? 'Да' : 'Нет';
+    return localizeBoolean(prop.rawValue, t);
   }
 
-  return String(prop.rawValue ?? '—');
+  return String(prop.rawValue ?? '-');
 };
 
 export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
@@ -142,6 +122,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
   onSave,
   initialConfig,
 }) => {
+  const { t } = useI18n();
   const allProperties = extractModalProperties(device);
 
   const [primaryIndex, setPrimaryIndex] = useState<number | null>(null);
@@ -204,7 +185,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
         <div className="flex items-start justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">
-              Настройки отображения датчика
+              {t('modals.sensor.title')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-muted mt-1">
               {device.name}
@@ -219,14 +200,13 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
         </div>
 
         <p className="text-sm text-slate-600 dark:text-muted mb-4">
-          Выберите, какие показания отображать на карточке датчика.
-          Одно основное (внизу карточки) и до двух второстепенных (в верхней строке).
+          {t('modals.sensor.hint')}
         </p>
 
         {/* Properties List */}
         {allProperties.length === 0 ? (
           <div className="text-center py-8 text-slate-500 dark:text-muted">
-            У этого датчика нет доступных свойств для отображения.
+            {t('modals.sensor.empty')}
           </div>
         ) : (
           <div className="space-y-2 mb-6 max-h-80 overflow-y-auto pr-1">
@@ -262,7 +242,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
                         : 'border-gray-300 dark:border-muted hover:border-primary dark:hover:border-primary'
                       }
                     `}
-                    title="Сделать основным"
+                    title={t('modals.sensor.makePrimary')}
                   >
                     {isPrimary && <div className="w-2 h-2 rounded-full bg-white" />}
                   </button>
@@ -275,10 +255,10 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
                   {/* Label + value */}
                   <div className="flex-1 min-w-0">
                     <div className={`text-sm font-medium ${isPrimary || isSecondary ? 'text-slate-900 dark:text-card-fg' : 'text-slate-700 dark:text-card-fg'}`}>
-                      {getInstanceLabel(prop.instance)}
+                      {getInstanceLabel(prop.instance, t)}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-muted truncate">
-                      {formatPreviewValue(prop)}
+                      {formatPreviewValue(prop, t)}
                     </div>
                   </div>
 
@@ -286,7 +266,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
                   <button
                     onClick={() => {
                       if (isPrimary) {
-                        // Switching primary to secondary — clear primary
+                        // Switching primary to secondary: clear primary
                         setPrimaryIndex(null);
                         setSecondaryIndexes(prev => {
                           if (prev.includes(prop.index)) return prev;
@@ -306,7 +286,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
                           : 'border-gray-300 dark:border-muted hover:border-blue-400 dark:hover:border-blue-500'
                       }
                     `}
-                    title={isPrimary ? 'Сделать второстепенным' : 'Показать второстепенным'}
+                    title={isPrimary ? t('modals.sensor.makeSecondary') : t('modals.sensor.showSecondary')}
                   >
                     {isSecondary && (
                       <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
@@ -324,7 +304,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
         <div className="flex items-center gap-4 mb-6 text-xs text-slate-500 dark:text-muted">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full border-2 border-primary bg-primary" />
-            Основное
+            {t('modals.sensor.primary')}
           </span>
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded border-2 border-blue-400 dark:border-blue-500 bg-blue-400 dark:bg-blue-500">
@@ -332,7 +312,7 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             </span>
-            Второстепенное
+            {t('modals.sensor.secondary')}
           </span>
         </div>
 
@@ -343,13 +323,13 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
             disabled={!isValid}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-[color:var(--accent)] dark:border-primary text-[color:var(--accent)] dark:text-primary hover:bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Сохранить
+            {t('common.save')}
           </button>
           <button
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white"
           >
-            Закрыть
+            {t('common.close')}
           </button>
         </div>
       </div>

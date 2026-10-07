@@ -11,6 +11,8 @@ import {
   Rotate3D,
   Pause,
 } from 'lucide-react';
+import { useI18n } from '../../i18n/I18nContext';
+import { localizeMode } from '../../constants/formatting';
 
 interface FanSettingsModalProps {
   device: YandexDevice;
@@ -25,6 +27,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
   onClose,
   onApply,
 }) => {
+  const { t } = useI18n();
   const [fanSpeed, setFanSpeed] = useState<string>('');
   const [oscillation, setOscillation] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -202,7 +205,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
         <div className="flex items-start justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">
-              Настройки вентилятора
+              {t('modals.fan.title')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-muted mt-1">
               {device.name}
@@ -222,7 +225,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
           {fanSpeedCap && fanSpeedModes.length > 0 && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-card-fg mb-3">
-                Скорость вращения
+                {t('modals.fan.speed')}
               </label>
               <div className="grid grid-cols-3 gap-2">
                 {fanSpeedModes.map((mode) => {
@@ -232,7 +235,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
                     <ModeIconButton
                       key={mode.value}
                       value={mode.value}
-                      label={mode.name || mode.value}
+                      label={localizeMode(mode.value, mode.name, t)}
                       icon={Icon}
                       isSelected={isSelected}
                       onClick={() => setFanSpeed(mode.value)}
@@ -247,7 +250,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
           {oscillationCapability && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-card-fg mb-3">
-                Вращение вентилятора
+                {t('modals.fan.swing')}
               </label>
               <div className="flex gap-2">
                 <button
@@ -259,7 +262,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
                       : 'border-gray-200 dark:border-border bg-white dark:bg-surface hover:border-gray-300 dark:hover:border-border opacity-60 hover:opacity-80'
                     }
                   `}
-                  title="Отключить вращение"
+                  title={t('modals.fan.swingOffHint')}
                 >
                   <Pause 
                     className={`
@@ -277,7 +280,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
                       : 'text-gray-500 dark:text-muted'
                     }
                   `}>
-                    Выкл
+                    {t('modals.fan.off')}
                   </span>
                 </button>
                 <button
@@ -289,7 +292,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
                       : 'border-gray-200 dark:border-border bg-white dark:bg-surface hover:border-gray-300 dark:hover:border-border opacity-60 hover:opacity-80'
                     }
                   `}
-                  title="Включить вращение"
+                  title={t('modals.fan.swingOnHint')}
                 >
                   <Rotate3D 
                     className={`
@@ -307,7 +310,7 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
                       : 'text-gray-500 dark:text-muted'
                     }
                   `}>
-                    Вкл
+                    {t('modals.fan.on')}
                   </span>
                 </button>
               </div>
@@ -322,14 +325,14 @@ export const FanSettingsModal: React.FC<FanSettingsModalProps> = ({
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-[color:var(--accent)] dark:border-primary text-[color:var(--accent)] dark:text-primary hover:bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Применение...' : 'Применить'}
+            {isLoading ? t('modals.applying') : t('modals.apply')}
           </button>
           <button
             onClick={onClose}
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Применение...' : 'Закрыть'}
+            {isLoading ? t('modals.applying') : t('common.close')}
           </button>
         </div>
       </div>
