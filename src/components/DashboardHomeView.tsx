@@ -7,6 +7,7 @@ import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
 import { isLightGroup, isSensorDevice } from '../constants';
 import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface DashboardHomeViewProps {
     state: UseDashboardStateReturn;
@@ -48,21 +49,22 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
     hasFavoriteSensors,
 }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     // ---- Render helpers ----
     const renderStatsRow = () => (
         <div className="stats-row">
             <div className="stat-chip">
-                <Building2 /> Домов: {ctx.households.length}
+                <Building2 /> {t('dashboard.stats.homes', { count: ctx.households.length })}
             </div>
             <div className="stat-chip">
-                <SquareSquare /> Комнат: {roomsForHome.length}
+                <SquareSquare /> {t('dashboard.stats.rooms', { count: roomsForHome.length })}
             </div>
             <div className="stat-chip">
-                <ScrollText /> Сценариев: {activeScenarios.length}
+                <ScrollText /> {t('dashboard.stats.scenarios', { count: activeScenarios.length })}
             </div>
             <div className="stat-chip">
-                <Lightbulb /> Устройств: {devicesForHome.length}
+                <Lightbulb /> {t('dashboard.stats.devices', { count: devicesForHome.length })}
             </div>
         </div>
     );
@@ -73,7 +75,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             <section className="favorites-section">
                 <div className="favorites-title">
                     <Star />
-                    <h2>Избранное</h2>
+                    <h2>{t('dashboard.favorites')}</h2>
                 </div>
 
                 {/* Sensors — first at the top */}
@@ -81,7 +83,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <>
                         <div className="section-header" style={{ marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Датчики</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{t('dashboard.sensors')}</span>
                                 <span className="section-count">{visibleFavoriteSensorDevices.length}</span>
                             </div>
                         </div>
@@ -97,7 +99,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <>
                         <div className="section-header" style={{ marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Сценарии</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{t('dashboard.scenarios')}</span>
                                 <span className="section-count">{visibleFavoriteScenarios.length}</span>
                             </div>
                         </div>
@@ -122,7 +124,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <>
                         <div className="section-header" style={{ marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Устройства</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{t('dashboard.devices')}</span>
                                 <span className="section-count">{visibleFavoriteNonSensorDevices.length}</span>
                             </div>
                         </div>
@@ -138,7 +140,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <>
                         <div className="section-header" style={{ marginBottom: 10 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>Группы</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>{t('dashboard.groups')}</span>
                                 <span className="section-count">{visibleFavoriteGroups.length}</span>
                             </div>
                         </div>
@@ -251,7 +253,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <div className="room-section">
                         <div className="room-header" onClick={state.toggleUnassignedDevices}>
                             {state.collapse.isUnassignedDevicesCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
-                            <h2>Без комнаты</h2>
+                            <h2>{t('dashboard.noRoom')}</h2>
                             <span className="room-count">{unassignedDevices.length}</span>
                         </div>
                         {!state.collapse.isUnassignedDevicesCollapsed && (
@@ -273,14 +275,14 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <div className="section-header">
                         <button onClick={state.toggleScenarios} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
                             {state.collapse.isScenariosCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
-                            <h2>Сценарии</h2>
+                            <h2>{t('dashboard.scenarios')}</h2>
                             <span className="section-count">{activeScenarios.filter(s => !state.getEffectiveHidden(`scenario_${s.id}`)).length}</span>
                         </button>
                     </div>
                     {!state.collapse.isScenariosCollapsed && (
                         <>
                             {activeScenarios.length === 0 ? (
-                                <div className="empty-state"><p>У вас нет активных сценариев.</p></div>
+                                <div className="empty-state"><p>{t('dashboard.noScenarios')}</p></div>
                             ) : (
                                 <div className="scenario-grid">
                                     {activeScenarios.map(scenario => {

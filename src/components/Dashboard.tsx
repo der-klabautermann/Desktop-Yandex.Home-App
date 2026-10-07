@@ -20,11 +20,11 @@ import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
 import packageJson from '../../package.json';
-
-const DEFAULT_HOME_NAME = 'Мой Дом';
+import { useI18n } from '../i18n/I18nContext';
 
 export const Dashboard: React.FC = () => {
     const ctx = useDashboardContext();
+    const { t, tp } = useI18n();
 
     const state = useDashboardState(
         ctx.activeHouseholdId,
@@ -46,7 +46,7 @@ export const Dashboard: React.FC = () => {
         return ctx.households[0];
     }, [ctx.households, ctx.activeHouseholdId]);
 
-    const homeName = currentHousehold?.name || DEFAULT_HOME_NAME;
+    const homeName = currentHousehold?.name || t('dashboard.defaultHomeName');
     const hasMultipleHomes = (ctx.households?.length || 0) > 1;
 
     const roomsForHome = useMemo(() => {
@@ -157,7 +157,7 @@ export const Dashboard: React.FC = () => {
                 const onOff = d.capabilities.find(c => c.type === 'devices.capabilities.on_off');
                 return onOff?.state?.value === true;
             }).length;
-            return `${roomDevices.length} устройств, ${onCount} включено`;
+            return tp('dashboard.devicesOn', roomDevices.length, { on: onCount });
         }
         if (ctx.activeSidebarView === 'group' && ctx.activeGroupId) {
             const group = groupsForHome.find(g => g.id === ctx.activeGroupId);
@@ -167,11 +167,11 @@ export const Dashboard: React.FC = () => {
                     const onOff = d.capabilities.find(c => c.type === 'devices.capabilities.on_off');
                     return onOff?.state?.value === true;
                 }).length;
-                return `${groupDevices.length} устройств, ${onCount} включено`;
+                return tp('dashboard.devicesOn', groupDevices.length, { on: onCount });
             }
         }
-        return `${devicesForHome.length} устройств в доме`;
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, devicesForHome, groupsForHome]);
+        return tp('dashboard.devicesInHome', devicesForHome.length);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, devicesForHome, groupsForHome, tp]);
 
     // ---- Content rendering ----
     const renderContent = () => {
@@ -257,14 +257,14 @@ export const Dashboard: React.FC = () => {
                                 <button
                                     onClick={state.toggleEditMode}
                                     className={`header-btn ${state.edit.isEditMode ? 'active' : ''}`}
-                                    title={state.edit.isEditMode ? 'Выйти из режима редактирования' : 'Редактировать дашборд'}
+                                    title={state.edit.isEditMode ? t('dashboard.editExit') : t('dashboard.edit')}
                                 >
                                     <Pencil className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={ctx.onToggleAutostart}
                                     className={`header-btn ${ctx.isAutostartEnabled ? 'active' : ''}`}
-                                    title={ctx.isAutostartEnabled ? 'Автозапуск включен' : 'Автозапуск выключен'}
+                                    title={ctx.isAutostartEnabled ? t('dashboard.autostartOn') : t('dashboard.autostartOff')}
                                 >
                                     <Power className="w-4 h-4" />
                                 </button>
@@ -274,21 +274,21 @@ export const Dashboard: React.FC = () => {
                                     onClick={ctx.onRefresh}
                                     disabled={ctx.isRefreshing}
                                     className="header-btn"
-                                    title="Обновить"
+                                    title={t('dashboard.refresh')}
                                 >
                                     <RefreshCw className={`w-4 h-4 ${ctx.isRefreshing ? 'animate-spin' : ''}`} />
                                 </button>
                                 <button
                                     onClick={() => state.setShowInfoModal(true)}
                                     className="header-btn"
-                                    title="О программе"
+                                    title={t('dashboard.about')}
                                 >
                                     <Info className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => state.setShowConfirmModal(true)}
                                     className="header-btn"
-                                    title="Выйти"
+                                    title={t('dashboard.logout')}
                                 >
                                     <LogOut className="w-4 h-4" />
                                 </button>
@@ -304,20 +304,20 @@ export const Dashboard: React.FC = () => {
                 <div className="fixed inset-0 z-[100] bg-black/50 dark:bg-black/70 flex items-center justify-center backdrop-blur-sm">
                     <div className="bg-white dark:bg-surface border border-gray-200 dark:border-border-soft rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-300">
                         <div className="flex items-start justify-between mb-4">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">Подтверждение выхода</h3>
+                            <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">{t('dashboard.logoutConfirm.title')}</h3>
                             <button onClick={() => state.setShowConfirmModal(false)} className="text-slate-600 dark:text-muted hover:text-slate-900 dark:hover:text-card-fg transition-colors">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
                         <p className="text-slate-700 dark:text-card-fg mb-6 text-sm">
-                            Вы уверены, что хотите выйти из учетной записи? После этого действия для последующего входа потребуется токен.
+                            {t('dashboard.logoutConfirm.text')}
                         </p>
                         <div className="flex justify-end gap-3">
                             <button onClick={() => state.setShowConfirmModal(false)} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-red-400 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">
-                                Нет
+                                {t('common.no')}
                             </button>
                             <button onClick={() => { ctx.onLogout(); state.setShowConfirmModal(false); }} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-primary hover:bg-primary-hover text-white">
-                                Да, уверен
+                                {t('dashboard.logoutConfirm.confirm')}
                             </button>
                         </div>
                     </div>

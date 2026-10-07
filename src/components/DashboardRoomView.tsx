@@ -5,6 +5,7 @@ import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
 import { isLightGroup } from '../constants';
+import { useI18n } from '../i18n/I18nContext';
 
 interface DashboardRoomViewProps {
     state: UseDashboardStateReturn;
@@ -22,13 +23,14 @@ export const DashboardRoomView: React.FC<DashboardRoomViewProps> = ({
     devicesForHome,
 }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     if (!activeRoomId) return null;
     const room = roomsForHome.find(r => r.id === activeRoomId);
-    if (!room) return <div className="empty-state"><p>Комната не найдена</p></div>;
+    if (!room) return <div className="empty-state"><p>{t('dashboard.roomNotFound')}</p></div>;
 
     const roomDevices = devicesForHome.filter(d => room.devices.includes(d.id));
-    if (roomDevices.length === 0) return <div className="empty-state"><p>В этой комнате нет устройств</p></div>;
+    if (roomDevices.length === 0) return <div className="empty-state"><p>{t('dashboard.roomEmpty')}</p></div>;
 
     const groupedDeviceIds = new Set(
         groupsForHome
