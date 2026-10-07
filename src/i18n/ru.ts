@@ -49,4 +49,9 @@ export const ru = {
     groupNotFound: 'Группа не найдена',
     groupEmpty: 'В этой группе нет устройств',
   },
+  sidebar: {
+    allDevices: 'Все устройства',
+    groups: 'Группы устройств',
+    rooms: 'Комнаты',
+  },
 } satisfies Dictionary;

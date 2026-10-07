@@ -3,6 +3,7 @@ import { YandexDevice } from '../../types/index';
 import { ChevronDown, Star, Loader2 } from 'lucide-react';
 import { getIconForScenario, getIconForDevice, isCameraDevice, isSensorDevice } from '../../constants';
 import { useDashboardContext } from '../../contexts/DashboardContext';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SidebarFavoritesProps {
     collapsed: boolean;
@@ -16,6 +17,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
     collapsed, onToggle, loadingItems, withLoading, onOpenCameraStream,
 }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     // Household-aware filtering (same logic as Dashboard.tsx)
     const activeHouseholdId = ctx.activeHouseholdId;
@@ -75,7 +77,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
-                Избранное
+                {t('dashboard.favorites')}
             </div>
             {!collapsed && (<>
                 {favoriteScenarios.map(s => (

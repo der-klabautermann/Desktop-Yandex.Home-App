@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ChevronDown, Star } from 'lucide-react';
 import { getIconForDevice, isSensorDevice } from '../../constants';
 import { useDashboardContext } from '../../contexts/DashboardContext';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SidebarSensorsProps {
     collapsed: boolean;
@@ -10,6 +11,7 @@ interface SidebarSensorsProps {
 
 export const SidebarSensors: React.FC<SidebarSensorsProps> = ({ collapsed, onToggle }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     const roomsForHome = useMemo(() => {
         if (!ctx.activeHouseholdId) return ctx.data.rooms;
@@ -35,7 +37,7 @@ export const SidebarSensors: React.FC<SidebarSensorsProps> = ({ collapsed, onTog
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
-                Датчики
+                {t('dashboard.sensors')}
                 <span className="sidebar-item-badge">{allSensors.length}</span>
             </div>
             {!collapsed && allSensors.map(d => {

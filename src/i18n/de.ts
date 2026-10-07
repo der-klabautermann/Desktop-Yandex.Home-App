@@ -49,4 +49,9 @@ export const de = {
     groupNotFound: 'Gruppe nicht gefunden',
     groupEmpty: 'In dieser Gruppe gibt es keine Geräte',
   },
+  sidebar: {
+    allDevices: 'Alle Geräte',
+    groups: 'Gerätegruppen',
+    rooms: 'Räume',
+  },
 } satisfies Dictionary;

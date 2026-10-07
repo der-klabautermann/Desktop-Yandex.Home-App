@@ -8,6 +8,7 @@ import { SidebarSensors } from './sidebar/SidebarSensors';
 import { SidebarRooms } from './sidebar/SidebarRooms';
 import { SidebarGroups } from './sidebar/SidebarGroups';
 import { SidebarScenarios } from './sidebar/SidebarScenarios';
+import { useI18n } from '../i18n/I18nContext';
 
 interface SidebarProps {
     onOpenCameraStream?: (device: YandexDevice) => void;
@@ -15,6 +16,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
     const [loadingItems, setLoadingItems] = useState<Record<string, boolean>>({});
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
@@ -123,7 +125,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
                     onClick={ctx.onSelectHome}
                 >
                     <span className="sidebar-item-icon"><Home /></span>
-                    Все устройства
+                    {t('sidebar.allDevices')}
                 </button>
 
                 <SidebarFavorites

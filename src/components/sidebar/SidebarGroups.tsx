@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SidebarGroupsProps {
     collapsed: boolean;
@@ -9,6 +10,7 @@ interface SidebarGroupsProps {
 
 export const SidebarGroups: React.FC<SidebarGroupsProps> = ({ collapsed, onToggle }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     const groupsForHome = useMemo(() => {
         if (!ctx.activeHouseholdId) return ctx.data.groups;
@@ -21,7 +23,7 @@ export const SidebarGroups: React.FC<SidebarGroupsProps> = ({ collapsed, onToggl
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
-                Группы устройств
+                {t('sidebar.groups')}
             </div>
             {!collapsed && groupsForHome.map(group => (
                 <button

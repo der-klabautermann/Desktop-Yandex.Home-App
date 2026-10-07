@@ -3,6 +3,7 @@ import { ChevronDown, Star, Loader2 } from 'lucide-react';
 import { YandexScenario } from '../../types/index';
 import { getIconForScenario } from '../../constants';
 import { useDashboardContext } from '../../contexts/DashboardContext';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SidebarScenariosProps {
     collapsed: boolean;
@@ -16,6 +17,7 @@ export const SidebarScenarios: React.FC<SidebarScenariosProps> = ({
     collapsed, onToggle, loadingItems, withLoading, scenarios,
 }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     if (scenarios.length === 0) return null;
 
@@ -23,7 +25,7 @@ export const SidebarScenarios: React.FC<SidebarScenariosProps> = ({
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
-                Сценарии
+                {t('dashboard.scenarios')}
             </div>
             {!collapsed && scenarios.map(s => (
                 <div key={s.id} className="sidebar-item" style={{ paddingRight: '8px' }}>

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { ChevronDown, SquareSquare } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface SidebarRoomsProps {
     collapsed: boolean;
@@ -9,6 +10,7 @@ interface SidebarRoomsProps {
 
 export const SidebarRooms: React.FC<SidebarRoomsProps> = ({ collapsed, onToggle }) => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
 
     const roomsForHome = useMemo(() => {
         if (!ctx.activeHouseholdId) return ctx.data.rooms;
@@ -25,7 +27,7 @@ export const SidebarRooms: React.FC<SidebarRoomsProps> = ({ collapsed, onToggle 
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
-                Комнаты
+                {t('sidebar.rooms')}
             </div>
             {!collapsed && roomsForHome.map(room => (
                 <button

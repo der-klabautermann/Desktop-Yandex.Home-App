@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
-
-const DEFAULT_HOME_NAME = 'Мой Дом';
+import { useI18n } from '../../i18n/I18nContext';
 
 export const SidebarHeader: React.FC = () => {
     const ctx = useDashboardContext();
+    const { t } = useI18n();
     const [houseDropdownOpen, setHouseDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -18,7 +18,7 @@ export const SidebarHeader: React.FC = () => {
         return ctx.households[0];
     }, [ctx.households, ctx.activeHouseholdId]);
 
-    const homeName = currentHousehold?.name || DEFAULT_HOME_NAME;
+    const homeName = currentHousehold?.name || t('dashboard.defaultHomeName');
     const hasMultipleHomes = (ctx.households?.length || 0) > 1;
 
     useEffect(() => {
