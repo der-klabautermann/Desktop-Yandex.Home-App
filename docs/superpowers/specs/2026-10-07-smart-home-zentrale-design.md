@@ -16,6 +16,8 @@ Enthalten:
 - Dienste-Verwaltung („Мои сервисы") mit Anbieter-Auswahl und Anmeldung je Dienst
 - Drei Dienste: Яндекс (bestehender Code, umgezogen), Xiaomi Home, Aqara
 - Gemeinsames Dashboard über alle Dienste, Räume zusammengeführt
+- Anleitung zur Anmeldung bei jedem Dienst, direkt neben dem Anmeldeformular
+- Oberfläche in drei Sprachen: Deutsch, Englisch, Russisch
 - Lauffähig auf dem Mac
 
 Nicht enthalten (spätere Stufen):
@@ -43,7 +45,23 @@ Nicht enthalten (spätere Stufen):
 |---|---|
 | Яндекс | Wie bisher: OAuth-Token eintragen; QR-Anmeldung für Kameras bleibt. |
 | Xiaomi Home | Serverregion wählen (Европа, Россия, Китай, США, Сингапур, Индия). Knopf „Войти через Xiaomi" öffnet die offizielle Xiaomi-Login-Seite in einem App-Fenster. Nach der Anmeldung schließt sich das Fenster, die App übernimmt den Code. |
-| Aqara | Einmalig: Entwicklerschlüssel (App ID, App Key, Key ID) unter „Ключ разработчика" eintragen, mit Anleitung. Danach Serverregion, Telefon oder Mail eingeben, Aqara schickt einen Code, Code eintragen. |
+| Aqara | Einmalig: Entwicklerschlüssel (App ID, App Key, Key ID) unter „Ключ разработчика" eintragen. Danach Serverregion, Telefon oder Mail eingeben, Aqara schickt einen Code, Code eintragen. |
+
+### Anleitung zur Anmeldung
+
+- Jedes Anmeldeformular hat daneben (bei schmalem Fenster darüber, aufklappbar) eine
+  nummerierte Schritt-für-Schritt-Anleitung „Как войти" in der gewählten Sprache.
+- Inhalt je Dienst:
+  - Яндекс: Token über oauth.yandex.ru erzeugen (Rechte `iot:view`, `iot:control`), wie im
+    bisherigen README, plus QR-Anmeldung für Kameras.
+  - Xiaomi Home: welche Region das Konto hat und wo man sie in der Mi-Home-App sieht
+    (Профиль, Настройки, Регион), dann die Anmeldung.
+  - Aqara: Entwicklerkonto auf developer.aqara.com anlegen, App erstellen, Region Europa,
+    die drei Schlüssel kopieren; danach Anmeldung per Code. Die Region des Aqara-Kontos
+    sieht man in der Aqara-Home-App.
+- Typische Fehler mit Lösung am Ende jeder Anleitung (falsche Region, Code abgelaufen,
+  Schlüssel vertauscht).
+- Externe Links öffnen im normalen Browser.
 
 ### Dashboard
 
@@ -53,7 +71,19 @@ Nicht enthalten (spätere Stufen):
 - Jede Gerätekarte zeigt ein kleines Herkunftszeichen: „Я", „Mi", „Aqara".
 - „Сценарии" enthält Yandex-Szenarien und Aqara-Szenen, jeweils mit Herkunftszeichen.
 - Themes, „Автосмена“, Favoriten, Tray-Menü und der Vorssaint-Button funktionieren weiter.
-- Oberflächensprache bleibt Russisch, Anrede „Вы".
+- Anrede in Russisch „Вы", in Deutsch „Sie", in Englisch neutral.
+
+### Sprachen
+
+- Deutsch, Englisch, Russisch. Beim ersten Start gilt die Systemsprache, sonst Englisch.
+  Umschalten in einem Sprachmenü neben dem Paletten-Knopf; die Wahl wird gespeichert.
+- Alle Texte der App, auch die heute fest russischen, kommen aus Sprachdateien
+  (`src/i18n/de.ts`, `en.ts`, `ru.ts`) über eine kleine eigene Funktion `t()`, ohne
+  zusätzliche Bibliothek. Fehlt ein Text in einer Sprache, wird Englisch angezeigt.
+- Nicht übersetzt werden Namen, die aus den Diensten kommen (Geräte, Räume, Szenarien).
+- Theme-Namen werden übersetzt; die Yandex-Bezüge bleiben erkennbar (z. B. „Моя волна",
+  „My Wave", „Meine Welle").
+- Tray-Menü und Systembenachrichtigungen folgen derselben Sprache.
 
 ## Aufbau
 
@@ -148,6 +178,7 @@ Geräte oder Funktionen ohne Übersetzung erscheinen mit Name und dem Hinweis
 
 ## Tests
 
+- Sprachdateien: alle Schlüssel in allen drei Sprachen vorhanden (Test schlägt sonst fehl).
 - Übersetzer (Xiaomi zu gemeinsamem Format, Aqara zu gemeinsamem Format) mit gespeicherten
   echten Beispielantworten als Unit-Tests (vitest).
 - Aqara-Signatur gegen das Beispiel aus der offiziellen Dokumentation.
