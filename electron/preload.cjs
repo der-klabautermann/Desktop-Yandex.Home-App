@@ -3,6 +3,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+    setLanguage: (lang) => ipcRenderer.send('app:set-language', lang),
     fetchUserInfo: (token, options) => ipcRenderer.invoke('yandex-api:fetchUserInfo', token, options),
     executeScenario: (token, scenarioId) => ipcRenderer.invoke('yandex-api:executeScenario', token, scenarioId),
     toggleDevice: (token, deviceId, newState) => ipcRenderer.invoke('yandex-api:toggleDevice', token, deviceId, newState),

@@ -12,6 +12,7 @@ import '@fontsource/onest/latin-500.css';
 import '@fontsource/onest/latin-600.css';
 import './index.css';
 import App from './App';
+import { I18nProvider } from './i18n/I18nContext';
 import { debugError, debugLog, refreshDebugFlags } from './utils/debugLog';
 
 refreshDebugFlags();
@@ -33,7 +34,9 @@ if (!rootElement) {
 const root = ReactDOM.createRoot(rootElement);
 root.render(
   // <React.StrictMode>
-    <App />
+    <I18nProvider>
+      <App />
+    </I18nProvider>
   // </React.StrictMode>
 );
 

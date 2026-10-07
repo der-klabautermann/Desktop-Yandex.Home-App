@@ -6,6 +6,7 @@ export interface YandexApiRequestOptions {
 }
 
 export interface IYandexApi {
+    setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
     fetchUserInfo: (token: string, options?: YandexApiRequestOptions) => Promise<YandexUserInfoResponse>;
     fetchDevice: (token: string, deviceId: string) => Promise<YandexDevice>; 
     executeScenario: (token: string, scenarioId: string) => Promise<void>;
