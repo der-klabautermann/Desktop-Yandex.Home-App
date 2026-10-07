@@ -52,7 +52,8 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
       }
       if (result.status === 'error') {
         stopPolling();
-        setError(result.message);
+        console.warn('QR auth failed:', result.message);
+        setError(t('camera.qr.failed'));
       }
     } catch (err) {
       stopPolling();

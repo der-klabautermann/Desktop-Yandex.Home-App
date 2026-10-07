@@ -262,6 +262,7 @@ export const en = {
       privacyToggle: 'Could not change privacy mode',
     },
     qr: {
+      failed: 'QR sign-in failed. Please try again.',
       title: 'Sign in for cameras',
       description: 'Scan the QR code with the Yandex app or Yandex Key. You only need to do this once to get access to camera video.',
       alt: 'QR code for Yandex sign-in',

@@ -262,6 +262,7 @@ export const de = {
       privacyToggle: 'Der Privatsphäre-Modus konnte nicht geändert werden',
     },
     qr: {
+      failed: 'Die Anmeldung per QR-Code hat nicht geklappt. Bitte versuchen Sie es erneut.',
       title: 'Anmeldung für Kameras',
       description: 'Scannen Sie den QR-Code mit der Yandex-App oder Yandex Key. Das ist nur einmal nötig, damit Sie das Kamerabild sehen können.',
       alt: 'QR-Code für die Yandex-Anmeldung',
