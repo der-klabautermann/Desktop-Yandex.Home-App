@@ -15,6 +15,7 @@ import { SensorSettingsModal } from './modals/SensorSettingsModal';
 import { InfoModal } from './modals/InfoModal';
 import { Pencil, Power, RefreshCw, Info, LogOut, X } from 'lucide-react';
 import { ThemePicker } from './ThemePicker';
+import { LanguagePicker } from './LanguagePicker';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
@@ -268,6 +269,7 @@ export const Dashboard: React.FC = () => {
                                     <Power className="w-4 h-4" />
                                 </button>
                                 <ThemePicker />
+                                <LanguagePicker />
                                 <button
                                     onClick={ctx.onRefresh}
                                     disabled={ctx.isRefreshing}
