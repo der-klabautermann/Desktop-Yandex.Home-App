@@ -1,50 +1,99 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import {
+  ALL_TOKEN_NAMES,
+  DEFAULT_SETTINGS,
+  INTERVAL_OPTIONS,
+  PALETTES,
+  Palette,
+  ThemeSettings,
+  resolvePalette,
+} from '../themes/palettes';
 
 type Theme = 'light' | 'dark';
 
 interface ThemeContextType {
+  /** Базовая тема текущей палитры (для компонентов, которым важно светло/темно). */
   theme: Theme;
-  toggleTheme: () => void;
+  palette: Palette;
+  settings: ThemeSettings;
+  updateSettings: (patch: Partial<ThemeSettings>) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const THEME_STORAGE_KEY = 'app_theme';
+const SETTINGS_STORAGE_KEY = 'app_theme_settings';
+
+const loadSettings = (): ThemeSettings => {
+  try {
+    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    if (!raw) return DEFAULT_SETTINGS;
+    const parsed = JSON.parse(raw) as Partial<ThemeSettings>;
+    const ids = PALETTES.map(p => p.id);
+    return {
+      mode: parsed.mode === 'cycle' || parsed.mode === 'fixed' ? parsed.mode : DEFAULT_SETTINGS.mode,
+      fixed: parsed.fixed && ids.includes(parsed.fixed) ? parsed.fixed : DEFAULT_SETTINGS.fixed,
+      intervalHours: INTERVAL_OPTIONS.includes(parsed.intervalHours ?? 0) ? parsed.intervalHours! : DEFAULT_SETTINGS.intervalHours,
+      cycle: (() => {
+        const valid = Array.isArray(parsed.cycle) ? parsed.cycle.filter(id => ids.includes(id)) : [];
+        return valid.length >= 2 ? valid : DEFAULT_SETTINGS.cycle;
+      })(),
+    };
+  } catch {
+    return DEFAULT_SETTINGS;
+  }
+};
+
+/** Переносит палитру на <html>: базовая тема, класс dark для Tailwind и CSS-переменные. */
+const applyPalette = (palette: Palette) => {
+  const root = document.documentElement;
+  root.setAttribute('data-theme', palette.base);
+  root.setAttribute('data-palette', palette.id);
+  root.classList.toggle('dark', palette.base === 'dark');
+  for (const name of ALL_TOKEN_NAMES) {
+    root.style.removeProperty(name);
+  }
+  for (const [name, value] of Object.entries(palette.tokens)) {
+    root.style.setProperty(name, value);
+  }
+};
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme;
-      const initialTheme = stored === 'light' || stored === 'dark' ? stored : 'dark';
-      if (initialTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-      document.documentElement.setAttribute('data-theme', initialTheme);
-      return initialTheme;
-    }
-    return 'dark';
+  const [settings, setSettings] = useState<ThemeSettings>(loadSettings);
+  const [palette, setPalette] = useState<Palette>(() => {
+    const initial = resolvePalette(loadSettings());
+    applyPalette(initial);
+    return initial;
   });
 
+  // Пересчитываем тему при изменении настроек и раз в минуту (смена по часам)
   useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-    document.documentElement.setAttribute('data-theme', theme);
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(THEME_STORAGE_KEY, theme);
-    }
-  }, [theme]);
+    const refresh = () => {
+      const next = resolvePalette(settings);
+      setPalette(prev => (prev.id === next.id ? prev : next));
+    };
+    refresh();
+    const timer = window.setInterval(refresh, 60_000);
+    return () => window.clearInterval(timer);
+  }, [settings]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+  useEffect(() => {
+    applyPalette(palette);
+  }, [palette]);
+
+  const updateSettings = useCallback((patch: Partial<ThemeSettings>) => {
+    setSettings(prev => {
+      const next = { ...prev, ...patch };
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        // Настройки просто не сохранятся между запусками
+      }
+      return next;
+    });
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: palette.base, palette, settings, updateSettings }}>
       {children}
     </ThemeContext.Provider>
   );

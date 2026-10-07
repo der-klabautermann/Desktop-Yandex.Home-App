@@ -857,8 +857,8 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
       <div className="bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-white/10 rounded-t-2xl">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="p-2 rounded-full bg-[#176f91]/10 dark:bg-primary/20">
-              <Video className="w-5 h-5 text-[#176f91] dark:text-primary" />
+            <div className="p-2 rounded-full bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:bg-primary/20">
+              <Video className="w-5 h-5 text-[color:var(--accent)] dark:text-primary" />
             </div>
             <div className="min-w-0">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">
@@ -901,7 +901,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                 disabled={isLoading || !streamProtocol}
                 className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
                   isPictureInPicture
-                    ? 'text-[#176f91] dark:text-primary bg-[#176f91]/10 dark:bg-primary/20'
+                    ? 'text-[color:var(--accent)] dark:text-primary bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:bg-primary/20'
                     : 'text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700'
                 }`}
                 title={isPictureInPicture ? 'Закрыть окно поверх других' : 'Окно поверх других приложений'}
@@ -981,7 +981,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                       onClick={() => handleQualityChange(preset)}
                       className={`w-full px-3 py-2 text-xs text-left transition-colors ${
                         selectedQuality.label === preset.label
-                          ? 'bg-[#176f91] dark:bg-primary text-white font-semibold'
+                          ? 'bg-[color:var(--accent)] dark:bg-primary text-white font-semibold'
                           : 'text-white/80 hover:bg-white/10'
                       }`}
                     >
@@ -1030,7 +1030,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                 )}
                 <button
                   onClick={loadStream}
-                  className="px-4 py-2 rounded-lg bg-[#176f91] dark:bg-primary hover:bg-[#145a72] dark:hover:bg-primary-hover text-white text-sm font-medium"
+                  className="px-4 py-2 rounded-lg bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white text-sm font-medium"
                 >
                   Повторить
                 </button>

@@ -341,13 +341,13 @@ export const SensorSettingsModal: React.FC<SensorSettingsModalProps> = ({
           <button
             onClick={handleSave}
             disabled={!isValid}
-            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-[#176f91] dark:border-primary text-[#176f91] dark:text-primary hover:bg-[#176f91]/10 dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-[color:var(--accent)] dark:border-primary text-[color:var(--accent)] dark:text-primary hover:bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Сохранить
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-[#176f91] dark:bg-primary hover:bg-[#145a72] dark:hover:bg-primary-hover text-white"
+            className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white"
           >
             Закрыть
           </button>

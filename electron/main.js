@@ -486,8 +486,14 @@ if (!gotTheLock) {
         });
 
         ipcMain.handle('secure:getToken', async () => {
-            // Читает токен из системного хранилища
-            return await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
+            // Читает токен из системного хранилища.
+            // Если доступ к связке ключей запрещён, показываем ввод токена вместо вечной загрузки.
+            try {
+                return await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
+            } catch (error) {
+                console.error('Keychain read failed:', error);
+                return null;
+            }
         });
 
         ipcMain.handle('secure:setToken', async (event, token) => {
@@ -569,6 +575,10 @@ if (!gotTheLock) {
     app.on('activate', () => {
         if (BrowserWindow.getAllWindows().length === 0) {
             createWindow();
+        } else if (mainWindow && !mainWindow.isDestroyed()) {
+            // Окно скрыто через трей: показываем его при повторном открытии приложения
+            mainWindow.show();
+            mainWindow.focus();
         }
     });
 }

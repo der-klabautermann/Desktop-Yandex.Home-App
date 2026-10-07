@@ -87,7 +87,7 @@ export const UpdateNotificationModal: React.FC<UpdateNotificationModalProps> = (
             href={releaseUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#176f91] dark:bg-primary hover:bg-[#145a72] dark:hover:bg-primary-hover text-white rounded-lg transition-colors font-medium text-sm"
+            className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white rounded-lg transition-colors font-medium text-sm"
           >
             <Download className="w-4 h-4" />
             Скачать

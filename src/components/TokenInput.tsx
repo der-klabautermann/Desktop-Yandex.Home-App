@@ -25,7 +25,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
 
       <div className="w-full max-w-md p-8 bg-white/80 dark:bg-surface backdrop-blur-xl border border-gray-200 dark:border-border rounded-2xl shadow-2xl z-10">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#176f91] to-[#20aac4] dark:bg-gradient-to-br dark:from-[#ea8411] dark:to-[#ea8411]/70 rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-[#176f91]/15 dark:shadow-[#ea8411]/20">
+          <div className="w-16 h-16 bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent)] dark:bg-gradient-to-br dark:from-[color:var(--accent)] dark:to-[color:color-mix(in_oklab,var(--accent)_70%,transparent)] rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-[color:color-mix(in_oklab,var(--accent)_15%,transparent)] dark:shadow-[color:color-mix(in_oklab,var(--accent)_20%,transparent)]">
             <KeyRound className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-card-fg mb-2">Добро пожаловать</h1>
@@ -41,7 +41,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
               value={token}
               onChange={(e) => setToken(e.target.value)}
               placeholder="y0_AgAAAA..."
-              className="w-full bg-gray-100 dark:bg-surface-warm border border-gray-300 dark:border-border text-slate-900 dark:text-card-fg placeholder-gray-400 dark:placeholder-muted rounded-xl px-4 py-3 outline-none focus:border-[#176f91] dark:focus:border-primary focus:ring-1 focus:ring-[#176f91]/30 dark:focus:ring-primary/30 transition-all duration-200"
+              className="w-full bg-gray-100 dark:bg-surface-warm border border-gray-300 dark:border-border text-slate-900 dark:text-card-fg placeholder-gray-400 dark:placeholder-muted rounded-xl px-4 py-3 outline-none focus:border-[color:var(--accent)] dark:focus:border-primary focus:ring-1 focus:ring-[color:color-mix(in_oklab,var(--accent)_30%,transparent)] dark:focus:ring-primary/30 transition-all duration-200"
               required
             />
             <ShieldCheck className="absolute right-3 top-3.5 w-5 h-5 text-gray-400 dark:text-muted" />
@@ -56,7 +56,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
           <button
             type="submit"
             disabled={isLoading || !token}
-            className="w-full bg-[#176f91] hover:bg-[#145a72] dark:bg-[#ea8411] dark:hover:bg-[#d6750f] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 group shadow-md shadow-[#176f91]/15 dark:shadow-[#ea8411]/20"
+            className="w-full bg-[color:var(--accent)] hover:bg-[color:var(--accent-hover)] dark:bg-[color:var(--accent)] dark:hover:bg-[color:var(--accent-hover)] disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 group shadow-md shadow-[color:color-mix(in_oklab,var(--accent)_15%,transparent)] dark:shadow-[color:color-mix(in_oklab,var(--accent)_20%,transparent)]"
           >
             {isLoading ? (
               <span className="w-5 h-5 border-2 border-gray-400 dark:border-white/30 border-t-gray-600 dark:border-t-white rounded-full animate-spin"></span>
@@ -74,7 +74,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
             href="https://github.com/onegamerstory/Desktop-Yandex.Home-App/blob/main/README.md" 
             target="_blank" 
             rel="noopener noreferrer"
-            className="text-xs text-slate-600 dark:text-muted hover:text-[#176f91] dark:hover:text-primary transition-colors"
+            className="text-xs text-slate-600 dark:text-muted hover:text-[color:var(--accent)] dark:hover:text-primary transition-colors"
           >
             Где взять токен?
           </a>

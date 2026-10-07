@@ -271,7 +271,7 @@ function App() {
             <ThemeProvider>
                 <div className="min-h-screen flex items-center justify-center bg-transparent">
                     <div className="flex flex-col items-center gap-6">
-                        <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div className="w-12 h-12 border-4 border-[color:var(--accent)] border-t-transparent rounded-full animate-spin"></div>
                         <p className="text-white/70 animate-pulse">
                             {retryInfo ? retryInfo.message : 'Загрузка данных...'}
                         </p>

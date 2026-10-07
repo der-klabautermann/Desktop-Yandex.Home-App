@@ -13,8 +13,8 @@ import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
 import { InfoModal } from './modals/InfoModal';
-import { Pencil, Power, Sun, Moon, RefreshCw, Info, LogOut, X } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
+import { Pencil, Power, RefreshCw, Info, LogOut, X } from 'lucide-react';
+import { ThemePicker } from './ThemePicker';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
@@ -24,7 +24,6 @@ const DEFAULT_HOME_NAME = 'Мой Дом';
 
 export const Dashboard: React.FC = () => {
     const ctx = useDashboardContext();
-    const { theme, toggleTheme } = useTheme();
 
     const state = useDashboardState(
         ctx.activeHouseholdId,
@@ -268,13 +267,7 @@ export const Dashboard: React.FC = () => {
                                 >
                                     <Power className="w-4 h-4" />
                                 </button>
-                                <button
-                                    onClick={toggleTheme}
-                                    className="header-btn"
-                                    title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
-                                >
-                                    {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-                                </button>
+                                <ThemePicker />
                                 <button
                                     onClick={ctx.onRefresh}
                                     disabled={ctx.isRefreshing}

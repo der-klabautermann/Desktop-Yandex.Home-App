@@ -1,5 +1,15 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@fontsource/unbounded/cyrillic-400.css';
+import '@fontsource/unbounded/cyrillic-500.css';
+import '@fontsource/unbounded/latin-400.css';
+import '@fontsource/unbounded/latin-500.css';
+import '@fontsource/onest/cyrillic-400.css';
+import '@fontsource/onest/cyrillic-500.css';
+import '@fontsource/onest/cyrillic-600.css';
+import '@fontsource/onest/latin-400.css';
+import '@fontsource/onest/latin-500.css';
+import '@fontsource/onest/latin-600.css';
 import './index.css';
 import App from './App';
 import { debugError, debugLog, refreshDebugFlags } from './utils/debugLog';
