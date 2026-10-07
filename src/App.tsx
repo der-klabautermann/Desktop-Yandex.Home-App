@@ -15,12 +15,14 @@ import { useNotification, useAuth, useFavorites, useNavigation, useUpdateNotific
          useCameraAuth, useYandexData, useDeviceActions, useHousehold, useAutostart } from './hooks';
 import packageJson from '../package.json';
 import { debugLog, debugWarn, refreshDebugFlags } from './utils/debugLog';
+import { useI18n } from './i18n/I18nContext';
 
 const yandexApi = window.api;
 
 function App() {
     // --- Хуки (порядок важен для зависимостей) ---
     // 1. Нет зависимостей
+    const { t } = useI18n();
     const { notification, showNotification, clearNotification } = useNotification();
     const { token, setToken, appState, setAppState, errorMsg, retryInfo, setErrorMsg } = useAuth();
     const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite, isFavorite } = useFavorites();
@@ -73,14 +75,14 @@ function App() {
             debugLog('app', 'handleLoadData ok', { devices: sortedData.devices?.length });
         } catch (err) {
             debugWarn('app', 'handleLoadData failed', err);
-            setErrorMsg(cleanErrorMessage(err));
+            setErrorMsg(cleanErrorMessage(err, t));
             setAppState(AppState.AUTH);
             if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
                 await yandexApi.deleteSecureToken();
                 setToken(null);
             }
         }
-    }, [setUserData, setAppState, setErrorMsg, setToken, promptXTokenIfNeeded]);
+    }, [setUserData, setAppState, setErrorMsg, setToken, promptXTokenIfNeeded, t]);
 
     const handleLoadDataRef = React.useRef(handleLoadData);
     useEffect(() => {
@@ -173,7 +175,7 @@ function App() {
                 let sensorValue: string | null = null;
                 if ((isSensorOrMeter && !isToggleable) || isClimateDevice) {
                     const deviceConfig = sensorDisplayConfig[device.id] ?? null;
-                    sensorValue = formatSensorValueForTray(device, deviceConfig);
+                    sensorValue = formatSensorValueForTray(device, deviceConfig, t);
                 }
 
                 return {
@@ -227,7 +229,7 @@ function App() {
             }));
 
         return [...favDeviceItems, ...favGroupItems, ...favScenarioItems];
-    }, []);
+    }, [t]);
 
     // --- 3. Tray-эффект (отправка избранного в трей) ---
     useEffect(() => {
@@ -273,19 +275,19 @@ function App() {
                     <div className="flex flex-col items-center gap-6">
                         <div className="w-12 h-12 border-4 border-[color:var(--accent)] border-t-transparent rounded-full animate-spin"></div>
                         <p className="text-white/70 animate-pulse">
-                            {retryInfo ? retryInfo.message : 'Загрузка данных...'}
+                            {retryInfo ? t('app.retrying', { attempt: retryInfo.attempt, max: retryInfo.maxAttempts }) : t('app.loading')}
                         </p>
                         {retryInfo && (
                             <>
                                 <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
-                                    Нет соединения. Приложение пытается подключиться...<br/>
-                                    Попытка {retryInfo.attempt} из {retryInfo.maxAttempts}
+                                    {t('app.noConnection')}<br/>
+                                    {t('app.attempt', { attempt: retryInfo.attempt, max: retryInfo.maxAttempts })}
                                 </p>
                                 <button
                                     onClick={handleCancelRetry}
                                     className="px-6 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white rounded-lg transition-colors font-medium text-sm"
                                 >
-                                    Отменить
+                                    {t('common.cancel')}
                                 </button>
                             </>
                         )}

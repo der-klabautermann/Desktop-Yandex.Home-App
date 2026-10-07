@@ -1,3 +1,4 @@
+import type React from 'react';
 import { useState, useEffect } from 'react';
 import { compareVersions } from '../utils/dataUtils';
 import { getCheckUpdatesOnStartup } from '../utils/updateSettings';

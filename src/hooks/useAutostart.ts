@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useI18n } from '../i18n/I18nContext';
 
 const yandexApi = window.api;
 
@@ -10,6 +11,7 @@ interface UseAutostartReturn {
 export function useAutostart(
     showNotification: (message: string, type?: 'error' | 'success') => void
 ): UseAutostartReturn {
+    const { t } = useI18n();
     const [isAutostartEnabled, setIsAutostartEnabled] = useState<boolean>(false);
     const autostartStateRef = useRef(isAutostartEnabled);
 
@@ -29,15 +31,15 @@ export function useAutostart(
             setIsAutostartEnabled(newState);
             showNotification(
                 newState
-                    ? 'Автозапуск включен. Приложение будет запускаться вместе с системой.'
-                    : 'Автозапуск выключен. Приложение будет запускаться только вручную.',
+                    ? t('auth.autostartOn')
+                    : t('auth.autostartOff'),
                 'success'
             );
         } catch (error) {
             console.error('Ошибка при изменении автозапуска:', error);
-            showNotification('Не удалось изменить настройки автозапуска', 'error');
+            showNotification(t('auth.autostartFailed'), 'error');
         }
-    }, [showNotification]);
+    }, [showNotification, t]);
 
     return { isAutostartEnabled, handleToggleAutostart };
 }

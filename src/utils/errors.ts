@@ -1,20 +1,35 @@
-/**
- * Очищает сообщение об ошибке от технических префиксов Electron IPC,
- * оставляя только человеческий текст на русском языке.
- */
-export function cleanErrorMessage(error: unknown): string {
-    if (!(error instanceof Error)) return 'Произошла неизвестная ошибка';
+import type { Translate } from '../i18n/core';
 
-    let message = error.message;
+/**
+ * Превращает ошибку из главного процесса в понятный текст на выбранном языке.
+ * Главный процесс сообщает стабильные коды: ERR_AUTH, ERR_NETWORK, ERR_HTTP <status>,
+ * ERR_DEVICE <код Яндекса>, ERR_GROUP_EMPTY, X_TOKEN_REQUIRED.
+ */
+const CODE_KEYS: Record<string, string> = {
+    ERR_AUTH: 'errors.auth',
+    ERR_NETWORK: 'errors.network',
+    ERR_GROUP_EMPTY: 'errors.groupEmpty',
+    X_TOKEN_REQUIRED: 'errors.xTokenRequired',
+    CAM_PRIVACY_TOGGLE: 'camera.errors.privacyToggle',
+};
+
+export function cleanErrorMessage(error: unknown, t: Translate): string {
+    if (!(error instanceof Error)) return t('errors.unknown');
 
     // Убираем префикс Electron IPC вида:
     // Error invoking remote method 'yandex-api:fetchUserInfo': Error: ...
-    message = message.replace(/^Error invoking remote method\s+'[^']+':\s*Error:\s*/i, '');
+    const message = error.message.replace(/^Error invoking remote method\s+'[^']+':\s*Error:\s*/i, '').trim();
 
-    // Если после очистки остался HTTP статус код — заменяем
-    if (/^\d{3}\s/.test(message) || /error_code/i.test(message)) {
-        return 'Произошла ошибка при выполнении запроса. Попробуйте позже.';
+    if (message in CODE_KEYS) return t(CODE_KEYS[message]);
+
+    const device = /^ERR_DEVICE\s*(.*)$/.exec(message);
+    if (device) {
+        if (/UNREACHABLE|OFFLINE/i.test(device[1])) return t('errors.deviceUnreachable');
+        return t('errors.device', { detail: device[1] || '?' });
     }
 
+    if (/^ERR_HTTP\b/.test(message) || /^\d{3}\s/.test(message) || /error_code/i.test(message)) {
+        return t('errors.request');
+    }
     return message;
 }

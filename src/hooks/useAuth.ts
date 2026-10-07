@@ -1,8 +1,10 @@
+import type React from 'react';
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { fetchUserInfo } from '../services/yandexIoT';
 import { AppState, YandexUserInfoResponse } from '../types/index';
 import { stableSortData } from '../utils/dataUtils';
 import { cleanErrorMessage } from '../utils/errors';
+import { useI18n } from '../i18n/I18nContext';
 
 const yandexApi = window.api;
 
@@ -29,6 +31,7 @@ interface UseAuthReturn {
 }
 
 export function useAuth(): UseAuthReturn {
+    const { t } = useI18n();
     const [token, setToken] = useState<string | null>(null);
     const [appState, setAppState] = useState<AppState>(AppState.LOADING);
     const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
@@ -52,7 +55,7 @@ export function useAuth(): UseAuthReturn {
             setRetryInfo(null);
             // promptXTokenIfNeeded будет вызываться из useYandexData
         } catch (err: unknown) {
-            setErrorMsg(cleanErrorMessage(err));
+            setErrorMsg(cleanErrorMessage(err, t));
             setAppState(AppState.AUTH);
             if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
                 await yandexApi.deleteSecureToken();
@@ -75,7 +78,7 @@ export function useAuth(): UseAuthReturn {
         setUserData(null);
         setRetryInfo(null);
         setAppState(AppState.AUTH);
-        setErrorMsg('Подключение отменено. Пожалуйста, авторизуйтесь снова.');
+        setErrorMsg(t('auth.cancelled'));
     }, []);
 
     const handleTokenSubmit = useCallback(async (newToken: string) => {

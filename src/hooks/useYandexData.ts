@@ -1,7 +1,9 @@
+import type React from 'react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { fetchUserInfo } from '../services/yandexIoT';
 import { YandexUserInfoResponse, AppState } from '../types/index';
 import { hasDeviceStateChanges, stableSortData } from '../utils/dataUtils';
+import { useI18n } from '../i18n/I18nContext';
 
 const yandexApi = window.api;
 
@@ -21,6 +23,7 @@ export function useYandexData(
     setToken: React.Dispatch<React.SetStateAction<string | null>>,
     promptXTokenIfNeeded: (data: YandexUserInfoResponse) => Promise<void>
 ): UseYandexDataReturn {
+    const { t } = useI18n();
     const [userData, setUserData] = useState<YandexUserInfoResponse | null>(null);
     const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -40,7 +43,7 @@ export function useYandexData(
             setUserData(sortedData);
 
             if (!silent) {
-                showNotification('Данные успешно обновлены.', 'success');
+                showNotification(t('auth.refreshed'), 'success');
             } else if (hasChanges) {
                 console.log('Device states synchronized from external changes');
             }
@@ -50,9 +53,9 @@ export function useYandexData(
                 setToken(null);
                 setUserData(null);
                 setAppState(AppState.AUTH);
-                showNotification('Сессия истекла. Пожалуйста, введите токен заново.', 'error');
+                showNotification(t('auth.sessionExpired'), 'error');
             } else if (!silent) {
-                showNotification('Ошибка обновления данных.', 'error');
+                showNotification(t('auth.refreshFailed'), 'error');
             } else {
                 console.error('Silent sync error:', err);
             }
@@ -61,7 +64,7 @@ export function useYandexData(
                 setIsRefreshing(false);
             }
         }
-    }, [showNotification, setToken, setAppState]);
+    }, [showNotification, setToken, setAppState, t]);
 
     return { userData, isRefreshing, refreshDashboardData, userDataRef, setUserData };
 }

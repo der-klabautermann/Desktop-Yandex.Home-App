@@ -23,7 +23,7 @@ const isNetworkError = (error) => {
            error.code === 'ETIMEDOUT' ||
            error.message?.includes('fetch failed') ||
            error.message?.includes('network error') ||
-           error.message?.includes('Ошибка сети');
+           error.message === 'ERR_NETWORK';
 };
 
 // Вспомогательная функция для обработки ошибок
@@ -31,7 +31,7 @@ const handleFetchError = (error) => {
     // В Main Process нет CORS, так что ошибка "Failed to fetch"
     // будет означать реальную проблему с сетью (офлайн, DNS, firewall).
     if (isNetworkError(error)) {
-        throw new Error('Ошибка сети. Проверьте подключение.');
+        throw new Error('ERR_NETWORK');
     }
     throw error;
 };
@@ -47,7 +47,7 @@ const withRetry = async (asyncFn, onRetryAttempt = null) => {
             lastError = error;
             
             // Если это ошибка авторизации или x-token, не повторяем попытку
-            if (error.message?.includes('авторизац') || 
+            if (error.message === 'ERR_AUTH' || 
                 error.message?.includes('Quasar auth') ||
                 error.message?.includes('x-token') ||
                 error.message?.includes('X_TOKEN_REQUIRED') ||
@@ -94,9 +94,9 @@ const fetchUserInfoOnce = async (token) => {
 
     if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-            throw new Error('Ошибка авторизации. Проверьте ваш токен.');
+            throw new Error('ERR_AUTH');
         }
-        throw new Error(`Ошибка загрузки данных: ${response.status} ${response.statusText}`);
+        throw new Error(`ERR_HTTP ${response.status}`);
     }
 
     return await response.json();
@@ -123,9 +123,9 @@ export const fetchDevice = async (token, deviceId, onRetryAttempt = null) => {
 
         if (!response.ok) {
             if (response.status === 401 || response.status === 403) {
-                throw new Error('Ошибка авторизации. Проверьте ваш токен.');
+                throw new Error('ERR_AUTH');
             }
-            throw new Error(`Не удалось получить устройство ${deviceId}: ${response.status} ${response.statusText}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
 
         return await response.json();
@@ -144,7 +144,7 @@ export const executeScenario = async (token, scenarioId, onRetryAttempt = null) 
         });
 
         if (!response.ok) {
-            throw new Error(`Не удалось запустить сценарий: ${response.status}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
     }, onRetryAttempt);
 };
@@ -179,13 +179,13 @@ export const toggleDevice = async (token, deviceId, newState, onRetryAttempt = n
         });
 
         if (!response.ok) {
-            throw new Error(`Не удалось изменить состояние устройства: ${response.status}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
         
         const data = await response.json();
         const deviceResult = data.devices?.find((d) => d.id === deviceId);
         if (deviceResult && 'error_code' in deviceResult) {
-            throw new Error(`Ошибка устройства: ${deviceResult.error_message || deviceResult.error_code}`);
+            throw new Error(`ERR_DEVICE ${deviceResult.error_code || deviceResult.error_message}`);
         }
     }, onRetryAttempt);
 };
@@ -259,13 +259,13 @@ export const setDeviceMode = async (token, deviceId, modeActions, turnOn = false
         });
 
         if (!response.ok) {
-            throw new Error(`Не удалось изменить режим устройства: ${response.status}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
         
         const data = await response.json();
         const deviceResult = data.devices?.find((d) => d.id === deviceId);
         if (deviceResult && 'error_code' in deviceResult) {
-            throw new Error(`Ошибка устройства: ${deviceResult.error_message || deviceResult.error_code}`);
+            throw new Error(`ERR_DEVICE ${deviceResult.error_code || deviceResult.error_message}`);
         }
     }, onRetryAttempt);
 };
@@ -273,7 +273,7 @@ export const setDeviceMode = async (token, deviceId, modeActions, turnOn = false
 // 5. Управление группой устройств (включение/выключение всех устройств в группе)
 export const toggleGroup = async (token, groupId, deviceIds, newState, onRetryAttempt = null) => {
     if (!deviceIds || deviceIds.length === 0) {
-        throw new Error(`В группе нет устройств`);
+        throw new Error('ERR_GROUP_EMPTY');
     }
 
     const devices = deviceIds.map(id => ({
@@ -302,14 +302,14 @@ export const toggleGroup = async (token, groupId, deviceIds, newState, onRetryAt
         });
 
         if (!response.ok) {
-            throw new Error(`Не удалось переключить группу: ${response.status}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
 
         const data = await response.json();
         const errors = (data.devices || []).filter(d => 'error_code' in d);
         if (errors.length > 0) {
             const firstError = errors[0];
-            throw new Error(`Ошибка устройства: ${firstError.error_message || firstError.error_code}`);
+            throw new Error(`ERR_DEVICE ${firstError.error_code || firstError.error_message}`);
         }
     }, onRetryAttempt);
 };
@@ -343,13 +343,13 @@ const sendIotDeviceAction = async (token, deviceId, action, onRetryAttempt = nul
         });
 
         if (!response.ok) {
-            throw new Error(`Не удалось изменить параметр устройства: ${response.status}`);
+            throw new Error(`ERR_HTTP ${response.status}`);
         }
 
         const data = await response.json();
         const deviceResult = data.devices?.find((d) => d.id === deviceId);
         if (deviceResult && 'error_code' in deviceResult) {
-            throw new Error(deviceResult.error_message || deviceResult.error_code);
+            throw new Error(`ERR_DEVICE ${deviceResult.error_code || deviceResult.error_message}`);
         }
     }, onRetryAttempt);
 };
@@ -402,5 +402,5 @@ export const setCameraPrivacyMode = async (
         }
     }
 
-    throw lastError ?? new Error('Не удалось изменить режим приватности');
+    throw lastError ?? new Error('CAM_PRIVACY_TOGGLE');
 };

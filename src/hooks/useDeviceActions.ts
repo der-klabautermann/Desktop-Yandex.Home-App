@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { toggleDevice, toggleGroup, executeScenario, setDeviceMode, getCameraStream, setCameraPrivacyMode } from '../services/yandexIoT';
 import { YandexUserInfoResponse, YandexModeAction, CameraStreamResult } from '../types/index';
 import { cleanErrorMessage } from '../utils/errors';
+import { useI18n } from '../i18n/I18nContext';
 
 interface UseDeviceActionsReturn {
     handleToggleDevice: (deviceId: string, currentState: boolean) => Promise<void>;
@@ -19,6 +20,7 @@ export function useDeviceActions(
     refreshDashboardData: (apiToken: string, silent?: boolean) => Promise<void>,
     requestXTokenAuth: () => Promise<boolean>
 ): UseDeviceActionsReturn {
+    const { t } = useI18n();
     const handleToggleDevice = useCallback(async (deviceId: string, currentState: boolean) => {
         if (!token || !userData) return;
         const newState = !currentState;
@@ -28,10 +30,10 @@ export function useDeviceActions(
             // Пока оставим refreshDashboardData
             refreshDashboardData(token);
         } catch (err) {
-            showNotification(`Ошибка: ${cleanErrorMessage(err)}`, 'error');
+            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
             throw err;
         }
-    }, [token, userData, refreshDashboardData, showNotification]);
+    }, [token, userData, refreshDashboardData, showNotification, t]);
 
     const handleToggleGroup = useCallback(async (groupId: string, currentState: boolean) => {
         if (!token || !userData) return;
@@ -41,36 +43,36 @@ export function useDeviceActions(
         try {
             await toggleGroup(token, groupId, deviceIds, newState);
             refreshDashboardData(token);
-            showNotification('Группа успешно переключена', 'success');
+            showNotification(t('actions.groupToggled'), 'success');
         } catch (err) {
-            showNotification(`Ошибка: ${cleanErrorMessage(err)}`, 'error');
+            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
             throw err;
         }
-    }, [token, userData, refreshDashboardData, showNotification]);
+    }, [token, userData, refreshDashboardData, showNotification, t]);
 
     const handleExecuteScenario = useCallback(async (scenarioId: string) => {
         if (!token) return;
         try {
             await executeScenario(token, scenarioId);
-            showNotification('Сценарий успешно запущен', 'success');
+            showNotification(t('actions.scenarioStarted'), 'success');
             refreshDashboardData(token);
         } catch (err) {
-            showNotification(`Ошибка: ${cleanErrorMessage(err)}`, 'error');
+            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
             throw err;
         }
-    }, [token, refreshDashboardData, showNotification]);
+    }, [token, refreshDashboardData, showNotification, t]);
 
     const handleSetDeviceMode = useCallback(async (deviceId: string, modeActions: YandexModeAction[], turnOn: boolean = false) => {
         if (!token) return;
         try {
             await setDeviceMode(token, deviceId, modeActions, turnOn);
-            showNotification('Настройки успешно применены', 'success');
+            showNotification(t('actions.settingsApplied'), 'success');
             refreshDashboardData(token);
         } catch (err) {
-            showNotification(`Ошибка: ${cleanErrorMessage(err)}`, 'error');
+            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
             throw err;
         }
-    }, [token, refreshDashboardData, showNotification]);
+    }, [token, refreshDashboardData, showNotification, t]);
 
     const handleGetCameraStream = useCallback(async (deviceId: string) => {
         const isXTokenError = (message: string) =>
@@ -86,7 +88,7 @@ export function useDeviceActions(
                 if (authenticated) {
                     return getCameraStream(deviceId);
                 }
-                throw new Error('Требуется вход по QR для просмотра камер');
+                throw new Error('X_TOKEN_REQUIRED');
             }
             throw err;
         }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { KeyRound, ArrowRight, ShieldCheck } from 'lucide-react';
+import { useI18n } from '../i18n/I18nContext';
 
 interface TokenInputProps {
   onTokenSubmit: (token: string) => void;
@@ -9,6 +10,7 @@ interface TokenInputProps {
 
 export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading, error }) => {
   const [token, setToken] = useState('');
+  const { t } = useI18n();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +30,9 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
           <div className="w-16 h-16 bg-gradient-to-br from-[color:var(--accent)] to-[color:var(--accent)] dark:bg-gradient-to-br dark:from-[color:var(--accent)] dark:to-[color:color-mix(in_oklab,var(--accent)_70%,transparent)] rounded-2xl flex items-center justify-center mb-4 shadow-md shadow-[color:color-mix(in_oklab,var(--accent)_15%,transparent)] dark:shadow-[color:color-mix(in_oklab,var(--accent)_20%,transparent)]">
             <KeyRound className="w-8 h-8 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-card-fg mb-2">Добро пожаловать</h1>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-card-fg mb-2">{t('auth.welcome')}</h1>
           <p className="text-slate-600 dark:text-muted text-center text-sm">
-            Введите ваш OAuth токен Яндекс Умного Дома для продолжения
+            {t('auth.enterToken')}
           </p>
         </div>
 
@@ -62,7 +64,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
               <span className="w-5 h-5 border-2 border-gray-400 dark:border-white/30 border-t-gray-600 dark:border-t-white rounded-full animate-spin"></span>
             ) : (
               <>
-                Войти
+                {t('auth.signIn')}
                 <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -76,7 +78,7 @@ export const TokenInput: React.FC<TokenInputProps> = ({ onTokenSubmit, isLoading
             rel="noopener noreferrer"
             className="text-xs text-slate-600 dark:text-muted hover:text-[color:var(--accent)] dark:hover:text-primary transition-colors"
           >
-            Где взять токен?
+            {t('auth.whereToken')}
           </a>
         </div>
       </div>

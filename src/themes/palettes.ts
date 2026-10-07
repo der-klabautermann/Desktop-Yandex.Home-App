@@ -5,8 +5,6 @@ export type PaletteId = 'volna' | 'alisa' | 'muzyka' | 'dom' | 'gorod' | 'plus' 
 
 export interface Palette {
     id: PaletteId;
-    name: string;
-    mood: string;
     base: 'light' | 'dark';
     /** Цвета для превью в выборе темы: фон, два цвета свечения, "горящее" устройство. */
     swatch: [string, string, string, string];
@@ -73,8 +71,6 @@ const build = (spec: PaletteSpec): Record<string, string> => {
 export const PALETTES: Palette[] = [
     {
         id: 'volna',
-        name: 'Моя волна',
-        mood: 'Чёрный фон и цветные переливы',
         base: 'dark',
         swatch: ['#09090D', '#FF3DA5', '#3D7BFF', '#F7F3FF'],
         tokens: build({
@@ -88,8 +84,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'alisa',
-        name: 'Алиса',
-        mood: 'Глубокий фиолетовый и синее сияние',
         base: 'dark',
         swatch: ['#0D0A22', '#8B5CFF', '#3E8BFF', '#EEE8FF'],
         tokens: build({
@@ -103,8 +97,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'muzyka',
-        name: 'Музыка',
-        mood: 'Чёрный фон и фирменный жёлтый',
         base: 'dark',
         swatch: ['#111111', '#FFDB4D', '#5B5B5B', '#FFF7D1'],
         tokens: build({
@@ -118,8 +110,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'dom',
-        name: 'Дом',
-        mood: 'Светлая лаванда, как в «Доме с Алисой»',
         base: 'light',
         swatch: ['#F3F1FB', '#6E4BFF', '#B7A6FF', '#22184A'],
         tokens: build({
@@ -133,8 +123,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'gorod',
-        name: 'Ночной город',
-        mood: 'Тёмно-синий, как ночные Карты',
         base: 'dark',
         swatch: ['#121A2B', '#4D8DFF', '#2EC28B', '#E8F0FF'],
         tokens: build({
@@ -148,8 +136,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'plus',
-        name: 'Плюс',
-        mood: 'Розово-фиолетовый градиент',
         base: 'light',
         swatch: ['#FBF2F8', '#EB469F', '#8341EF', '#2A1238'],
         tokens: build({
@@ -163,8 +149,6 @@ export const PALETTES: Palette[] = [
     },
     {
         id: 'biryuza',
-        name: 'Бирюза',
-        mood: 'Свежий бирюзовый, как в Яндекс Браузере',
         base: 'light',
         swatch: ['#EEF8F7', '#00A3A3', '#5CC8FF', '#0D2B2E'],
         tokens: build({

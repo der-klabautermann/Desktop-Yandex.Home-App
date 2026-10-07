@@ -278,9 +278,9 @@ export const connectYandexGoloomWebRtc = async (
     const slotsConfigPromise = new Promise<string>(resolve => { slotsConfigResolve = resolve; });
 
     // Timers cleared on cleanup
-    let keepaliveIntervalId: ReturnType<typeof setInterval> | null = null;
-    let jwtRefreshTimerId: ReturnType<typeof setTimeout> | null = null;
-    let upgradeTimerId: ReturnType<typeof setTimeout> | null = null;
+    let keepaliveIntervalId: number | null = null;
+    let jwtRefreshTimerId: number | null = null;
+    let upgradeTimerId: number | null = null;
 
     const doCleanup = (ws: WebSocket, pc: RTCPeerConnection, unexpected = false, keepVideo = false) => {
         if (closed) return;

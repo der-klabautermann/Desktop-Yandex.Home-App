@@ -56,9 +56,9 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
       }
     } catch (err) {
       stopPolling();
-      setError(cleanErrorMessage(err));
+      setError(cleanErrorMessage(err, t));
     }
-  }, [onSuccess, stopPolling]);
+  }, [onSuccess, stopPolling, t]);
 
   const startAuth = useCallback(async () => {
     stopPolling();
@@ -78,11 +78,11 @@ export const QrAuthModal: React.FC<QrAuthModalProps> = ({
       }, POLL_INTERVAL_MS);
       pollOnce();
     } catch (err) {
-      setError(cleanErrorMessage(err));
+      setError(cleanErrorMessage(err, t));
     } finally {
       setIsStarting(false);
     }
-  }, [pollOnce, stopPolling]);
+  }, [pollOnce, stopPolling, t]);
 
   useEffect(() => {
     if (!isOpen) {
