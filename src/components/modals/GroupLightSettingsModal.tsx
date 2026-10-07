@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { YandexGroup, YandexDevice, YandexCapability } from '../../types/index';
 import { X, Lightbulb, Palette, Thermometer } from 'lucide-react';
 import { hsvToRgb } from '../../utils/colorConverter';
+import { useI18n } from '../../i18n/I18nContext';
 
 interface GroupLightSettingsModalProps {
   group: YandexGroup;
@@ -29,6 +30,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
   onClose,
   onApply,
 }) => {
+  const { t, tp } = useI18n();
   const [brightness, setBrightness] = useState<number | null>(null);
   const [brightnessRange, setBrightnessRange] = useState<{ min: number; max: number; precision: number } | null>(null);
   const [temperature_k, setTemperature_k] = useState<number | null>(null);
@@ -63,33 +65,33 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
 
   // Предопределенные цвета для выбора
   const colorOptions: ColorOption[] = [
-    { name: 'Красный', hsv: { h: 0, s: 100, v: 100 }, hex: '#FF0000' },
-    { name: 'Розовый', hsv: { h: 330, s: 100, v: 100 }, hex: '#FF69B4' },
-    { name: 'Малиновый', hsv: { h: 345, s: 100, v: 100 }, hex: '#C71585' },
-    { name: 'Бордовый', hsv: { h: 350, s: 100, v: 70 }, hex: '#800000' },
-    { name: 'Алый', hsv: { h: 0, s: 100, v: 85 }, hex: '#DC143C' },
-    { name: 'Оранжевый', hsv: { h: 30, s: 100, v: 100 }, hex: '#FFA500' },
-    { name: 'Коралл', hsv: { h: 16, s: 100, v: 100 }, hex: '#FF7F50' },
-    { name: 'Золотой', hsv: { h: 45, s: 100, v: 100 }, hex: '#FFD700' },
-    { name: 'Желтый', hsv: { h: 60, s: 100, v: 100 }, hex: '#FFFF00' },
-    { name: 'Лимонный', hsv: { h: 75, s: 100, v: 100 }, hex: '#CDDC39' },
-    { name: 'Лайм', hsv: { h: 90, s: 100, v: 100 }, hex: '#00FF00' },
-    { name: 'Зеленый', hsv: { h: 120, s: 100, v: 100 }, hex: '#00FF00' },
-    { name: 'Хвоя', hsv: { h: 120, s: 100, v: 70 }, hex: '#228B22' },
-    { name: 'Морской', hsv: { h: 150, s: 100, v: 100 }, hex: '#20B2AA' },
-    { name: 'Бирюзовый', hsv: { h: 160, s: 100, v: 100 }, hex: '#40E0D0' },
-    { name: 'Голубой', hsv: { h: 180, s: 100, v: 100 }, hex: '#00FFFF' },
-    { name: 'Аквамарин', hsv: { h: 160, s: 50, v: 100 }, hex: '#7FFFD4' },
-    { name: 'Стальной', hsv: { h: 180, s: 25, v: 100 }, hex: '#B0E0E6' },
-    { name: 'Синий', hsv: { h: 240, s: 100, v: 100 }, hex: '#0000FF' },
-    { name: 'Королевский', hsv: { h: 225, s: 100, v: 100 }, hex: '#4169E1' },
-    { name: 'Индиго', hsv: { h: 270, s: 100, v: 100 }, hex: '#4B0082' },
-    { name: 'Фиолетовый', hsv: { h: 280, s: 100, v: 100 }, hex: '#9400D3' },
-    { name: 'Магента', hsv: { h: 300, s: 100, v: 100 }, hex: '#FF00FF' },
-    { name: 'Оливковый', hsv: { h: 60, s: 100, v: 50 }, hex: '#808000' },
-    { name: 'Сливовый', hsv: { h: 270, s: 100, v: 65 }, hex: '#660066' },
-    { name: 'Белый', hsv: { h: 0, s: 0, v: 100 }, hex: '#FFFFFF' },
-    { name: 'Серый', hsv: { h: 0, s: 0, v: 50 }, hex: '#808080' },
+    { name: 'red', hsv: { h: 0, s: 100, v: 100 }, hex: '#FF0000' },
+    { name: 'pink', hsv: { h: 330, s: 100, v: 100 }, hex: '#FF69B4' },
+    { name: 'raspberry', hsv: { h: 345, s: 100, v: 100 }, hex: '#C71585' },
+    { name: 'burgundy', hsv: { h: 350, s: 100, v: 70 }, hex: '#800000' },
+    { name: 'scarlet', hsv: { h: 0, s: 100, v: 85 }, hex: '#DC143C' },
+    { name: 'orange', hsv: { h: 30, s: 100, v: 100 }, hex: '#FFA500' },
+    { name: 'coral', hsv: { h: 16, s: 100, v: 100 }, hex: '#FF7F50' },
+    { name: 'gold', hsv: { h: 45, s: 100, v: 100 }, hex: '#FFD700' },
+    { name: 'yellow', hsv: { h: 60, s: 100, v: 100 }, hex: '#FFFF00' },
+    { name: 'lemon', hsv: { h: 75, s: 100, v: 100 }, hex: '#CDDC39' },
+    { name: 'lime', hsv: { h: 90, s: 100, v: 100 }, hex: '#00FF00' },
+    { name: 'green', hsv: { h: 120, s: 100, v: 100 }, hex: '#00FF00' },
+    { name: 'pine', hsv: { h: 120, s: 100, v: 70 }, hex: '#228B22' },
+    { name: 'sea', hsv: { h: 150, s: 100, v: 100 }, hex: '#20B2AA' },
+    { name: 'turquoise', hsv: { h: 160, s: 100, v: 100 }, hex: '#40E0D0' },
+    { name: 'skyBlue', hsv: { h: 180, s: 100, v: 100 }, hex: '#00FFFF' },
+    { name: 'aquamarine', hsv: { h: 160, s: 50, v: 100 }, hex: '#7FFFD4' },
+    { name: 'steel', hsv: { h: 180, s: 25, v: 100 }, hex: '#B0E0E6' },
+    { name: 'blue', hsv: { h: 240, s: 100, v: 100 }, hex: '#0000FF' },
+    { name: 'royalBlue', hsv: { h: 225, s: 100, v: 100 }, hex: '#4169E1' },
+    { name: 'indigo', hsv: { h: 270, s: 100, v: 100 }, hex: '#4B0082' },
+    { name: 'violet', hsv: { h: 280, s: 100, v: 100 }, hex: '#9400D3' },
+    { name: 'magenta', hsv: { h: 300, s: 100, v: 100 }, hex: '#FF00FF' },
+    { name: 'olive', hsv: { h: 60, s: 100, v: 50 }, hex: '#808000' },
+    { name: 'plum', hsv: { h: 270, s: 100, v: 65 }, hex: '#660066' },
+    { name: 'white', hsv: { h: 0, s: 0, v: 100 }, hex: '#FFFFFF' },
+    { name: 'gray', hsv: { h: 0, s: 0, v: 50 }, hex: '#808080' },
   ];
 
   useEffect(() => {
@@ -240,10 +242,10 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
         <div className="flex items-start justify-between mb-6">
           <div>
             <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">
-              Настройки освещения группы
+              {t('modals.light.groupTitle')}
             </h3>
             <p className="text-sm text-slate-600 dark:text-muted mt-1">
-              {group.name} ({groupDevices.length} устройств)
+              {tp('modals.light.groupDevices', groupDevices.length, { name: group.name })}
             </p>
           </div>
           <button
@@ -259,7 +261,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
           {brightnessRange && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-card-fg mb-3">
-                Яркость
+                {t('modals.light.brightness')}
                 <span className="ml-2 text-xs text-slate-500 dark:text-muted">({brightness}%)</span>
               </label>
               <div className="flex items-center gap-4">
@@ -295,7 +297,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
               }`}
             >
               <Palette className="w-4 h-4" />
-              Цвет
+              {t('modals.light.color')}
             </button>
             <button
               onClick={() => setColorMode('temperature')}
@@ -307,7 +309,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
               }`}
             >
               <Thermometer className="w-4 h-4" />
-              Температура
+              {t('modals.light.temperature')}
             </button>
           </div>
 
@@ -315,7 +317,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
           {colorMode === 'color' && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-card-fg mb-3">
-                Выберите цвет
+                {t('modals.light.pickColor')}
               </label>
               <div className="flex justify-center">
                 <div className="grid grid-cols-9 gap-1">
@@ -331,7 +333,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
                         }
                       `}
                       style={{ backgroundColor: color.hex }}
-                      title={color.name}
+                      title={t(`modals.light.colors.${color.name}`)}
                     >
                       {selectedColor?.name === color.name && (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -351,12 +353,12 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
           {colorMode === 'temperature' && temperatureKRange && (
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-card-fg mb-3">
-                Температура света
+                {t('modals.light.colorTemperature')}
                 <span className="ml-2 text-xs text-slate-500 dark:text-muted">({temperatureKRange ? temperatureKRange.min + temperatureKRange.max - temperature_k : temperature_k}K)</span>
               </label>
               <div className="flex items-center gap-4">
                 <div className="text-xs text-slate-600 dark:text-muted w-12">
-                  Холодно
+                  {t('modals.light.cold')}
                 </div>
                 <input
                   type="range"
@@ -368,7 +370,7 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
                   className="flex-1 accent-orange-500 dark:accent-orange-400 temp-slider"
                 />
                 <div className="text-xs text-slate-600 dark:text-muted w-12 text-right">
-                  Тепло
+                  {t('modals.light.warm')}
                 </div>
               </div>
               <div className="flex justify-between text-xs text-slate-500 dark:text-muted mt-2">
@@ -386,14 +388,14 @@ export const GroupLightSettingsModal: React.FC<GroupLightSettingsModalProps> = (
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-[color:var(--accent)] dark:border-primary text-[color:var(--accent)] dark:text-primary hover:bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Применение...' : 'Применить'}
+            {isLoading ? t('modals.applying') : t('modals.apply')}
           </button>
           <button
             onClick={onClose}
             disabled={isLoading}
             className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-[color:var(--accent)] dark:bg-primary hover:bg-[color:var(--accent-hover)] dark:hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isLoading ? 'Применение...' : 'Закрыть'}
+            {isLoading ? t('modals.applying') : t('common.close')}
           </button>
         </div>
       </div>
