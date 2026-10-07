@@ -1,3 +1,4 @@
+import './dev/maybeMock';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import '@fontsource/unbounded/cyrillic-400.css';
@@ -31,15 +32,19 @@ if (!rootElement) {
   throw new Error("Could not find root element to mount to");
 }
 
-const root = ReactDOM.createRoot(rootElement);
-root.render(
-  // <React.StrictMode>
-    <I18nProvider>
-      <App />
-    </I18nProvider>
-  // </React.StrictMode>
-);
+const mount = () => {
+  const root = ReactDOM.createRoot(rootElement);
+  root.render(
+    // <React.StrictMode>
+      <I18nProvider>
+        <App />
+      </I18nProvider>
+    // </React.StrictMode>
+  );
 
-debugLog('react', 'root.render called', {
-  rootChildren: rootElement.childElementCount,
-});
+  debugLog('react', 'root.render called', {
+    rootChildren: rootElement.childElementCount,
+  });
+};
+
+mount();

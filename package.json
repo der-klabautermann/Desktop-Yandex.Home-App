@@ -10,7 +10,8 @@
     "build": "vite build",
     "dist": "npm run build && electron-builder",
     "preview": "vite preview",
-    "test": "vitest run --root ."
+    "test": "vitest run --root .",
+    "preview:web": "vite --port 5174 --strictPort"
   },
   "dependencies": {
     "@fontsource/onest": "^5.3.1",
