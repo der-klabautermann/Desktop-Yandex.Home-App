@@ -53,3 +53,24 @@ describe('detectLanguage', () => {
     expect(detectLanguage('xx', undefined)).toBe('en');
   });
 });
+
+import { ru } from './ru';
+import { en } from './en';
+import { de } from './de';
+import { collectKeys } from './core';
+
+describe('Sprachdateien', () => {
+  const reference = collectKeys(ru).sort();
+  it.each([['en', en], ['de', de]] as const)('%s hat dieselben Schlüssel wie ru', (_name, dict) => {
+    expect(collectKeys(dict).sort()).toEqual(reference);
+  });
+  it('keine leeren Texte', () => {
+    for (const dict of [ru, en, de]) {
+      for (const key of collectKeys(dict)) {
+        const value = key.split('.').reduce<any>((node, part) => node[part], dict);
+        const texts = typeof value === 'string' ? [value] : Object.values(value as object);
+        for (const text of texts) expect(String(text).trim()).not.toBe('');
+      }
+    }
+  });
+});
