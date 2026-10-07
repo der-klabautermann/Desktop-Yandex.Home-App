@@ -119,7 +119,13 @@ Grundlage ist das Format, das die Oberfläche heute schon versteht (Yandex Smart
 `type`, `capabilities`, `properties`). Erweiterungen:
 
 - `providerId` am Gerät, an Raum und Szenario
-- Geräte-ID global eindeutig: `"<providerId>:<ursprüngliche ID>"`
+- Geräte-ID global eindeutig: `"<providerId>:<ursprüngliche ID>"`. Ausnahme Яндекс: Geräte,
+  Gruppen und Szenarien behalten ihre bisherigen IDs ohne Präfix, damit gespeicherte
+  Favoriten und die Kamerafunktionen weiter funktionieren. Eine ID ohne bekanntes Präfix
+  gehört zu Яндекс.
+- Häuser (Households) mit gleichem Namen werden zusammengelegt, innerhalb eines Hauses
+  Räume mit gleichem Namen. Ein Xiaomi-Zuhause „Мой дом" erscheint also als eigenes Haus,
+  bis es in der Xiaomi-App genauso heißt wie das Yandex-Haus; das steht in der Anleitung.
 
 Stufe 1 übersetzt diese Funktionen:
 
@@ -161,18 +167,24 @@ Geräte oder Funktionen ohne Übersetzung erscheinen mit Name und dem Hinweis
 
 ### Desktop-Anbindung
 
+- Der Kern wird mit esbuild (über Vite bereits vorhanden) zu `electron/core.js` gebündelt
+  (nicht im Repo), den der Electron-Hauptprozess lädt. Die bisherigen reinen Node-Dateien
+  `yandex-api.js`, `yandex-quasar.js`, `yandex-x-token-auth.js` ziehen nach
+  `core/providers/yandex/` um.
 - Electron-Hauptprozess lädt den Kern. Die Oberfläche spricht nur noch über allgemeine
   Kanäle (`hub:loadHome`, `hub:execute`, `hub:runScenario`, `hub:accounts:*`) statt über
   Yandex-spezifische.
 - Zugangsdaten je Dienst im Schlüsselbund (keytar), Dienst `SmartHomeControlApp`,
-  Konto `provider:<id>`. Der bisherige Yandex-Eintrag wird übernommen, damit niemand sich
-  neu anmelden muss.
+  Konto `provider:<id>`. Яндекс behält seine bisherigen Einträge `YandexToken` und
+  `YandexXToken`, damit sich niemand neu anmelden muss.
 - Aktualisierung wie bisher alle 30 Sekunden, je Dienst unabhängig.
 
 ## Fehlerverhalten
 
-- Jeder Dienst lädt für sich. Fällt einer aus, zeigt nur seine Karte in „Мои сервисы"
-  den Fehler, seine Geräte erscheinen ausgegraut mit „нет связи", der Rest läuft weiter.
+- Jeder Dienst lädt für sich. Fällt einer aus, zeigt seine Karte in „Мои сервисы" den
+  Fehler, und oben im Dashboard erscheint ein Hinweis-Balken („Xiaomi: нет связи. Устройства
+  этого сервиса сейчас не показаны."), der zu „Мои сервисы" führt. Seine Geräte fehlen bis
+  zum nächsten erfolgreichen Laden, der Rest läuft weiter.
 - Abgelaufene Anmeldung: Status „войдите снова", ein Klick führt zur Anmeldung dieses Dienstes.
 - Befehl schlägt fehl: Karte springt auf den alten Zustand zurück, kurze Meldung.
 
