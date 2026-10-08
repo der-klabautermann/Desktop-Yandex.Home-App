@@ -8,6 +8,7 @@ import {
   ThemeSettings,
   resolvePalette,
 } from '../themes/palettes';
+import { FONT_SETS, applyFontSet, fontById } from '../themes/fonts';
 
 type Theme = 'light' | 'dark';
 
@@ -37,6 +38,7 @@ const loadSettings = (): ThemeSettings => {
         const valid = Array.isArray(parsed.cycle) ? parsed.cycle.filter(id => ids.includes(id)) : [];
         return valid.length >= 2 ? valid : DEFAULT_SETTINGS.cycle;
       })(),
+      font: FONT_SETS.some(f => f.id === parsed.font) ? parsed.font! : DEFAULT_SETTINGS.font,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -60,8 +62,10 @@ const applyPalette = (palette: Palette) => {
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [settings, setSettings] = useState<ThemeSettings>(loadSettings);
   const [palette, setPalette] = useState<Palette>(() => {
-    const initial = resolvePalette(loadSettings());
+    const initialSettings = loadSettings();
+    const initial = resolvePalette(initialSettings);
     applyPalette(initial);
+    applyFontSet(fontById(initialSettings.font));
     return initial;
   });
 
@@ -79,6 +83,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   useEffect(() => {
     applyPalette(palette);
   }, [palette]);
+
+  useEffect(() => {
+    applyFontSet(fontById(settings.font));
+  }, [settings.font]);
 
   const updateSettings = useCallback((patch: Partial<ThemeSettings>) => {
     setSettings(prev => {

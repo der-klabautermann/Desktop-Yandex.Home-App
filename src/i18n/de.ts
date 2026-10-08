@@ -306,6 +306,16 @@ export const de = {
     withDetail: 'Fehler: {detail}',
   },
   theme: {
+    fonts: {
+      title: 'Schrift',
+      sample: 'Zuhause',
+      elegant: 'Elegant',
+      classic: 'Klassisch',
+      editorial: 'Magazin',
+      modern: 'Modern',
+      soft: 'Weich',
+      system: 'Wie macOS',
+    },
     title: 'Design',
     statusCycle: 'Jetzt: „{name}“, nächster Wechsel um {time}',
     statusFixed: 'Fest eingestellt: „{name}“',

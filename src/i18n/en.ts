@@ -306,6 +306,16 @@ export const en = {
     withDetail: 'Error: {detail}',
   },
   theme: {
+    fonts: {
+      title: 'Font',
+      sample: 'Home',
+      elegant: 'Elegant',
+      classic: 'Classic',
+      editorial: 'Editorial',
+      modern: 'Modern',
+      soft: 'Soft',
+      system: 'Like macOS',
+    },
     title: 'Appearance',
     statusCycle: 'Now: "{name}", next change at {time}',
     statusFixed: 'Pinned theme: "{name}"',

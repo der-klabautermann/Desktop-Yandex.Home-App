@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Palette as PaletteIcon, Check } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { INTERVAL_OPTIONS, PALETTES, PaletteId, ThemeMode, nextChange } from '../themes/palettes';
+import { FONT_SETS } from '../themes/fonts';
 import { useI18n } from '../i18n/I18nContext';
 
 const MODES: ThemeMode[] = ['cycle', 'fixed'];
@@ -125,6 +126,23 @@ export const ThemePicker: React.FC = () => {
                                 </button>
                             );
                         })}
+                    </div>
+
+                    <div className="theme-section-title">{t('theme.fonts.title')}</div>
+                    <div className="font-grid">
+                        {FONT_SETS.map(font => (
+                            <button
+                                key={font.id}
+                                className={`font-tile ${settings.font === font.id ? 'is-active' : ''}`}
+                                onClick={() => updateSettings({ font: font.id })}
+                                title={t(`theme.fonts.${font.id}`)}
+                            >
+                                <span className="font-tile-sample" style={{ fontFamily: font.display, fontWeight: font.displayWeight, fontSize: 22 * font.displayScale }}>
+                                    {t('theme.fonts.sample')}
+                                </span>
+                                <span className="font-tile-name" style={{ fontFamily: font.body }}>{t(`theme.fonts.${font.id}`)}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
             )}

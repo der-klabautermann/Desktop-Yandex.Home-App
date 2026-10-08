@@ -1,6 +1,8 @@
 // Цветовые темы приложения. Каждая тема — набор CSS-переменных поверх
 // базовой светлой или тёмной темы из index.css.
 
+import { DEFAULT_FONT, type FontId } from './fonts';
+
 export type PaletteId = 'volna' | 'alisa' | 'muzyka' | 'dom' | 'gorod' | 'plus' | 'biryuza';
 
 export interface Palette {
@@ -176,6 +178,8 @@ export interface ThemeSettings {
     intervalHours: number;
     /** Темы, участвующие в автосмене (в порядке PALETTES). */
     cycle: PaletteId[];
+    /** Шрифтовая пара интерфейса. */
+    font: FontId;
 }
 
 export const INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12];
@@ -185,6 +189,7 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
     fixed: 'alisa',
     intervalHours: 3,
     cycle: PALETTES.map(p => p.id),
+    font: DEFAULT_FONT,
 };
 
 /** Номер текущего "слота" смены: считается от полуночи местного времени, смена всегда в ровный час. */

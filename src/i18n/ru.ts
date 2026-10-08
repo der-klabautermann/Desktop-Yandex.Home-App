@@ -306,6 +306,16 @@ export const ru = {
     withDetail: 'Ошибка: {detail}',
   },
   theme: {
+    fonts: {
+      title: 'Шрифт',
+      sample: 'Дом',
+      elegant: 'Элегантный',
+      classic: 'Классический',
+      editorial: 'Журнальный',
+      modern: 'Современный',
+      soft: 'Мягкий',
+      system: 'Как в macOS',
+    },
     title: 'Оформление',
     statusCycle: 'Сейчас: «{name}», следующая смена в {time}',
     statusFixed: 'Тема закреплена: «{name}»',
