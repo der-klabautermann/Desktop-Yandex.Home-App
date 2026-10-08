@@ -2326,6 +2326,10 @@ html.is-mac .window-drag-strip {
   z-index: 10000;
   -webkit-app-region: drag;
 }
+/* Перетаскиваемые полосы не должны глотать нажатия: всё, что нажимается или вводится, исключаем */
+button, a, input, select, textarea, label, [role="button"], [role="radio"], [role="switch"] {
+  -webkit-app-region: no-drag;
+}
 html.is-mac .sidebar-header { padding-top: 44px; }
 html.is-mac .settings-screen,
 html.is-mac .services-screen { padding-top: 52px; }
