@@ -264,7 +264,7 @@ export const Dashboard: React.FC = () => {
                                 </button>
                             )}
                             <ActivityButton />
-                            <button onClick={ctx.onAddService} className="header-btn" title={t('header.addConnection')}>
+                            <button onClick={ctx.onOpenServices} className="header-btn" title={t('services.title')}>
                                 <Plug className="w-4 h-4" />
                             </button>
                             <button onClick={ctx.onOpenSettings} className="header-btn" title={t('settings.title')}>
