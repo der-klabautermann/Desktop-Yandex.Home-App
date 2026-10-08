@@ -13,9 +13,9 @@ const REGIONS = ['europe', 'russia', 'china', 'usa', 'korea'] as const;
  * Сначала Aqara присылает код, затем код подтверждает вход.
  */
 export const AqaraConnect: React.FC<{ onConnected: () => void }> = ({ onConnected }) => {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const [form, setForm] = useState({
-    region: lang === 'ru' ? 'russia' : 'europe',
+    region: 'russia',
     appId: '', keyId: '', appKey: '', account: '', code: '',
   });
   const [codeSent, setCodeSent] = useState(false);
