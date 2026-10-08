@@ -300,6 +300,7 @@ export const en = {
     groupEmpty: 'The group has no devices',
     deviceUnreachable: 'The device is offline',
     device: 'The device reported an error ({detail})',
+    haInput: 'Please enter the Home Assistant address and access token.',
     aqaraInput: 'Please fill in all fields: region, App ID, App Key, Key ID and Aqara account.',
     aqara: 'Aqara reported an error ({detail})',
     withDetail: 'Error: {detail}',
@@ -328,6 +329,46 @@ export const en = {
     },
   },
   services: {
+    homeassistant: {
+      url: 'Home Assistant address',
+      urlPlaceholder: 'http://homeassistant.local:8123',
+      token: 'Long-lived access token',
+      connect: 'Connect',
+      connectedNote: 'Home Assistant is already connected. Add your Xiaomi devices in Home Assistant with the steps on the right, then refresh.',
+      refresh: 'Refresh devices',
+      guide: {
+        title: 'How to connect Home Assistant',
+        steps: {
+          1: 'Install Home Assistant on a device that runs around the clock: Raspberry Pi, Home Assistant Green, an old laptop or a NAS. Instructions: {link:install}.',
+          2: 'Open `http://homeassistant.local:8123` in a browser and create an account.',
+          3: 'Add your devices: Settings, Devices & services, Add integration.',
+          4: 'Assign your devices to areas. In the app they become rooms.',
+          5: 'Create a token: profile at the bottom left, "Security" tab, "Long-lived access tokens", "Create token". Copy it right away, it is shown only once.',
+          6: 'Enter the address and token on the left and click "Connect".',
+        },
+        problems: {
+          1: 'No connection: the computer must be on the same network. Instead of `homeassistant.local`, try the IP address, for example `http://192.168.1.20:8123`.',
+          2: 'Access from another home: you need remote access, for example Home Assistant Cloud (Nabu Casa) or Tailscale.',
+          3: 'Authorization error: create a new token and paste it again.',
+        },
+      },
+      xiaomiGuide: {
+        title: 'Xiaomi via Home Assistant',
+        steps: {
+          1: 'Connect your Home Assistant on the left: address and token (the "Home Assistant" tile shows how to get them). You sign in to Xiaomi directly in Home Assistant, Yandex is not needed.',
+          2: 'Install Xiaomi\'s official "Xiaomi Home" integration in Home Assistant via HACS or manually: {link:xiaomi}.',
+          3: 'In Home Assistant: Settings, Devices & services, Add integration, "Xiaomi Home".',
+          4: 'Sign in with your Mi account and choose the region it is registered in, for example Russia.',
+          5: 'Select the homes and devices to bring over.',
+          6: 'Click "Refresh devices" here: your Xiaomi devices appear together with all the others.',
+        },
+        problems: {
+          1: 'No devices: wrong Mi account region. You can see it in Mi Home under profile, settings, region.',
+          2: 'Xiaomi asks for SMS confirmation: enter the code in the Home Assistant sign-in window.',
+          3: 'Devices without a room: assign them to areas in Home Assistant.',
+        },
+      },
+    },
     aqara: {
       region: 'Region of the Aqara account',
       regions: { europe: 'Europe', russia: 'Russia', china: 'China', usa: 'USA', korea: 'Korea' },
@@ -373,10 +414,11 @@ export const en = {
     alert: '{name}: {status}. Devices are shown in gray with their last known state.',
     guideProblems: 'If it does not work',
     status: { connected: 'connected', offline: 'unreachable', relogin: 'sign in again' },
-    names: { yandex: 'Yandex', xiaomi: 'Xiaomi Home', aqara: 'Aqara' },
+    names: { yandex: 'Yandex', xiaomi: 'Xiaomi Home', aqara: 'Aqara', homeassistant: 'Home Assistant' },
     taglines: {
+      homeassistant: 'Smart home server: Xiaomi, Hue, Tuya, Shelly and hundreds of other brands',
       yandex: 'Smart home with Alice, speakers, lights, cameras',
-      xiaomi: 'Mi Home and Xiaomi Home devices',
+      xiaomi: 'Mi Home devices via Home Assistant',
       aqara: 'Aqara sensors, hubs and switches',
     },
     yandex: {

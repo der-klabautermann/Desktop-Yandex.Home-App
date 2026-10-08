@@ -13,6 +13,7 @@ const CODE_KEYS: Record<string, string> = {
     CAM_PRIVACY_TOGGLE: 'camera.errors.privacyToggle',
     ERR_TOKEN_EXPIRED: 'errors.auth',
     ERR_AQARA_INPUT: 'errors.aqaraInput',
+    ERR_HA_INPUT: 'errors.haInput',
 };
 
 export function cleanErrorMessage(error: unknown, t: Translate): string {

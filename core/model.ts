@@ -2,8 +2,8 @@
 // который уже понимает интерфейс.
 import type { YandexModeAction, YandexUserInfoResponse } from '../src/types/index';
 
-export type ProviderId = 'yandex' | 'xiaomi' | 'aqara';
-export const PROVIDER_IDS: ProviderId[] = ['yandex', 'xiaomi', 'aqara'];
+export type ProviderId = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
+export const PROVIDER_IDS: ProviderId[] = ['yandex', 'xiaomi', 'aqara', 'homeassistant'];
 
 export type HomeData = YandexUserInfoResponse;
 export type ModeAction = YandexModeAction;

@@ -9,6 +9,7 @@ import { ProviderMark } from './ProviderMark';
 import { ProviderPicker } from './ProviderPicker';
 import { YandexConnect } from './YandexConnect';
 import { AqaraConnect } from './AqaraConnect';
+import { HomeAssistantConnect } from './HomeAssistantConnect';
 
 interface ServicesScreenProps {
   accounts: AccountSummary[];
@@ -115,6 +116,13 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
 
       {view.kind === 'connect' && view.providerId === 'yandex' && (
         <YandexConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />
+      )}
+      {view.kind === 'connect' && (view.providerId === 'homeassistant' || view.providerId === 'xiaomi') && (
+        <HomeAssistantConnect
+          variant={view.providerId}
+          alreadyConnected={view.providerId === 'xiaomi' && accounts.some(a => a.providerId === 'homeassistant')}
+          onConnected={() => { setView({ kind: 'list' }); onChanged(); }}
+        />
       )}
       {view.kind === 'connect' && view.providerId === 'aqara' && (
         <AqaraConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />

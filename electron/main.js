@@ -9,6 +9,7 @@ import {
     Hub,
     createYandexProvider,
     createAqaraProvider,
+    createHomeAssistantProvider,
     yandexApi,
     startQrAuth,
     pollQrAuth,
@@ -106,6 +107,7 @@ const providerHooks = {
 const hub = new Hub([
     createYandexProvider(credentialStore, providerHooks),
     createAqaraProvider(credentialStore),
+    createHomeAssistantProvider(credentialStore),
 ], homeCache);
 
 // --- 1. Обработка закрытия окна (свернуть в трей) ---

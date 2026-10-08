@@ -5,7 +5,7 @@ export interface YandexApiRequestOptions {
     retry?: boolean;
 }
 
-export type ProviderId = 'yandex' | 'xiaomi' | 'aqara';
+export type ProviderId = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
 
 export interface AccountSummary {
     providerId: ProviderId;

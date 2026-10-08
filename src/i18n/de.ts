@@ -300,6 +300,7 @@ export const de = {
     groupEmpty: 'Die Gruppe hat keine Geräte',
     deviceUnreachable: 'Das Gerät ist nicht erreichbar',
     device: 'Das Gerät hat einen Fehler gemeldet ({detail})',
+    haInput: 'Bitte Adresse von Home Assistant und Zugangstoken eingeben.',
     aqaraInput: 'Bitte alle Felder ausfüllen: Region, App ID, App Key, Key ID und Aqara-Konto.',
     aqara: 'Aqara hat einen Fehler gemeldet ({detail})',
     withDetail: 'Fehler: {detail}',
@@ -328,6 +329,46 @@ export const de = {
     },
   },
   services: {
+    homeassistant: {
+      url: 'Adresse von Home Assistant',
+      urlPlaceholder: 'http://homeassistant.local:8123',
+      token: 'Langlebiger Zugangstoken',
+      connect: 'Verbinden',
+      connectedNote: 'Home Assistant ist schon verbunden. Fügen Sie Ihre Xiaomi-Geräte mit den Schritten rechts in Home Assistant hinzu und aktualisieren Sie dann.',
+      refresh: 'Geräte aktualisieren',
+      guide: {
+        title: 'So verbinden Sie Home Assistant',
+        steps: {
+          1: 'Installieren Sie Home Assistant auf einem Gerät, das rund um die Uhr läuft: Raspberry Pi, Home Assistant Green, ein alter Laptop oder ein NAS. Anleitung: {link:install}.',
+          2: 'Öffnen Sie `http://homeassistant.local:8123` im Browser und legen Sie ein Konto an.',
+          3: 'Fügen Sie Ihre Geräte hinzu: Einstellungen, Geräte & Dienste, Integration hinzufügen.',
+          4: 'Ordnen Sie die Geräte Bereichen zu. In der App werden daraus Räume.',
+          5: 'Token erstellen: unten links Profil, Reiter „Sicherheit“, „Langlebige Zugriffstoken“, „Token erstellen“. Sofort kopieren, er wird nur einmal angezeigt.',
+          6: 'Adresse und Token links eintragen und auf „Verbinden“ klicken.',
+        },
+        problems: {
+          1: 'Keine Verbindung: Der Computer muss im selben Netz sein. Probieren Sie statt `homeassistant.local` die IP-Adresse, zum Beispiel `http://192.168.1.20:8123`.',
+          2: 'Zugriff aus einem anderen Haus: Dafür braucht es Fernzugriff, zum Beispiel Home Assistant Cloud (Nabu Casa) oder Tailscale.',
+          3: 'Anmeldefehler: Erstellen Sie einen neuen Token und fügen Sie ihn erneut ein.',
+        },
+      },
+      xiaomiGuide: {
+        title: 'Xiaomi über Home Assistant',
+        steps: {
+          1: 'Verbinden Sie links Ihren Home Assistant: Adresse und Token (wie Sie die bekommen, zeigt die Kachel „Home Assistant“). Die Anmeldung bei Xiaomi läuft direkt in Home Assistant, Yandex wird nicht gebraucht.',
+          2: 'Installieren Sie in Home Assistant die offizielle Integration „Xiaomi Home“ von Xiaomi über HACS oder von Hand: {link:xiaomi}.',
+          3: 'In Home Assistant: Einstellungen, Geräte & Dienste, Integration hinzufügen, „Xiaomi Home“.',
+          4: 'Melden Sie sich mit Ihrem Mi-Konto an und wählen Sie die Region, in der es registriert ist, zum Beispiel Russland.',
+          5: 'Wählen Sie die Häuser und Geräte aus, die übernommen werden sollen.',
+          6: 'Klicken Sie hier auf „Geräte aktualisieren“: Die Xiaomi-Geräte erscheinen zusammen mit allen anderen.',
+        },
+        problems: {
+          1: 'Keine Geräte: falsche Region des Mi-Kontos. Sie steht in Mi Home unter Profil, Einstellungen, Region.',
+          2: 'Xiaomi verlangt eine Bestätigung per SMS: Geben Sie den Code im Anmeldefenster von Home Assistant ein.',
+          3: 'Geräte ohne Raum: Ordnen Sie sie in Home Assistant Bereichen zu.',
+        },
+      },
+    },
     aqara: {
       region: 'Region des Aqara-Kontos',
       regions: { europe: 'Europa', russia: 'Russland', china: 'China', usa: 'USA', korea: 'Korea' },
@@ -373,10 +414,11 @@ export const de = {
     alert: '{name}: {status}. Die Geräte werden grau mit dem zuletzt bekannten Stand angezeigt.',
     guideProblems: 'Wenn es nicht klappt',
     status: { connected: 'verbunden', offline: 'nicht erreichbar', relogin: 'neu anmelden' },
-    names: { yandex: 'Yandex', xiaomi: 'Xiaomi Home', aqara: 'Aqara' },
+    names: { yandex: 'Yandex', xiaomi: 'Xiaomi Home', aqara: 'Aqara', homeassistant: 'Home Assistant' },
     taglines: {
+      homeassistant: 'Smart-Home-Server: Xiaomi, Hue, Tuya, Shelly und Hunderte weitere Marken',
       yandex: 'Smart Home mit Alice, Lautsprecher, Lampen, Kameras',
-      xiaomi: 'Geräte aus Mi Home und Xiaomi Home',
+      xiaomi: 'Mi-Home-Geräte über Home Assistant',
       aqara: 'Aqara-Sensoren, Hubs und Schalter',
     },
     yandex: {

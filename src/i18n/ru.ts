@@ -300,6 +300,7 @@ export const ru = {
     groupEmpty: 'В группе нет устройств',
     deviceUnreachable: 'Устройство не в сети',
     device: 'Устройство сообщило об ошибке ({detail})',
+    haInput: 'Укажите адрес Home Assistant и токен доступа.',
     aqaraInput: 'Заполните все поля: регион, App ID, App Key, Key ID и аккаунт Aqara.',
     aqara: 'Aqara сообщила об ошибке ({detail})',
     withDetail: 'Ошибка: {detail}',
@@ -328,6 +329,46 @@ export const ru = {
     },
   },
   services: {
+    homeassistant: {
+      url: 'Адрес Home Assistant',
+      urlPlaceholder: 'http://homeassistant.local:8123',
+      token: 'Долгосрочный токен доступа',
+      connect: 'Подключить',
+      connectedNote: 'Home Assistant уже подключён. Добавьте устройства Xiaomi в Home Assistant по шагам справа, затем обновите данные.',
+      refresh: 'Обновить устройства',
+      guide: {
+        title: 'Как подключить Home Assistant',
+        steps: {
+          1: 'Установите Home Assistant на устройство, которое работает круглосуточно: Raspberry Pi, Home Assistant Green, старый ноутбук или NAS. Инструкция: {link:install}.',
+          2: 'Откройте в браузере `http://homeassistant.local:8123` и создайте учётную запись.',
+          3: 'Добавьте свои устройства: Настройки, Устройства и службы, Добавить интеграцию.',
+          4: 'Назначьте устройствам пространства (комнаты). В приложении они станут комнатами.',
+          5: 'Создайте токен: внизу слева профиль, вкладка «Безопасность», «Долгосрочные токены доступа», «Создать токен». Скопируйте его сразу, он показывается один раз.',
+          6: 'Впишите адрес и токен слева и нажмите «Подключить».',
+        },
+        problems: {
+          1: 'Нет связи: компьютер должен быть в той же сети. Вместо `homeassistant.local` попробуйте IP-адрес, например `http://192.168.1.20:8123`.',
+          2: 'Доступ из другого дома: нужен удалённый доступ, например Home Assistant Cloud (Nabu Casa) или Tailscale.',
+          3: 'Ошибка авторизации: создайте новый токен и вставьте его заново.',
+        },
+      },
+      xiaomiGuide: {
+        title: 'Xiaomi через Home Assistant',
+        steps: {
+          1: 'Подключите слева свой Home Assistant: адрес и токен (как их получить, показано в плитке «Home Assistant»). Вход в Xiaomi идёт напрямую в Home Assistant, Яндекс не нужен.',
+          2: 'Установите в Home Assistant официальную интеграцию Xiaomi «Xiaomi Home» через HACS или вручную: {link:xiaomi}.',
+          3: 'В Home Assistant: Настройки, Устройства и службы, Добавить интеграцию, «Xiaomi Home».',
+          4: 'Войдите в свой аккаунт Mi и выберите регион, в котором он зарегистрирован, например Россия.',
+          5: 'Отметьте дома и устройства, которые нужно перенести.',
+          6: 'Нажмите здесь «Обновить устройства»: устройства Xiaomi появятся вместе с остальными.',
+        },
+        problems: {
+          1: 'Нет устройств: неверный регион аккаунта Mi. Его видно в Mi Home: профиль, настройки, регион.',
+          2: 'Xiaomi просит подтверждение по SMS: введите код в окне входа Home Assistant.',
+          3: 'Устройства без комнаты: назначьте им пространства в Home Assistant.',
+        },
+      },
+    },
     aqara: {
       region: 'Регион аккаунта Aqara',
       regions: { europe: 'Европа', russia: 'Россия', china: 'Китай', usa: 'США', korea: 'Корея' },
@@ -373,10 +414,11 @@ export const ru = {
     alert: '{name}: {status}. Устройства показаны серым с последним известным состоянием.',
     guideProblems: 'Если не получается',
     status: { connected: 'подключено', offline: 'нет связи', relogin: 'войдите снова' },
-    names: { yandex: 'Яндекс', xiaomi: 'Xiaomi Home', aqara: 'Aqara' },
+    names: { yandex: 'Яндекс', xiaomi: 'Xiaomi Home', aqara: 'Aqara', homeassistant: 'Home Assistant' },
     taglines: {
+      homeassistant: 'Сервер для умного дома: Xiaomi, Hue, Tuya, Shelly и сотни других марок',
       yandex: 'Умный дом с Алисой, колонки, лампы, камеры',
-      xiaomi: 'Устройства Mi Home и Xiaomi Home',
+      xiaomi: 'Устройства Mi Home через Home Assistant',
       aqara: 'Датчики, хабы и выключатели Aqara',
     },
     yandex: {

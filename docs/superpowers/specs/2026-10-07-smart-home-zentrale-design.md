@@ -211,9 +211,11 @@ Geräte oder Funktionen ohne Übersetzung erscheinen mit Name und dem Hinweis
 Die Lizenz des offiziellen Xiaomi-Codes für Home Assistant (github.com/XiaoMi/ha_xiaomi_home)
 erlaubt Anmeldung und Cloud-Schnittstelle nur für die Nutzung in Home Assistant und
 untersagt ausdrücklich, damit eigene Apps zu bauen. Der oben beschriebene Xiaomi-Weg wird
-deshalb nicht umgesetzt, bis Maxim zwischen den Alternativen entschieden hat
-(Xiaomi über die Yandex-Verknüpfung, Home Assistant als eigener Dienst, inoffizielle
-Anmeldung nur in privater Fassung). Xiaomi steht in der Auswahl weiter als „bald“.
+deshalb nicht umgesetzt. Entscheidung Maxim (08.10.): Xiaomi läuft über **Home Assistant**
+als eigenen Dienst. Die Mi-Anmeldung passiert in Home Assistant mit Xiaomis offizieller
+Integration „Xiaomi Home“ (dort ist sie erlaubt), unabhängig von Yandex. Die App liest
+Home Assistant über dessen REST-Schnittstelle (Adresse plus langlebiger Token).
+Betrieb: ein Gerät, das rund um die Uhr läuft (Maxim möchte einen Raspberry Pi).
 
 ## Risiken
 

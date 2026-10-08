@@ -9,11 +9,12 @@ export interface ProviderInfo {
   available: boolean;
 }
 
-// Xiaomi включается отдельно (см. вопрос о лицензии в docs).
+// Xiaomi подключается через Home Assistant (официальная интеграция Xiaomi разрешена только там).
 export const PROVIDERS: ProviderInfo[] = [
   { id: 'yandex', badge: 'Я', color: '#FC3F1D', available: true },
-  { id: 'xiaomi', badge: 'Mi', color: '#FF6900', available: false },
+  { id: 'xiaomi', badge: 'Mi', color: '#FF6900', available: true },
   { id: 'aqara', badge: 'Aq', color: '#2B2B2B', available: true },
+  { id: 'homeassistant', badge: 'HA', color: '#18A0D8', available: true },
 ];
 
 export const providerInfo = (id: string | undefined): ProviderInfo =>
