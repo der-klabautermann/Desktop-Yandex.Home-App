@@ -20,6 +20,10 @@ Enthalten:
 - Oberfläche in drei Sprachen: Deutsch, Englisch, Russisch
 - Lauffähig auf dem Mac
 
+Direkt danach (Stufe 1b, Wunsch Maxim 08.10.): räumlicher Aufbau nach Vorbild Homey mit
+frei verschachtelten Zonen (Haus, Etage, Raum), Zonen-Steuerung und Zonenaktivität.
+Gesamte Funktionsliste: `2026-10-08-roadmap-homey-funktionen.md`.
+
 Nicht enthalten (spätere Stufen):
 
 - Stufe 2: Windows-Installer
@@ -181,10 +185,14 @@ Geräte oder Funktionen ohne Übersetzung erscheinen mit Name und dem Hinweis
 
 ## Fehlerverhalten
 
-- Jeder Dienst lädt für sich. Fällt einer aus, zeigt seine Karte in „Мои сервисы" den
-  Fehler, und oben im Dashboard erscheint ein Hinweis-Balken („Xiaomi: нет связи. Устройства
-  этого сервиса сейчас не показаны."), der zu „Мои сервисы" führt. Seine Geräte fehlen bis
-  zum nächsten erfolgreichen Laden, der Rest läuft weiter.
+- Jeder Dienst lädt für sich. Fällt einer aus, bleiben seine Geräte, Gruppen und Szenarien
+  mit dem zuletzt bekannten Stand sichtbar, aber ausgegraut (Wunsch Maxim, 07.10.).
+  Antippen schaltet nichts, sondern zeigt kurz „Xiaomi Home: нет связи" bzw.
+  „Xiaomi Home: nicht erreichbar". Der Rest läuft weiter.
+- Der zuletzt bekannte Stand je Dienst wird auf der Festplatte zwischengespeichert, damit
+  die Geräte auch nach einem Neustart ohne Verbindung ausgegraut erscheinen statt zu fehlen.
+- Zusätzlich zeigt seine Karte in „Мои сервисы" den Fehler, und ein schmaler Hinweis-Balken
+  oben im Dashboard nennt den Dienst und führt zu „Мои сервисы".
 - Abgelaufene Anmeldung: Status „войдите снова", ein Klick führt zur Anmeldung dieses Dienstes.
 - Befehl schlägt fehl: Karte springt auf den alten Zustand zurück, kurze Meldung.
 
