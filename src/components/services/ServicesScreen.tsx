@@ -20,14 +20,16 @@ interface ServicesScreenProps {
   /** Ошибка последней загрузки. */
   error?: string;
   onRetry?: () => void;
+  /** С чего начать: список сервисов или сразу выбор нового. */
+  initialView?: 'list' | 'pick';
 }
 
 type View = { kind: 'list' } | { kind: 'pick' } | { kind: 'connect'; providerId: ProviderId };
 
 /** «Мои сервисы»: список подключённых сервисов, выбор нового и вход в него. */
-export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChanged, onClose, error, onRetry }) => {
+export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChanged, onClose, error, onRetry, initialView }) => {
   const { t } = useI18n();
-  const [view, setView] = useState<View>(accounts.length === 0 ? { kind: 'pick' } : { kind: 'list' });
+  const [view, setView] = useState<View>(accounts.length === 0 || initialView === 'pick' ? { kind: 'pick' } : { kind: 'list' });
   const [busy, setBusy] = useState<ProviderId | null>(null);
   const [actionError, setActionError] = useState<string>();
 

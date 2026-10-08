@@ -8,7 +8,7 @@ import {
   ThemeSettings,
   resolvePalette,
 } from '../themes/palettes';
-import { FONT_SETS, applyFontSet, fontById } from '../themes/fonts';
+import { applyFonts, fontById, isFontId } from '../themes/fonts';
 
 type Theme = 'light' | 'dark';
 
@@ -38,7 +38,8 @@ const loadSettings = (): ThemeSettings => {
         const valid = Array.isArray(parsed.cycle) ? parsed.cycle.filter(id => ids.includes(id)) : [];
         return valid.length >= 2 ? valid : DEFAULT_SETTINGS.cycle;
       })(),
-      font: FONT_SETS.some(f => f.id === parsed.font) ? parsed.font! : DEFAULT_SETTINGS.font,
+      headingFont: isFontId(parsed.headingFont) ? parsed.headingFont : DEFAULT_SETTINGS.headingFont,
+      textFont: isFontId(parsed.textFont) ? parsed.textFont : DEFAULT_SETTINGS.textFont,
     };
   } catch {
     return DEFAULT_SETTINGS;
@@ -65,7 +66,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const initialSettings = loadSettings();
     const initial = resolvePalette(initialSettings);
     applyPalette(initial);
-    applyFontSet(fontById(initialSettings.font));
+    applyFonts(fontById(initialSettings.headingFont, 'system'), fontById(initialSettings.textFont, 'system'));
     return initial;
   });
 
@@ -85,8 +86,8 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   }, [palette]);
 
   useEffect(() => {
-    applyFontSet(fontById(settings.font));
-  }, [settings.font]);
+    applyFonts(fontById(settings.headingFont, 'system'), fontById(settings.textFont, 'system'));
+  }, [settings.headingFont, settings.textFont]);
 
   const updateSettings = useCallback((patch: Partial<ThemeSettings>) => {
     setSettings(prev => {

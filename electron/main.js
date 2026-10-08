@@ -394,6 +394,19 @@ if (!gotTheLock) {
         createWindow();
         createTray(); // Создаем Tray
 
+        // Системное уведомление о событии дома (протечка, дым и т. п.); клик открывает окно
+        ipcMain.on('notification:show', (_event, payload) => {
+            if (!Notification.isSupported() || !payload?.title) return;
+            const notification = new Notification({ title: String(payload.title), body: String(payload.body ?? '') });
+            notification.on('click', () => {
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.show();
+                    mainWindow.focus();
+                }
+            });
+            notification.show();
+        });
+
         ipcMain.on('app:set-language', (_event, lang) => {
             setMainLanguage(lang);
             if (appTray) {

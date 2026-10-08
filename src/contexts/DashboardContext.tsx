@@ -2,6 +2,7 @@ import React, { createContext, useContext } from 'react';
 import { YandexUserInfoResponse, YandexHousehold, YandexModeAction, CameraStreamResult } from '../types/index';
 import type { AccountSummary } from '../types/electron-api';
 import type { UseZonesReturn } from '../hooks/useZones';
+import type { UseActivityReturn } from '../hooks/useActivity';
 
 export interface DashboardContextValue {
     // Данные
@@ -46,6 +47,14 @@ export interface DashboardContextValue {
     onToggleAutostart: () => void;
     onSwitchHousehold: (householdId?: string) => void;
     onOpenServices: () => void;
+    onOpenSettings: () => void;
+    /** Открыть выбор нового сервиса («Новое подключение»). */
+    onAddService: () => void;
+    /** Лента уведомлений. */
+    activity: UseActivityReturn;
+    /** Настройки попросили включить режим редактирования панели. */
+    editRequested: boolean;
+    onEditHandled: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);

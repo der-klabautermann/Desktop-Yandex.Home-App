@@ -13,14 +13,11 @@ import { FanSettingsModal } from './modals/FanSettingsModal';
 import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
-import { InfoModal } from './modals/InfoModal';
-import { Pencil, Power, RefreshCw, Info, Plug, CloudOff } from 'lucide-react';
-import { ThemePicker } from './ThemePicker';
-import { LanguagePicker } from './LanguagePicker';
+import { Check, CloudOff, Plus, Settings } from 'lucide-react';
+import { ActivityButton } from './activity/ActivityButton';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
-import packageJson from '../../package.json';
 import { useI18n } from '../i18n/I18nContext';
 
 export const Dashboard: React.FC = () => {
@@ -36,6 +33,13 @@ export const Dashboard: React.FC = () => {
         isLightDevice,
         isLightGroup,
     );
+
+    // Настройки попросили включить режим редактирования
+    React.useEffect(() => {
+        if (!ctx.editRequested) return;
+        if (!state.edit.isEditMode) state.toggleEditMode();
+        ctx.onEditHandled();
+    }, [ctx.editRequested]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // ---- Computed values ----
     const currentHousehold = useMemo(() => {
@@ -253,48 +257,20 @@ export const Dashboard: React.FC = () => {
                             <h1>{contentTitle}</h1>
                             <div className="subtitle">{contentSubtitle}</div>
                         </div>
-                        {ctx.activeSidebarView === 'home' && (
-                            <div className="content-actions">
-                                <button
-                                    onClick={state.toggleEditMode}
-                                    className={`header-btn ${state.edit.isEditMode ? 'active' : ''}`}
-                                    title={state.edit.isEditMode ? t('dashboard.editExit') : t('dashboard.edit')}
-                                >
-                                    <Pencil className="w-4 h-4" />
+                        <div className="content-actions">
+                            {state.edit.isEditMode && (
+                                <button onClick={state.toggleEditMode} className="header-done">
+                                    <Check className="w-4 h-4" /> {t('header.done')}
                                 </button>
-                                <button
-                                    onClick={ctx.onToggleAutostart}
-                                    className={`header-btn ${ctx.isAutostartEnabled ? 'active' : ''}`}
-                                    title={ctx.isAutostartEnabled ? t('dashboard.autostartOn') : t('dashboard.autostartOff')}
-                                >
-                                    <Power className="w-4 h-4" />
-                                </button>
-                                <ThemePicker />
-                                <LanguagePicker />
-                                <button
-                                    onClick={ctx.onRefresh}
-                                    disabled={ctx.isRefreshing}
-                                    className="header-btn"
-                                    title={t('dashboard.refresh')}
-                                >
-                                    <RefreshCw className={`w-4 h-4 ${ctx.isRefreshing ? 'animate-spin' : ''}`} />
-                                </button>
-                                <button
-                                    onClick={() => state.setShowInfoModal(true)}
-                                    className="header-btn"
-                                    title={t('dashboard.about')}
-                                >
-                                    <Info className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={ctx.onOpenServices}
-                                    className="header-btn"
-                                    title={t('services.title')}
-                                >
-                                    <Plug className="w-4 h-4" />
-                                </button>
-                            </div>
-                        )}
+                            )}
+                            <ActivityButton />
+                            <button onClick={ctx.onAddService} className="header-btn" title={t('header.addConnection')}>
+                                <Plus className="w-4 h-4" />
+                            </button>
+                            <button onClick={ctx.onOpenSettings} className="header-btn" title={t('settings.title')}>
+                                <Settings className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                     {ctx.accounts.filter(a => a.status !== 'connected').map(a => (
                         <button key={a.providerId} className="service-alert" onClick={ctx.onOpenServices}>
@@ -385,11 +361,6 @@ export const Dashboard: React.FC = () => {
                 />
             )}
 
-            <InfoModal
-                isOpen={state.modal.showInfoModal}
-                onClose={() => state.setShowInfoModal(false)}
-                currentVersion={packageJson.version}
-            />
         </div>
     );
 };

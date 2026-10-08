@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { ServicesScreen } from './components/services/ServicesScreen';
+import { SettingsScreen } from './components/settings/SettingsScreen';
 import { UpdateNotificationModal } from './components/modals/UpdateNotificationModal';
 import { QrAuthModal } from './components/modals/QrAuthModal';
 import { listAccounts, loadHome } from './services/hub';
@@ -12,7 +13,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import DashboardContext from './contexts/DashboardContext';
 import { useNotification, useAuth, useFavorites, useNavigation, useUpdateNotification,
-         useCameraAuth, useYandexData, useDeviceActions, useHousehold, useAutostart, useZones } from './hooks';
+         useCameraAuth, useYandexData, useDeviceActions, useHousehold, useAutostart, useZones, useActivity } from './hooks';
 import packageJson from '../package.json';
 import { debugLog, debugWarn, refreshDebugFlags } from './utils/debugLog';
 import { useI18n } from './i18n/I18nContext';
@@ -28,7 +29,9 @@ function App() {
     const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite } = useFavorites();
     const { activeSidebarView, activeRoomId, activeGroupId, onSelectHome, onSelectRoom, onSelectGroup } = useNavigation();
     const { showUpdateNotification, setShowUpdateNotification, updateInfo } = useUpdateNotification();
-    const [showServices, setShowServices] = useState(false);
+    // Что показано вместо панели: настройки, список сервисов или выбор нового сервиса
+    const [screen, setScreen] = useState<'dashboard' | 'settings' | 'services' | 'add'>('dashboard');
+    const [editRequested, setEditRequested] = useState(false);
 
     // 2. Зависит от showNotification
     const cameraAuth = useCameraAuth(showNotification);
@@ -45,6 +48,7 @@ function App() {
     const household = useHousehold(userData, refreshDashboardData);
     const { activeHouseholdId, handleSwitchHousehold } = household;
     const zones = useZones(userData, activeHouseholdId);
+    const activity = useActivity(userData, accounts, t);
 
     // 5. Зависит от showNotification
     const { isAutostartEnabled, handleToggleAutostart } = useAutostart(showNotification);
@@ -251,7 +255,7 @@ function App() {
     // --- 5. Polling-эффект (автосинхронизация) ---
     useEffect(() => {
         if (appState !== AppState.DASHBOARD || accounts.length === 0) return;
-        const POLLING_INTERVAL = 120000;
+        const POLLING_INTERVAL = 60000;
         const pollingInterval = setInterval(() => {
             refreshDashboardData(true).catch(err => {
                 console.error('Polling sync error:', err);
@@ -327,13 +331,27 @@ function App() {
                     isAutostartEnabled,
                     onToggleAutostart: handleToggleAutostart,
                     onSwitchHousehold: handleSwitchHousehold,
-                    onOpenServices: () => setShowServices(true),
+                    onOpenServices: () => setScreen('services'),
+                    onOpenSettings: () => setScreen('settings'),
+                    onAddService: () => setScreen('add'),
+                    activity,
+                    editRequested,
+                    onEditHandled: () => setEditRequested(false),
                 }}>
-                    {showServices ? (
+                    {screen === 'settings' ? (
+                        <SettingsScreen
+                            onClose={() => setScreen('dashboard')}
+                            onManageServices={() => setScreen('services')}
+                            onAddService={() => setScreen('add')}
+                            onEditDashboard={() => { onSelectHome(); setEditRequested(true); setScreen('dashboard'); }}
+                        />
+                    ) : screen === 'services' || screen === 'add' ? (
                         <ServicesScreen
+                            key={screen}
                             accounts={accounts}
-                            onChanged={() => { setShowServices(false); void loadData(); }}
-                            onClose={() => setShowServices(false)}
+                            initialView={screen === 'add' ? 'pick' : 'list'}
+                            onChanged={() => { setScreen('dashboard'); void loadData(); }}
+                            onClose={() => setScreen('dashboard')}
                         />
                     ) : (
                         <Dashboard />

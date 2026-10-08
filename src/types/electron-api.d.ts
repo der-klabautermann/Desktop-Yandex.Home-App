@@ -60,6 +60,7 @@ export interface IYandexApi {
     
     onRetryAttempt: (callback: (data: {action: string, attempt: number, maxAttempts: number, message: string}) => void) => () => void;
 
+    showSystemNotification?: (payload: { title: string; body: string }) => void;
     showCameraStreamErrorNotification: (payload: {
         deviceId: string;
         deviceName: string;

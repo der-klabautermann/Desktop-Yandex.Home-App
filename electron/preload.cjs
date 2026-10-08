@@ -58,6 +58,7 @@ contextBridge.exposeInMainWorld('api', {
         return () => ipcRenderer.removeListener('yandex-api:retry-attempt', handler);
     },
 
+    showSystemNotification: (payload) => ipcRenderer.send('notification:show', payload),
     showCameraStreamErrorNotification: (payload) =>
         ipcRenderer.invoke('notification:camera-stream-error', payload),
     onCameraStreamRetry: (callback) => {
