@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Palette, Type, Languages, Bell, Plug, LayoutGrid, Info, RefreshCw, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Palette, Type, Languages, Bell, Plug, LayoutGrid, Info, RefreshCw, Pencil, Settings2 } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { LANGUAGES } from '../../i18n/core';
@@ -106,8 +106,8 @@ export const SettingsScreen: React.FC<SettingsScreenProps> = ({ onClose, onManag
                 ))}
               </div>
               <div className="settings-actions">
-                <button className="service-action" onClick={onManageServices}><Plug className="w-3.5 h-3.5" /> {t('settings.services.manage')}</button>
-                <button className="service-action" onClick={onAddService}><Plus className="w-3.5 h-3.5" /> {t('header.addConnection')}</button>
+                <button className="service-action" onClick={onManageServices}><Settings2 className="w-3.5 h-3.5" /> {t('settings.services.manage')}</button>
+                <button className="service-action" onClick={onAddService}><Plug className="w-3.5 h-3.5" /> {t('header.addConnection')}</button>
               </div>
             </>
           )}

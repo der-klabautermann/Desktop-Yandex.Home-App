@@ -13,7 +13,7 @@ import { FanSettingsModal } from './modals/FanSettingsModal';
 import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
-import { Check, CloudOff, Plus, Settings } from 'lucide-react';
+import { Check, CloudOff, Plug, Settings } from 'lucide-react';
 import { ActivityButton } from './activity/ActivityButton';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -265,7 +265,7 @@ export const Dashboard: React.FC = () => {
                             )}
                             <ActivityButton />
                             <button onClick={ctx.onAddService} className="header-btn" title={t('header.addConnection')}>
-                                <Plus className="w-4 h-4" />
+                                <Plug className="w-4 h-4" />
                             </button>
                             <button onClick={ctx.onOpenSettings} className="header-btn" title={t('settings.title')}>
                                 <Settings className="w-4 h-4" />
