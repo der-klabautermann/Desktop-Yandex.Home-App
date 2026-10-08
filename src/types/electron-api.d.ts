@@ -5,20 +5,36 @@ export interface YandexApiRequestOptions {
     retry?: boolean;
 }
 
+export type ProviderId = 'yandex' | 'xiaomi' | 'aqara';
+
+export interface AccountSummary {
+    providerId: ProviderId;
+    status: 'connected' | 'offline' | 'relogin';
+    error?: string;
+}
+
+export interface HubLoadResult {
+    data: YandexUserInfoResponse;
+    accounts: AccountSummary[];
+}
+
+export interface IHubApi {
+    accounts: () => Promise<AccountSummary[]>;
+    connect: (providerId: ProviderId, payload: Record<string, string>) => Promise<void>;
+    disconnect: (providerId: ProviderId) => Promise<void>;
+    loadHome: (options?: YandexApiRequestOptions) => Promise<HubLoadResult>;
+    toggleDevice: (deviceId: string, newState: boolean) => Promise<void>;
+    setDeviceMode: (deviceId: string, actions: YandexModeAction[], turnOn?: boolean) => Promise<void>;
+    toggleGroup: (groupId: string, deviceIds: string[], newState: boolean) => Promise<void>;
+    runScenario: (scenarioId: string) => Promise<void>;
+}
+
 export interface IYandexApi {
+    hub: IHubApi;
     setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
-    fetchUserInfo: (token: string, options?: YandexApiRequestOptions) => Promise<YandexUserInfoResponse>;
-    fetchDevice: (token: string, deviceId: string) => Promise<YandexDevice>; 
-    executeScenario: (token: string, scenarioId: string) => Promise<void>;
-    toggleDevice: (token: string, deviceId: string, newState: boolean) => Promise<void>;
-    toggleGroup: (token: string, groupId: string, deviceIds: string[], newState: boolean) => Promise<void>;
-    setDeviceMode: (token: string, deviceId: string, modeActions: YandexModeAction[], turnOn?: boolean) => Promise<void>;
     getCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     setCameraPrivacyMode: (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => Promise<void>;
     getQuasarCameraDevice: (deviceId: string, options?: YandexApiRequestOptions) => Promise<YandexDevice>;
-	  getSecureToken: () => Promise<string | null>;
-    setSecureToken: (token: string) => Promise<void>;
-    deleteSecureToken: () => Promise<void>;
 
     hasXToken: () => Promise<boolean>;
     startQrAuth: () => Promise<{ qrUrl: string; qrDataUrl: string }>;

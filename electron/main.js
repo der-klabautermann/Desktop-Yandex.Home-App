@@ -1,10 +1,13 @@
 // main.js
 
-import { app, BrowserWindow, ipcMain, Menu, Tray, Notification } from 'electron'; // <-- Добавлен Menu, Tray
+import { app, BrowserWindow, ipcMain, Menu, Tray, Notification, shell } from 'electron';
 import path from 'path';
+import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
-// Импорт yandex-api.js
+// Ядро: сервисы умного дома и распределитель
 import {
+    Hub,
+    createYandexProvider,
     yandexApi,
     startQrAuth,
     pollQrAuth,
@@ -26,6 +29,21 @@ const ACCOUNT_NAME_X_TOKEN = 'YandexXToken';
 const getStoredXToken = () => keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME_X_TOKEN);
 const setStoredXToken = (xToken) => keytar.setPassword(SERVICE_NAME, ACCOUNT_NAME_X_TOKEN, xToken);
 const deleteStoredXToken = () => keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME_X_TOKEN);
+
+// Связка ключей как хранилище секретов для ядра
+const credentialStore = {
+    get: async (account) => {
+        try {
+            return await keytar.getPassword(SERVICE_NAME, account);
+        } catch (error) {
+            // Доступ к связке ключей запрещён: считаем, что сервис не подключён
+            console.error('Keychain read failed:', error);
+            return null;
+        }
+    },
+    set: (account, value) => keytar.setPassword(SERVICE_NAME, account, value),
+    delete: async (account) => { await keytar.deletePassword(SERVICE_NAME, account); },
+};
 
 /** Coalesce concurrent identical API calls so retry counters are not reset. */
 const inflightRequests = new Map();
@@ -53,6 +71,38 @@ if (isDev) {
 let mainWindow = null;
 let appTray = null; // Переменная для хранения экземпляра Tray
 let favoritesData = []; // Данные избранных устройств/сценариев
+
+// Последнее удачное состояние каждого сервиса: при сбое карточки остаются серыми
+const homeCacheFile = (providerId) => path.join(app.getPath('userData'), 'home-cache', `${providerId}.json`);
+const homeCache = {
+    load: async (providerId) => {
+        try {
+            return JSON.parse(await fs.readFile(homeCacheFile(providerId), 'utf8'));
+        } catch {
+            return null;
+        }
+    },
+    save: async (providerId, data) => {
+        await fs.mkdir(path.dirname(homeCacheFile(providerId)), { recursive: true });
+        await fs.writeFile(homeCacheFile(providerId), JSON.stringify(data));
+    },
+    remove: async (providerId) => {
+        await fs.rm(homeCacheFile(providerId), { force: true });
+    },
+};
+
+const providerHooks = {
+    onRetryAttempt: (action, attempt, maxAttempts) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('yandex-api:retry-attempt', {
+                action, attempt, maxAttempts,
+                message: tm('retryAttempt', { attempt, max: maxAttempts }),
+            });
+        }
+    },
+};
+
+const hub = new Hub([createYandexProvider(credentialStore, providerHooks)], homeCache);
 
 // --- 1. Обработка закрытия окна (свернуть в трей) ---
 const minimizeToTray = (event) => {
@@ -235,6 +285,12 @@ function createWindow () {
     });
     
     mainWindow.on('close', minimizeToTray);
+
+    // Внешние ссылки (инструкции по входу) открываем в обычном браузере
+    mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+        if (/^https?:\/\//.test(url)) shell.openExternal(url);
+        return { action: 'deny' };
+    });
     
     // Очищаем ссылку на окно при его закрытии
     mainWindow.on('closed', () => {
@@ -340,61 +396,25 @@ if (!gotTheLock) {
             };
         };
 
-        ipcMain.handle('yandex-api:fetchUserInfo', async (event, token, options = {}) => {
+        const rethrow = (error) => { throw new Error(error.message, { cause: error }); };
+
+        ipcMain.handle('hub:accounts', () => hub.accounts());
+        ipcMain.handle('hub:connect', (_e, providerId, payload) => hub.connect(providerId, payload).catch(rethrow));
+        ipcMain.handle('hub:disconnect', async (_e, providerId) => {
+            await hub.disconnect(providerId);
+            if (providerId === 'yandex') {
+                clearQuasarSessionCache();
+                cancelQrAuth();
+            }
+        });
+        ipcMain.handle('hub:loadHome', (_e, options = {}) => {
             const retry = options.retry !== false;
-            const key = `fetchUserInfo:${token}:${retry}`;
-            try {
-                return await runSingleFlight(key, () =>
-                    yandexApi.fetchUserInfo(
-                        token,
-                        retry ? makeRetryCallback('fetchUserInfo') : null,
-                        { retry },
-                    ),
-                );
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
+            return runSingleFlight(`loadHome:${retry}`, () => hub.loadHome({ retry })).catch(rethrow);
         });
-
-        ipcMain.handle('yandex-api:executeScenario', async (event, token, scenarioId) => {
-            try {
-                return await yandexApi.executeScenario(token, scenarioId, makeRetryCallback('executeScenario'));
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
-        });
-
-        ipcMain.handle('yandex-api:toggleDevice', async (event, token, deviceId, newState) => {
-            try {
-                return await yandexApi.toggleDevice(token, deviceId, newState, makeRetryCallback('toggleDevice'));
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
-        });
-
-        ipcMain.handle('yandex-api:setDeviceMode', async (event, token, deviceId, modeActions, turnOn) => {
-            try {
-                return await yandexApi.setDeviceMode(token, deviceId, modeActions, turnOn, makeRetryCallback('setDeviceMode'));
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
-        });
-
-        ipcMain.handle('yandex-api:toggleGroup', async (event, token, groupId, deviceIds, newState) => {
-            try {
-                return await yandexApi.toggleGroup(token, groupId, deviceIds, newState, makeRetryCallback('toggleGroup'));
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
-        });
-
-        ipcMain.handle('yandex-api:fetchDevice', async (event, token, deviceId) => {
-            try {
-                return await yandexApi.fetchDevice(token, deviceId, makeRetryCallback('fetchDevice'));
-            } catch (error) {
-                throw new Error(error.message, { cause: error });
-            }
-        });
+        ipcMain.handle('hub:toggleDevice', (_e, id, state) => hub.toggleDevice(id, state).catch(rethrow));
+        ipcMain.handle('hub:setDeviceMode', (_e, id, actions, turnOn) => hub.setDeviceMode(id, actions, turnOn).catch(rethrow));
+        ipcMain.handle('hub:toggleGroup', (_e, id, deviceIds, state) => hub.toggleGroup(id, deviceIds, state).catch(rethrow));
+        ipcMain.handle('hub:runScenario', (_e, id) => hub.runScenario(id).catch(rethrow));
 
         ipcMain.handle('yandex-api:getCameraStream', async (event, deviceId) => {
             try {
@@ -494,29 +514,6 @@ if (!gotTheLock) {
             cancelQrAuth();
         });
 
-        ipcMain.handle('secure:getToken', async () => {
-            // Читает токен из системного хранилища.
-            // Если доступ к связке ключей запрещён, показываем ввод токена вместо вечной загрузки.
-            try {
-                return await keytar.getPassword(SERVICE_NAME, ACCOUNT_NAME);
-            } catch (error) {
-                console.error('Keychain read failed:', error);
-                return null;
-            }
-        });
-
-        ipcMain.handle('secure:setToken', async (event, token) => {
-            // Сохраняет токен в системное хранилище
-            await keytar.setPassword(SERVICE_NAME, ACCOUNT_NAME, token);
-        });
-
-        ipcMain.handle('secure:deleteToken', async () => {
-            await keytar.deletePassword(SERVICE_NAME, ACCOUNT_NAME);
-            await deleteStoredXToken();
-            clearQuasarSessionCache();
-            cancelQrAuth();
-        });
-        
         // --- Auto-launch handlers ---
         ipcMain.handle('autostart:isEnabled', async () => {
             const loginItemSettings = app.getLoginItemSettings();

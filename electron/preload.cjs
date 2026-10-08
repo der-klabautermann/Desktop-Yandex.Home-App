@@ -4,12 +4,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
     setLanguage: (lang) => ipcRenderer.send('app:set-language', lang),
-    fetchUserInfo: (token, options) => ipcRenderer.invoke('yandex-api:fetchUserInfo', token, options),
-    executeScenario: (token, scenarioId) => ipcRenderer.invoke('yandex-api:executeScenario', token, scenarioId),
-    toggleDevice: (token, deviceId, newState) => ipcRenderer.invoke('yandex-api:toggleDevice', token, deviceId, newState),
-    toggleGroup: (token, groupId, deviceIds, newState) => ipcRenderer.invoke('yandex-api:toggleGroup', token, groupId, deviceIds, newState),
-    setDeviceMode: (token, deviceId, modeActions, turnOn) => ipcRenderer.invoke('yandex-api:setDeviceMode', token, deviceId, modeActions, turnOn),
-    fetchDevice: (token, deviceId) => ipcRenderer.invoke('yandex-api:fetchDevice', token, deviceId),
     getCameraStream: (deviceId) => ipcRenderer.invoke('yandex-api:getCameraStream', deviceId),
     setCameraPrivacyMode: (deviceId, privacyEnabled, toggleInstance) =>
         ipcRenderer.invoke('yandex-api:setCameraPrivacyMode', deviceId, privacyEnabled, toggleInstance),
@@ -20,13 +14,17 @@ contextBridge.exposeInMainWorld('api', {
     pollQrAuth: () => ipcRenderer.invoke('yandex-auth:pollQr'),
     cancelQrAuth: () => ipcRenderer.invoke('yandex-auth:cancelQr'),
     
-    // Запрашивает токен из Keytar
-    getSecureToken: () => ipcRenderer.invoke('secure:getToken'), 
-    // Сохраняет токен в Keytar
-    setSecureToken: (token) => ipcRenderer.invoke('secure:setToken', token),
-    // Удаляет токен из Keytar
-    deleteSecureToken: () => ipcRenderer.invoke('secure:deleteToken'),
-    
+    hub: {
+        accounts: () => ipcRenderer.invoke('hub:accounts'),
+        connect: (providerId, payload) => ipcRenderer.invoke('hub:connect', providerId, payload),
+        disconnect: (providerId) => ipcRenderer.invoke('hub:disconnect', providerId),
+        loadHome: (options) => ipcRenderer.invoke('hub:loadHome', options),
+        toggleDevice: (deviceId, newState) => ipcRenderer.invoke('hub:toggleDevice', deviceId, newState),
+        setDeviceMode: (deviceId, actions, turnOn) => ipcRenderer.invoke('hub:setDeviceMode', deviceId, actions, turnOn),
+        toggleGroup: (groupId, deviceIds, newState) => ipcRenderer.invoke('hub:toggleGroup', groupId, deviceIds, newState),
+        runScenario: (scenarioId) => ipcRenderer.invoke('hub:runScenario', scenarioId),
+    },
+
     // Auto-launch methods
     isAutostartEnabled: () => ipcRenderer.invoke('autostart:isEnabled'),
     setAutostartEnabled: (enabled) => ipcRenderer.invoke('autostart:setEnabled', enabled), 
