@@ -97,7 +97,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
     <div className="group-wrapper" style={{ opacity: isEditMode && getIconHiddenState(`group_${group.id}`) ? 0.5 : 1, filter: isEditMode && getIconHiddenState(`group_${group.id}`) ? 'grayscale(1)' : 'none' }}>
       <div className="group-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setIsCollapsed(!isCollapsed)}>
-          {isCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+          {isCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
           <h3>{group.name}<ProviderBadge providerId={group.provider_id} unreachable={group.unreachable} /></h3>
           <span className="sidebar-item-badge" style={{ fontSize: 11 }}>{groupDevices.length}</span>
         </div>
@@ -105,7 +105,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
           {onToggleFavorite && (
             <div
               onClick={(e) => { e.stopPropagation(); onToggleFavorite(group.id); }}
-              style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: isFavorite ? 'color-mix(in oklab, var(--fav-star) 10%, transparent)' : 'transparent', color: isFavorite ? 'var(--fav-star)' : 'rgba(255,255,255,0.5)' }}
+              style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: isFavorite ? 'color-mix(in oklab, var(--fav-star) 10%, transparent)' : 'transparent', color: isFavorite ? 'var(--fav-star)' : 'var(--muted)' }}
             >
               <Star className="w-3.5 h-3.5" fill={isFavorite ? 'currentColor' : 'none'} />
             </div>

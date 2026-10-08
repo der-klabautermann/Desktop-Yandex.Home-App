@@ -194,7 +194,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
         return (
             <div key={room.id} className="room-section">
                 <div className="room-header" onClick={() => state.toggleRoom(room.id)}>
-                    {isRoomCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+                    {isRoomCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
                     <h2>{room.name}</h2>
                     <span className="room-count">{roomDevices.length}</span>
                 </div>
@@ -269,7 +269,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                 return (
                     <div className="room-section">
                         <div className="room-header" onClick={state.toggleUnassignedDevices}>
-                            {state.collapse.isUnassignedDevicesCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+                            {state.collapse.isUnassignedDevicesCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
                             <h2>{t('dashboard.noRoom')}</h2>
                             <span className="room-count">{unassignedDevices.length}</span>
                         </div>
@@ -291,7 +291,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                 <section style={{ marginTop: 32 }}>
                     <div className="section-header">
                         <button onClick={state.toggleScenarios} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
-                            {state.collapse.isScenariosCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+                            {state.collapse.isScenariosCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
                             <h2>{t('dashboard.scenarios')}</h2>
                             <span className="section-count">{activeScenarios.filter(s => !state.getEffectiveHidden(`scenario_${s.id}`)).length}</span>
                         </button>

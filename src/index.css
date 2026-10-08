@@ -2305,3 +2305,16 @@ body::after {
   .settings-nav { position: static; flex-direction: row; overflow-x: auto; }
   .font-columns, .settings-choices { grid-template-columns: 1fr; }
 }
+
+/* Заголовки комнат и разделов вровень с краем карточек: стрелка сворачивания висит слева в поле */
+.room-header,
+.section-header > button { position: relative; }
+.room-header > svg:first-child,
+.section-header > button > svg:first-child {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.7;
+}
+.section-header > button { gap: 10px !important; }
