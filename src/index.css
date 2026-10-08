@@ -2286,9 +2286,7 @@ body::after {
 }
 .font-preview-title { color: var(--fg); line-height: 1.1; }
 .font-preview-text { margin-top: 8px; font-size: 14px; color: var(--fg-2, var(--fg)); line-height: 1.5; }
-.font-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
-.font-columns h4 { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.font-list { display: flex; flex-direction: column; gap: 4px; }
+.font-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 18px; }
 .font-option {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
   padding: 9px 12px; border-radius: 12px;
@@ -2303,7 +2301,7 @@ body::after {
 @media (max-width: 760px) {
   .settings-layout { grid-template-columns: 1fr; }
   .settings-nav { position: static; flex-direction: row; overflow-x: auto; }
-  .font-columns, .settings-choices { grid-template-columns: 1fr; }
+  .font-list, .settings-choices { grid-template-columns: 1fr; }
 }
 
 /* Заголовки комнат и разделов вровень с краем карточек: стрелка сворачивания висит слева в поле */
