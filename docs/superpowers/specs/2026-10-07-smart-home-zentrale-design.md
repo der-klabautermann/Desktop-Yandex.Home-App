@@ -206,6 +206,15 @@ Geräte oder Funktionen ohne Übersetzung erscheinen mit Name und dem Hinweis
 - Ende-zu-Ende nur mit echten Konten: Yandex mit Maxims Konto; Xiaomi und Aqara erst,
   wenn Maxim oder sein Vater sich einmal anmeldet.
 
+## Xiaomi: Lizenzfrage (08.10.)
+
+Die Lizenz des offiziellen Xiaomi-Codes für Home Assistant (github.com/XiaoMi/ha_xiaomi_home)
+erlaubt Anmeldung und Cloud-Schnittstelle nur für die Nutzung in Home Assistant und
+untersagt ausdrücklich, damit eigene Apps zu bauen. Der oben beschriebene Xiaomi-Weg wird
+deshalb nicht umgesetzt, bis Maxim zwischen den Alternativen entschieden hat
+(Xiaomi über die Yandex-Verknüpfung, Home Assistant als eigener Dienst, inoffizielle
+Anmeldung nur in privater Fassung). Xiaomi steht in der Auswahl weiter als „bald“.
+
 ## Risiken
 
 - Xiaomi könnte die für Home Assistant freigegebene Anmeldung für fremde Apps einschränken.
