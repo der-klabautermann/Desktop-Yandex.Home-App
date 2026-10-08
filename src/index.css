@@ -2218,11 +2218,17 @@ body::after {
 .settings-screen {
   position: relative; z-index: 1;
   max-width: 1100px; margin: 0 auto;
-  padding: 34px 34px 48px;
-  height: 100vh; overflow-y: auto;
+  padding: 34px 34px 34px;
+  height: 100vh; overflow: hidden;
+  display: flex; flex-direction: column;
   color: var(--fg);
 }
-.settings-layout { display: grid; grid-template-columns: 210px 1fr; gap: 24px; align-items: start; }
+/* Seite selbst scrollt nicht: Titel und Menü bleiben stehen, gescrollt wird nur im Inhalt */
+.settings-layout {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 210px 1fr; grid-template-rows: minmax(0, 1fr);
+  gap: 24px; align-items: start;
+}
 .settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
 .settings-nav-item {
   display: flex; align-items: center; gap: 10px;
@@ -2241,7 +2247,15 @@ body::after {
   background: color-mix(in oklab, var(--card-bg) 78%, transparent);
   border: 1px solid var(--glass-line);
   animation: riseIn 360ms var(--ease-standard) both;
+  max-height: 100%; overflow-y: auto;
+  display: flex; flex-direction: column;
 }
+.settings-panel > * { flex-shrink: 0; }
+/* Schrift: Vorschau bleibt stehen, nur die Liste scrollt */
+.settings-panel:has(.font-settings) { overflow: hidden; }
+.settings-panel > .font-settings { flex-shrink: 1; min-height: 0; display: flex; flex-direction: column; }
+.font-settings .font-preview { flex-shrink: 0; }
+.font-settings .font-list { min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px 2px; }
 .settings-panel > h2 {
   margin: 0 0 16px;
   font-family: var(--font-display); font-weight: var(--display-weight, 500);
@@ -2298,7 +2312,7 @@ body::after {
 .font-option-sample { line-height: 1.2; }
 
 @media (max-width: 760px) {
-  .settings-layout { grid-template-columns: 1fr; }
+  .settings-layout { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); }
   .settings-nav { position: static; flex-direction: row; overflow-x: auto; }
   .settings-choices { grid-template-columns: 1fr; }
 }
