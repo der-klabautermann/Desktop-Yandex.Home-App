@@ -1,6 +1,6 @@
 // main.js
 
-import { app, BrowserWindow, ipcMain, Menu, Tray, Notification, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, Menu, Tray, Notification, shell, systemPreferences } from 'electron';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
@@ -17,7 +17,7 @@ import {
     validateStoredXToken,
     clearQuasarSessionCache,
 } from './core.js';
-import { setMainLanguage, tm } from './i18n.js';
+import { mainLanguage, setMainLanguage, tm } from './i18n.js';
 import keytar from 'keytar';
 
 // Установка __dirname и __filename для ES Modules
@@ -71,9 +71,14 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 app.commandLine.appendSwitch('use-mock-keychain');
 const DEV_VITE_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
+if (!isDev) {
+    // Папка данных остаётся прежней и после переименования приложения (настройки, кэш, зоны)
+    app.setPath('userData', path.join(app.getPath('appData'), 'yandex-smart-home-control'));
+}
+
 if (isDev) {
     // Отделяем dev-экземпляр от установленного приложения (single-instance, userData, трей)
-    app.setName('Yandex Smart Home Control DEV');
+    app.setName('Smart Central DEV');
     app.setPath('userData', path.join(app.getPath('appData'), 'yandex-smart-home-control-dev'));
 }
 
@@ -293,10 +298,74 @@ function updateTrayMenu() {
 }
 
 
+// Меню приложения на macOS: подписи на языке приложения, правка нужна для Cmd+C/Cmd+V
+function applyAppMenu() {
+    if (process.platform !== 'darwin') {
+        Menu.setApplicationMenu(null);
+        return;
+    }
+    const name = tm('appName');
+    Menu.setApplicationMenu(Menu.buildFromTemplate([
+        {
+            label: name,
+            submenu: [
+                { role: 'about', label: `${tm('about')} ${name}` },
+                { type: 'separator' },
+                { role: 'hide', label: `${tm('hide')} ${name}` },
+                { role: 'hideOthers', label: tm('hideOthers') },
+                { role: 'unhide', label: tm('showAll') },
+                { type: 'separator' },
+                { role: 'quit', label: `${tm('quit')} ${name}` },
+            ],
+        },
+        {
+            label: tm('edit'),
+            submenu: [
+                { role: 'undo', label: tm('undo') },
+                { role: 'redo', label: tm('redo') },
+                { type: 'separator' },
+                { role: 'cut', label: tm('cut') },
+                { role: 'copy', label: tm('copy') },
+                { role: 'paste', label: tm('paste') },
+                { role: 'selectAll', label: tm('selectAll') },
+            ],
+        },
+        {
+            label: tm('view'),
+            submenu: [
+                { role: 'reload', label: tm('reload') },
+                { role: 'togglefullscreen', label: tm('fullscreen') },
+            ],
+        },
+        {
+            label: tm('window'),
+            submenu: [
+                { role: 'minimize', label: tm('minimize') },
+                { role: 'zoom', label: tm('zoom') },
+            ],
+        },
+    ]));
+}
+
+// Имя в строке меню macOS берётся из пакета приложения (de/en/ru.lproj) по языку,
+// записанному здесь. Меняется со следующего запуска.
+function rememberBundleLanguage(lang) {
+    if (process.platform !== 'darwin' || isDev) return;
+    try {
+        const stored = systemPreferences.getUserDefault('AppleLanguages', 'array');
+        if (Array.isArray(stored) && stored[0] === lang) return;
+        systemPreferences.setUserDefault('AppleLanguages', 'array', [lang]);
+    } catch (error) {
+        console.warn('[Main] AppleLanguages not saved:', error?.message);
+    }
+}
+
 function createWindow () {
     mainWindow = new BrowserWindow({
         width: 1024,
         height: 768,
+        // macOS: без серой полосы заголовка, содержимое на всё окно, кнопки окна поверх
+        ...(process.platform === 'darwin' ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 18, y: 18 } } : {}),
         webPreferences: {
             nodeIntegration: false, 
             contextIsolation: true,
@@ -326,7 +395,7 @@ function createWindow () {
 
 
      if (isDev) {
-        mainWindow.setTitle('[DEV] Yandex Smart Home Control');
+        mainWindow.setTitle('[DEV] Smart Central');
         mainWindow.loadURL(DEV_VITE_URL);
         mainWindow.webContents.openDevTools({ mode: 'detach' });
         mainWindow.webContents.on('console-message', (_event, level, message) => {
@@ -389,7 +458,7 @@ if (!gotTheLock) {
             app.setAppUserModelId('com.onegamerstory.smarthomecontrol');
         }
 
-        Menu.setApplicationMenu(null);
+        applyAppMenu();
 
         createWindow();
         createTray(); // Создаем Tray
@@ -409,6 +478,8 @@ if (!gotTheLock) {
 
         ipcMain.on('app:set-language', (_event, lang) => {
             setMainLanguage(lang);
+            applyAppMenu();
+            rememberBundleLanguage(lang);
             if (appTray) {
                 appTray.setToolTip(isDev ? `[DEV] ${tm('trayTooltip')}` : tm('trayTooltip'));
             }

@@ -3,6 +3,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('api', {
+    platform: process.platform,
     setLanguage: (lang) => ipcRenderer.send('app:set-language', lang),
     getCameraStream: (deviceId) => ipcRenderer.invoke('yandex-api:getCameraStream', deviceId),
     setCameraPrivacyMode: (deviceId, privacyEnabled, toggleInstance) =>

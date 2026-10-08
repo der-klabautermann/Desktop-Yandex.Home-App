@@ -37,6 +37,7 @@ export interface IZonesApi {
 export interface IYandexApi {
     hub: IHubApi;
     zones: IZonesApi;
+    platform?: string;
     setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
     getCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     setCameraPrivacyMode: (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => Promise<void>;

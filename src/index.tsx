@@ -17,6 +17,9 @@ import { I18nProvider } from './i18n/I18nContext';
 import { debugError, debugLog, refreshDebugFlags } from './utils/debugLog';
 
 refreshDebugFlags();
+
+// На macOS окно без системной полосы заголовка: CSS оставляет место под кнопками окна
+if (window.api?.platform === 'darwin') document.documentElement.classList.add('is-mac');
 debugLog('react', 'renderer boot', { href: window.location.href });
 
 window.addEventListener('error', (event) => {

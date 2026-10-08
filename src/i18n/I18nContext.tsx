@@ -34,6 +34,7 @@ export const I18nProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     document.documentElement.lang = lang;
+    document.title = resolveKey(DICTIONARIES[lang], 'app.name') as string;
     window.api?.setLanguage?.(lang);
   }, [lang]);
 

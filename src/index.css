@@ -2316,3 +2316,16 @@ body::after {
   opacity: 0.7;
 }
 .section-header > button { gap: 10px !important; }
+
+/* macOS: окно без полосы заголовка. Кнопки окна лежат поверх содержимого слева сверху,
+   за верхнюю кромку окно можно перетаскивать. */
+.window-drag-strip { display: none; }
+html.is-mac .window-drag-strip {
+  display: block;
+  position: fixed; top: 0; left: 0; right: 0; height: 28px;
+  z-index: 10000;
+  -webkit-app-region: drag;
+}
+html.is-mac .sidebar-header { padding-top: 44px; }
+html.is-mac .settings-screen,
+html.is-mac .services-screen { padding-top: 52px; }

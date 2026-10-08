@@ -267,6 +267,7 @@ export const de = {
     },
   },
   app: {
+    name: 'Smart Zentrale',
     loading: 'Daten werden geladen …',
     retrying: 'Neue Verbindung, Versuch {attempt} von {max} …',
     noConnection: 'Keine Verbindung. Die App versucht, sich zu verbinden …',

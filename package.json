@@ -48,10 +48,10 @@
     "vitest": "^3.2.7"
   },
   "author": "История Одного Геймера <gamecuts0412@gmail.com>",
-  "description": "Yandex Smart Home Control Application",
+  "description": "Smart Central: eine Zentrale für Yandex, Xiaomi, Aqara und Home Assistant",
   "build": {
     "appId": "com.onegamerstory.smarthomecontrol",
-    "productName": "Yandex Smart Home Control",
+    "productName": "Smart Central",
     "artifactName": "${productName} Setup v${version}.${ext}",
     "icon": "resources/icon.png",
     "files": [
@@ -84,11 +84,22 @@
       "extendInfo": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
+        },
+        "CFBundleDisplayName": "Smart Central",
+        "LSHasLocalizedDisplayName": true
+      },
+      "extraResources": [
+        {
+          "from": "resources/mac-locales",
+          "to": ".",
+          "filter": [
+            "**/*"
+          ]
         }
-      }
+      ]
     },
     "dmg": {
-      "title": "Smart Home Control Installer",
+      "title": "Smart Central",
       "iconSize": 128,
       "contents": [
         {

@@ -267,6 +267,7 @@ export const en = {
     },
   },
   app: {
+    name: 'Smart Central',
     loading: 'Loading data...',
     retrying: 'Reconnecting, attempt {attempt} of {max}...',
     noConnection: 'No connection. The app is trying to connect...',
