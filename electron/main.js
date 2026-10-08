@@ -24,7 +24,10 @@ import keytar from 'keytar';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SERVICE_NAME = 'SmartHomeControlApp';
+// Записи связки ключей. Старые (SmartHomeControlApp) создавались сборками с подписью без Team ID:
+// macOS спрашивала пароль после каждой пересборки. Новые создаёт приложение с подписью
+// Apple Development (постоянный Team ID), поэтому обновления больше не вызывают запрос.
+const SERVICE_NAME = 'SmartHomeZentrale';
 const ACCOUNT_NAME = 'YandexToken';
 const ACCOUNT_NAME_X_TOKEN = 'YandexXToken';
 
@@ -62,6 +65,10 @@ const runSingleFlight = (key, fn) => {
 };
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
+
+// Chromium хранит ключ шифрования cookies в связке ключей и после каждой пересборки
+// спрашивал бы пароль. Нужных нам cookies в окне нет, поэтому связка ключей ему не нужна.
+app.commandLine.appendSwitch('use-mock-keychain');
 const DEV_VITE_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
 if (isDev) {
