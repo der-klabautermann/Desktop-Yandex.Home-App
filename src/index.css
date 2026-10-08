@@ -285,26 +285,27 @@ body {
   height: 15px;
 }
 
-/* Scrollbars */
-.sidebar::-webkit-scrollbar,
-.content::-webkit-scrollbar {
+/* Scrollbars: überall schmal, ohne Hintergrundspur, Farbe aus dem Theme */
+::-webkit-scrollbar {
   width: 6px;
-}
-
-.sidebar::-webkit-scrollbar-track,
-.content::-webkit-scrollbar-track {
+  height: 6px;
   background: transparent;
 }
 
-.sidebar::-webkit-scrollbar-thumb,
-.content::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover,
-.content::-webkit-scrollbar-thumb:hover {
-  background: var(--meta);
+::-webkit-scrollbar-thumb {
+  background: color-mix(in oklab, var(--fg) 18%, transparent);
+  background-clip: padding-box;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in oklab, var(--fg) 32%, transparent);
 }
 
 /* Sidebar sections */
@@ -2231,6 +2232,7 @@ body::after {
 }
 .settings-nav { position: sticky; top: 0; display: flex; flex-direction: column; gap: 2px; }
 .settings-nav-item {
+  transition: background-color 180ms ease, color 180ms ease;
   display: flex; align-items: center; gap: 10px;
   padding: 9px 12px; border-radius: 12px; border: none;
   background: transparent; color: var(--fg-2, var(--fg));
@@ -2255,7 +2257,16 @@ body::after {
 .settings-panel:has(.font-settings) { overflow: hidden; }
 .settings-panel > .font-settings { flex-shrink: 1; min-height: 0; display: flex; flex-direction: column; }
 .font-settings .font-preview { flex-shrink: 0; }
-.font-settings .font-list { min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 0 6px 2px; }
+.font-settings .font-list {
+  min-height: 0; overflow-y: auto;
+  margin: 0 -6px; padding: 2px 6px;
+  --fade-top: 0px; --fade-bottom: 0px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--fade-top), #000 calc(100% - var(--fade-bottom)), transparent 100%);
+}
+/* Weicher Rand nur dort, wo noch etwas zum Scrollen ist */
+.font-settings .font-list[data-more-above="true"] { --fade-top: 28px; }
+.font-settings .font-list[data-more-below="true"] { --fade-bottom: 28px; }
 .settings-panel > h2 {
   margin: 0 0 16px;
   font-family: var(--font-display); font-weight: var(--display-weight, 500);
@@ -2266,6 +2277,7 @@ body::after {
 .settings-choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .settings-choices.is-column { grid-template-columns: 1fr; }
 .settings-choice {
+  transition: background-color 180ms ease, border-color 180ms ease;
   display: flex; flex-direction: column; align-items: flex-start; gap: 4px;
   padding: 14px 16px; border-radius: 16px;
   border: 1px solid var(--glass-line); background: transparent;
@@ -2302,10 +2314,17 @@ body::after {
 .font-preview-text { margin-top: 8px; font-size: 14px; color: var(--fg-2, var(--fg)); line-height: 1.5; }
 .font-list { display: flex; flex-direction: column; gap: 4px; }
 .font-option {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
-  padding: 9px 12px; border-radius: 12px;
+  display: flex; align-items: center; gap: 12px;
+  min-height: 44px; padding: 8px 14px; border-radius: 12px;
   border: 1px solid transparent; background: transparent;
   color: var(--fg); cursor: pointer; text-align: left;
+  transition: background-color 180ms ease, border-color 180ms ease;
+}
+.font-option:focus-visible,
+.settings-nav-item:focus-visible,
+.settings-choice:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, transparent);
+  outline-offset: 2px;
 }
 .font-option:hover { background: color-mix(in oklab, var(--fg) 5%, transparent); }
 .font-option.is-active { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
