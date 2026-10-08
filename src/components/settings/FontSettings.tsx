@@ -3,7 +3,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { FONTS, fontById, type FontChoice } from '../../themes/fonts';
 
-/** Шрифт: живой пример сверху, ниже один список на заголовки и текст сразу. */
+/** Шрифт: живой пример сверху, ниже один столбец вариантов (заголовки и текст сразу). */
 export const FontSettings: React.FC = () => {
   const { settings, updateSettings } = useTheme();
   const { t } = useI18n();
@@ -35,7 +35,6 @@ export const FontSettings: React.FC = () => {
             >
               {label(font)}
             </span>
-            <span className="font-option-kind" style={{ fontFamily: font.body }}>{t(`settings.fonts.${font.kind}`)}</span>
           </button>
         ))}
       </div>

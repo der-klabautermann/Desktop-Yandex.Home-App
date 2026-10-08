@@ -510,9 +510,6 @@ export const ru = {
       general: 'Общие',
     },
     fonts: {
-      serif: 'с засечками',
-      sans: 'без засечек',
-      blackletter: 'готический',
       system: 'Системный',
       original: 'Исходный',
       previewTitle: 'Гостиная',

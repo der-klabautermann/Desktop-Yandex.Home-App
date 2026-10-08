@@ -510,9 +510,6 @@ export const en = {
       general: 'General',
     },
     fonts: {
-      serif: 'serif',
-      sans: 'sans serif',
-      blackletter: 'blackletter',
       system: 'System',
       original: 'Original',
       previewTitle: 'Living room',

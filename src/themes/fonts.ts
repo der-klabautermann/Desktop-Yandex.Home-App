@@ -1,5 +1,5 @@
 // Шрифт интерфейса: один выбор на всё приложение. Все варианты поддерживают кириллицу
-// и подключены локально (@fontsource и src/assets/fonts), без загрузки из интернета.
+// и подключены локально (@fontsource), без загрузки из интернета.
 import '@fontsource/manrope/cyrillic-400.css';
 import '@fontsource/manrope/cyrillic-500.css';
 import '@fontsource/manrope/cyrillic-600.css';
@@ -12,12 +12,14 @@ import '@fontsource/montserrat/cyrillic-600.css';
 import '@fontsource/montserrat/latin-400.css';
 import '@fontsource/montserrat/latin-500.css';
 import '@fontsource/montserrat/latin-600.css';
-import '@fontsource/ibm-plex-sans/cyrillic-400.css';
-import '@fontsource/ibm-plex-sans/cyrillic-500.css';
-import '@fontsource/ibm-plex-sans/cyrillic-600.css';
-import '@fontsource/ibm-plex-sans/latin-400.css';
-import '@fontsource/ibm-plex-sans/latin-500.css';
-import '@fontsource/ibm-plex-sans/latin-600.css';
+// Google Sans: CSS-файлы пакета не задают unicode-range, и латиница перекрывала бы кириллицу.
+// Поэтому подключаем файлы сами, с правильными диапазонами (см. registerGoogleSans).
+import googleSansCyrillic400 from '@fontsource/google-sans/files/google-sans-cyrillic-400-normal.woff2';
+import googleSansCyrillic500 from '@fontsource/google-sans/files/google-sans-cyrillic-500-normal.woff2';
+import googleSansCyrillic600 from '@fontsource/google-sans/files/google-sans-cyrillic-600-normal.woff2';
+import googleSansLatin400 from '@fontsource/google-sans/files/google-sans-latin-400-normal.woff2';
+import googleSansLatin500 from '@fontsource/google-sans/files/google-sans-latin-500-normal.woff2';
+import googleSansLatin600 from '@fontsource/google-sans/files/google-sans-latin-600-normal.woff2';
 import '@fontsource/comfortaa/cyrillic-400.css';
 import '@fontsource/comfortaa/cyrillic-500.css';
 import '@fontsource/comfortaa/cyrillic-600.css';
@@ -51,18 +53,13 @@ import '@fontsource/onest/cyrillic-600.css';
 import '@fontsource/onest/latin-400.css';
 import '@fontsource/onest/latin-500.css';
 import '@fontsource/onest/latin-600.css';
-// Germanica (Peter Wiegel, SIL Open Font License): готический шрифт с кириллицей
-import '../assets/fonts/germanica/germanica.css';
 
-export type FontId = 'system' | 'original' | 'manrope' | 'montserrat' | 'plex' | 'comfortaa' | 'cormorant' | 'playfair' | 'literata' | 'germanica';
-
-export type FontKind = 'sans' | 'serif' | 'blackletter';
+export type FontId = 'system' | 'original' | 'manrope' | 'montserrat' | 'google' | 'comfortaa' | 'cormorant' | 'playfair' | 'literata';
 
 export interface FontChoice {
   id: FontId;
   /** Название шрифта (не переводится); у system и original берётся из словаря. */
   name: string;
-  kind: FontKind;
   /** Заголовки, крупные числа. */
   display: string;
   /** Основной текст и мелкие подписи. */
@@ -73,22 +70,35 @@ export interface FontChoice {
   headingTracking: string;
 }
 
+const CYRILLIC_RANGE = 'U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116';
+const LATIN_RANGE = 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD';
+
+const registerGoogleSans = () => {
+  if (typeof document === 'undefined' || typeof FontFace === 'undefined') return;
+  const faces: Array<[string, string, string]> = [
+    [googleSansCyrillic400, '400', CYRILLIC_RANGE], [googleSansCyrillic500, '500', CYRILLIC_RANGE], [googleSansCyrillic600, '600', CYRILLIC_RANGE],
+    [googleSansLatin400, '400', LATIN_RANGE], [googleSansLatin500, '500', LATIN_RANGE], [googleSansLatin600, '600', LATIN_RANGE],
+  ];
+  for (const [url, weight, unicodeRange] of faces) {
+    document.fonts.add(new FontFace('Google Sans', `url(${url}) format('woff2')`, { weight, unicodeRange, display: 'swap' }));
+  }
+};
+registerGoogleSans();
+
 const SYSTEM = '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
 
 const single = (family: string) => ({ display: family, body: family });
 
 export const FONTS: FontChoice[] = [
-  { id: 'system', name: 'SF Pro', kind: 'sans', ...single(`"SF Pro Display", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0.005em' },
-  { id: 'original', name: 'Unbounded', kind: 'sans', display: `"Unbounded", "Onest", ${SYSTEM}`, body: `"Onest", ${SYSTEM}`, headingWeight: 500, headingScale: 0.94, headingTracking: '-0.01em' },
-  { id: 'manrope', name: 'Manrope', kind: 'sans', ...single(`"Manrope", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0em' },
-  { id: 'montserrat', name: 'Montserrat', kind: 'sans', ...single(`"Montserrat", ${SYSTEM}`), headingWeight: 600, headingScale: 0.96, headingTracking: '0em' },
-  { id: 'plex', name: 'IBM Plex Sans', kind: 'sans', ...single(`"IBM Plex Sans", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0em' },
-  { id: 'comfortaa', name: 'Comfortaa', kind: 'sans', ...single(`"Comfortaa", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0.01em' },
-  { id: 'cormorant', name: 'Cormorant', kind: 'serif', ...single(`"Cormorant Garamond", Georgia, serif`), headingWeight: 600, headingScale: 1.16, headingTracking: '0.02em' },
-  { id: 'playfair', name: 'Playfair', kind: 'serif', ...single(`"Playfair Display", Georgia, serif`), headingWeight: 500, headingScale: 1.02, headingTracking: '0.015em' },
-  { id: 'literata', name: 'Literata', kind: 'serif', ...single(`"Literata", Georgia, serif`), headingWeight: 500, headingScale: 1, headingTracking: '0.005em' },
-  // Фрактура в мелком тексте не читается: заголовки готикой, текст спокойной антиквой
-  { id: 'germanica', name: 'Germanica', kind: 'blackletter', display: `"Germanica", "Literata", Georgia, serif`, body: `"Literata", Georgia, serif`, headingWeight: 400, headingScale: 1.12, headingTracking: '0.01em' },
+  { id: 'system', name: 'SF Pro', ...single(`"SF Pro Display", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0.005em' },
+  { id: 'original', name: 'Unbounded', display: `"Unbounded", "Onest", ${SYSTEM}`, body: `"Onest", ${SYSTEM}`, headingWeight: 500, headingScale: 0.94, headingTracking: '-0.01em' },
+  { id: 'manrope', name: 'Manrope', ...single(`"Manrope", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0em' },
+  { id: 'montserrat', name: 'Montserrat', ...single(`"Montserrat", ${SYSTEM}`), headingWeight: 600, headingScale: 0.96, headingTracking: '0em' },
+  { id: 'google', name: 'Google Sans', ...single(`"Google Sans", ${SYSTEM}`), headingWeight: 500, headingScale: 1, headingTracking: '0em' },
+  { id: 'comfortaa', name: 'Comfortaa', ...single(`"Comfortaa", ${SYSTEM}`), headingWeight: 600, headingScale: 1, headingTracking: '0.01em' },
+  { id: 'cormorant', name: 'Cormorant', ...single(`"Cormorant Garamond", Georgia, serif`), headingWeight: 600, headingScale: 1.16, headingTracking: '0.02em' },
+  { id: 'playfair', name: 'Playfair', ...single(`"Playfair Display", Georgia, serif`), headingWeight: 500, headingScale: 1.02, headingTracking: '0.015em' },
+  { id: 'literata', name: 'Literata', ...single(`"Literata", Georgia, serif`), headingWeight: 500, headingScale: 1, headingTracking: '0.005em' },
 ];
 
 export const DEFAULT_FONT: FontId = 'system';
