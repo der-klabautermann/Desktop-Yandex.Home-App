@@ -11,6 +11,8 @@ const CODE_KEYS: Record<string, string> = {
     ERR_GROUP_EMPTY: 'errors.groupEmpty',
     X_TOKEN_REQUIRED: 'errors.xTokenRequired',
     CAM_PRIVACY_TOGGLE: 'camera.errors.privacyToggle',
+    ERR_TOKEN_EXPIRED: 'errors.auth',
+    ERR_AQARA_INPUT: 'errors.aqaraInput',
 };
 
 export function cleanErrorMessage(error: unknown, t: Translate): string {
@@ -27,6 +29,9 @@ export function cleanErrorMessage(error: unknown, t: Translate): string {
         if (/UNREACHABLE|OFFLINE/i.test(device[1])) return t('errors.deviceUnreachable');
         return t('errors.device', { detail: device[1] || '?' });
     }
+
+    const aqara = /^ERR_AQARA\s+(\d+)\s*(.*)$/.exec(message);
+    if (aqara) return t('errors.aqara', { detail: aqara[2] ? `${aqara[1]}: ${aqara[2]}` : aqara[1] });
 
     if (/^ERR_HTTP\b/.test(message) || /^\d{3}\s/.test(message) || /error_code/i.test(message)) {
         return t('errors.request');

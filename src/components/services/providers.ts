@@ -9,11 +9,11 @@ export interface ProviderInfo {
   available: boolean;
 }
 
-// Xiaomi и Aqara включаются в следующих планах.
+// Xiaomi включается отдельно (см. вопрос о лицензии в docs).
 export const PROVIDERS: ProviderInfo[] = [
   { id: 'yandex', badge: 'Я', color: '#FC3F1D', available: true },
   { id: 'xiaomi', badge: 'Mi', color: '#FF6900', available: false },
-  { id: 'aqara', badge: 'Aq', color: '#2B2B2B', available: false },
+  { id: 'aqara', badge: 'Aq', color: '#2B2B2B', available: true },
 ];
 
 export const providerInfo = (id: string | undefined): ProviderInfo =>

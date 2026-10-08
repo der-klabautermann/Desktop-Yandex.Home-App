@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import {
     Hub,
     createYandexProvider,
+    createAqaraProvider,
     yandexApi,
     startQrAuth,
     pollQrAuth,
@@ -102,7 +103,10 @@ const providerHooks = {
     },
 };
 
-const hub = new Hub([createYandexProvider(credentialStore, providerHooks)], homeCache);
+const hub = new Hub([
+    createYandexProvider(credentialStore, providerHooks),
+    createAqaraProvider(credentialStore),
+], homeCache);
 
 // --- 1. Обработка закрытия окна (свернуть в трей) ---
 const minimizeToTray = (event) => {

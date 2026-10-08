@@ -8,6 +8,7 @@ import { HubMap } from './HubMap';
 import { ProviderMark } from './ProviderMark';
 import { ProviderPicker } from './ProviderPicker';
 import { YandexConnect } from './YandexConnect';
+import { AqaraConnect } from './AqaraConnect';
 
 interface ServicesScreenProps {
   accounts: AccountSummary[];
@@ -114,6 +115,9 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
 
       {view.kind === 'connect' && view.providerId === 'yandex' && (
         <YandexConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />
+      )}
+      {view.kind === 'connect' && view.providerId === 'aqara' && (
+        <AqaraConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />
       )}
     </div>
   );

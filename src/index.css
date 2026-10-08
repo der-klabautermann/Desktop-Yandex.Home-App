@@ -2126,3 +2126,26 @@ body::after {
   border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
   background: transparent; color: var(--danger); font: inherit; font-size: 13px; cursor: pointer;
 }
+
+.connect-select {
+  padding: 11px 14px; border-radius: 14px;
+  border: 1px solid var(--glass-line-strong);
+  background: color-mix(in oklab, var(--surface) 70%, transparent);
+  color: var(--fg); font: inherit; font-size: 14px;
+}
+.connect-select:focus { outline: none; border-color: var(--accent); }
+.connect-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.connect-grid > div { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.connect-note {
+  display: flex; align-items: flex-start; gap: 8px;
+  margin: 8px 0 0; padding: 10px 12px; border-radius: 12px;
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+  font-size: 12.5px; line-height: 1.45;
+}
+.connect-note svg { color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+.connect-link {
+  align-self: center; margin-top: 2px;
+  border: none; background: none; color: var(--muted);
+  font: inherit; font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.connect-link:hover { color: var(--accent); }

@@ -4,11 +4,11 @@
 import { createMockHome, createMockXiaomiHome } from './mockData';
 import type { YandexUserInfoResponse } from '../types';
 
-type MockProvider = 'yandex' | 'xiaomi';
+type MockProvider = 'yandex' | 'xiaomi' | 'aqara';
 
 export function installMockApi() {
   const mode = new URLSearchParams(location.search).get('mock') ?? 'single';
-  const homes: Record<MockProvider, YandexUserInfoResponse> = { yandex: createMockHome(), xiaomi: createMockXiaomiHome() };
+  const homes: Record<'yandex' | 'xiaomi', YandexUserInfoResponse> = { yandex: createMockHome(), xiaomi: createMockXiaomiHome() };
   const connected = new Set<MockProvider>(mode === 'empty' ? [] : mode === 'single' ? ['yandex'] : ['yandex', 'xiaomi']);
   const offline = new Set<MockProvider>(mode === 'outage' ? ['xiaomi'] : []);
   const delay = (ms = 250) => new Promise(resolve => setTimeout(resolve, ms));
@@ -59,7 +59,13 @@ export function installMockApi() {
       accounts: async () => accounts(),
       connect: async (providerId: MockProvider, payload: Record<string, string>) => {
         await delay(600);
-        if (!payload.token?.trim()) throw new Error('ERR_AUTH');
+        if (providerId === 'aqara') {
+          if (!payload.appId?.trim()) throw new Error('ERR_AQARA_INPUT');
+          if (payload.step === 'requestCode') return;
+          if (payload.code?.trim() !== '123456') throw new Error('ERR_AQARA 2003 Auth code incorrect');
+        } else if (!payload.token?.trim()) {
+          throw new Error('ERR_AUTH');
+        }
         connected.add(providerId);
       },
       disconnect: async (providerId: MockProvider) => { connected.delete(providerId); },

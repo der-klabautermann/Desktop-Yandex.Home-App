@@ -28,3 +28,12 @@ describe('cleanErrorMessage', () => {
     expect(cleanErrorMessage(new Error('Something specific'), t)).toBe('Something specific');
   });
 });
+
+describe('cleanErrorMessage Aqara', () => {
+  it('Aqara-Fehler mit Code und Text', () => {
+    expect(cleanErrorMessage(new Error('ERR_AQARA 302 Missing parameter'), t)).toBe('[errors.aqara {"detail":"302: Missing parameter"}]');
+  });
+  it('fehlende Eingaben', () => {
+    expect(cleanErrorMessage(new Error('ERR_AQARA_INPUT'), t)).toBe('[errors.aqaraInput]');
+  });
+});
