@@ -5,6 +5,10 @@ export interface YandexScenarioStep {
 }
 
 export interface YandexScenario {
+  /** Сервис, из которого пришёл объект (yandex, xiaomi, aqara). */
+  provider_id?: string;
+  /** Сервис сейчас недоступен: показываем последнее известное состояние, управлять нельзя. */
+  unreachable?: boolean;
   id: string;
   name: string;
   is_active: boolean;
@@ -67,6 +71,11 @@ export interface YandexProperty {
 }
 
 export interface YandexDevice {
+  /** Сервис, из которого пришёл объект (yandex, xiaomi, aqara). */
+  provider_id?: string;
+  /** Сервис сейчас недоступен: показываем последнее известное состояние, управлять нельзя. */
+  unreachable?: boolean;
+  household_id?: string;
   id: string;
   name: string;
   type: string;
@@ -79,6 +88,10 @@ export interface YandexDevice {
 }
 
 export interface YandexGroup {
+  /** Сервис, из которого пришёл объект (yandex, xiaomi, aqara). */
+  provider_id?: string;
+  /** Сервис сейчас недоступен: показываем последнее известное состояние, управлять нельзя. */
+  unreachable?: boolean;
   id: string;
   name: string;
   household_id: string;
@@ -87,6 +100,8 @@ export interface YandexGroup {
 }
 
 export interface YandexRoom {
+  /** Сервис, из которого пришёл объект (yandex, xiaomi, aqara). */
+  provider_id?: string;
   id: string;
   name: string;
   household_id: string;
@@ -94,6 +109,8 @@ export interface YandexRoom {
 }
 
 export interface YandexHousehold {
+  /** Сервис, из которого пришёл объект (yandex, xiaomi, aqara). */
+  provider_id?: string;
   id: string;
   name: string;
   location?: unknown;
