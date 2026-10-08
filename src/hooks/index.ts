@@ -9,3 +9,4 @@ export { useDeviceActions } from './useDeviceActions';
 export { useAutostart } from './useAutostart';
 export { useUpdateNotification } from './useUpdateNotification';
 export { useDashboardState } from './useDashboardState';
+export { useZones } from './useZones';

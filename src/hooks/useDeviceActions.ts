@@ -12,6 +12,7 @@ interface UseDeviceActionsReturn {
     handleSetDeviceMode: (deviceId: string, actions: YandexModeAction[], turnOn?: boolean) => Promise<void>;
     handleGetCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     handleSetCameraPrivacy: (deviceId: string, enabled: boolean, instance?: string) => Promise<void>;
+    handleSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 }
 
 type Item = { unreachable?: boolean; provider_id?: string } | undefined;
@@ -109,12 +110,22 @@ export function useDeviceActions(
         }
     }, [userData, requestXTokenAuth]);
 
+    /** Включает или выключает сразу несколько устройств (например, весь свет в зоне). */
+    const handleSetPower = useCallback(async (deviceIds: string[], on: boolean) => {
+        if (!userData) return;
+        const targets = userData.devices.filter(d => deviceIds.includes(d.id) && !d.unreachable);
+        const results = await Promise.allSettled(targets.map(d => toggleDevice(d.id, on)));
+        const failed = results.find(r => r.status === 'rejected') as PromiseRejectedResult | undefined;
+        if (failed) fail(failed.reason);
+        await refreshDashboardData(true);
+    }, [userData, refreshDashboardData, fail]);
+
     const handleSetCameraPrivacy = useCallback(async (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => {
         await setCameraPrivacyMode(deviceId, privacyEnabled, toggleInstance);
     }, []);
 
     return {
         handleToggleDevice, handleToggleGroup, handleExecuteScenario,
-        handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy,
+        handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower,
     };
 }

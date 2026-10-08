@@ -25,6 +25,11 @@ contextBridge.exposeInMainWorld('api', {
         runScenario: (scenarioId) => ipcRenderer.invoke('hub:runScenario', scenarioId),
     },
 
+    zones: {
+        load: () => ipcRenderer.invoke('zones:load'),
+        save: (config) => ipcRenderer.invoke('zones:save', config),
+    },
+
     // Auto-launch methods
     isAutostartEnabled: () => ipcRenderer.invoke('autostart:isEnabled'),
     setAutostartEnabled: (enabled) => ipcRenderer.invoke('autostart:setEnabled', enabled), 

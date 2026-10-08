@@ -5,7 +5,7 @@ import { useDashboardContext } from '../contexts/DashboardContext';
 import { SidebarHeader } from './sidebar/SidebarHeader';
 import { SidebarFavorites } from './sidebar/SidebarFavorites';
 import { SidebarSensors } from './sidebar/SidebarSensors';
-import { SidebarRooms } from './sidebar/SidebarRooms';
+import { SidebarZones } from './sidebar/SidebarZones';
 import { SidebarGroups } from './sidebar/SidebarGroups';
 import { SidebarScenarios } from './sidebar/SidebarScenarios';
 import { useI18n } from '../i18n/I18nContext';
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
                     onToggle={() => toggleSection('sensors')}
                 />
 
-                <SidebarRooms
+                <SidebarZones
                     collapsed={!!collapsedSections['rooms']}
                     onToggle={() => toggleSection('rooms')}
                 />

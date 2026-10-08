@@ -2001,3 +2001,128 @@ body::after {
 .service-alert:hover { background: color-mix(in oklab, var(--danger) 14%, transparent); }
 
 .sidebar-item.is-unreachable { filter: grayscale(1); opacity: 0.45 !important; }
+
+/* ==========================================================================
+   Zonen: Baum, Zusammenfassung, Dialog
+   ========================================================================== */
+
+.zone-item { gap: 6px; }
+.zone-item.is-zone .zone-item-name { font-weight: 600; }
+.zone-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.zone-caret { width: 14px; display: inline-flex; justify-content: center; color: var(--muted); flex-shrink: 0; }
+.zone-active-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: var(--success);
+  box-shadow: 0 0 0 0 color-mix(in oklab, var(--success) 60%, transparent);
+  animation: zonePulse 2s ease-out infinite;
+}
+@keyframes zonePulse { 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.zone-add-inline {
+  margin-left: auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; border-radius: 6px;
+  border: 1px solid var(--glass-line-strong);
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.zone-add-inline:hover { color: var(--accent); border-color: var(--accent); }
+
+.zone-overview {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin: -6px 0 22px;
+}
+.zone-control, .zone-fact, .zone-edit {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  border-radius: 999px;
+  font: inherit; font-size: 13px;
+  border: 1px solid var(--glass-line);
+  background: color-mix(in oklab, var(--card-bg) 75%, transparent);
+  color: var(--fg);
+}
+.zone-control { cursor: pointer; transition: all var(--motion-fast) var(--ease-standard); }
+.zone-control b { font-family: var(--font-display); font-weight: 500; font-size: 12px; color: var(--muted); }
+.zone-control.is-on {
+  background: var(--card-bg-active);
+  color: var(--card-fg-active);
+  border-color: transparent;
+  box-shadow: 0 10px 26px -16px var(--lamp-glow, var(--accent));
+}
+.zone-control.is-on b { color: color-mix(in oklab, var(--card-fg-active) 65%, transparent); }
+.zone-control:hover:not(:disabled) { transform: translateY(-1px); }
+.zone-control:disabled { opacity: 0.6; cursor: progress; }
+.zone-fact { color: var(--fg-2, var(--fg)); }
+.zone-fact svg { color: var(--muted); }
+.zone-fact.is-active { color: var(--success); border-color: color-mix(in oklab, var(--success) 40%, transparent); }
+.zone-fact.is-active svg { color: var(--success); }
+.zone-fact.is-warn { color: var(--danger); border-color: color-mix(in oklab, var(--danger) 35%, transparent); }
+.zone-fact.is-warn svg { color: var(--danger); }
+.zone-edit { cursor: pointer; color: var(--muted); background: transparent; border-style: dashed; }
+.zone-edit:hover { color: var(--accent); border-color: var(--accent); }
+
+.zone-child-header { width: 100%; background: none; border: none; font: inherit; color: inherit; text-align: left; }
+.zone-child-header svg { color: var(--muted); }
+
+.zone-floor-heading {
+  display: flex; align-items: center; gap: 10px;
+  width: calc(100% - 4px);
+  margin: 26px 0 6px;
+  padding: 10px 14px;
+  border: none; border-radius: 14px;
+  background: linear-gradient(90deg, color-mix(in oklab, var(--accent) 14%, transparent), transparent 70%);
+  color: var(--fg);
+  font-family: var(--font-display); font-weight: 500; font-size: 15px; letter-spacing: 0.01em;
+  text-align: left; cursor: pointer;
+}
+.zone-floor-heading svg { color: var(--accent); }
+
+.zone-dialog-backdrop {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 180ms ease;
+}
+.zone-dialog {
+  width: min(440px, calc(100vw - 32px));
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 20px 22px 18px;
+  border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid var(--glass-line-strong);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6);
+  color: var(--fg);
+  animation: popIn 220ms var(--ease-standard);
+}
+.zone-dialog header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.zone-dialog h3 { margin: 0; font-family: var(--font-display); font-weight: 500; font-size: 19px; }
+.zone-dialog label { margin-top: 6px; font-size: 12px; color: var(--muted); }
+.zone-dialog input, .zone-dialog select {
+  padding: 10px 12px; border-radius: 12px;
+  border: 1px solid var(--glass-line-strong);
+  background: color-mix(in oklab, var(--bg, var(--surface)) 60%, transparent);
+  color: var(--fg); font: inherit; font-size: 14px;
+}
+.zone-dialog input:focus, .zone-dialog select:focus { outline: none; border-color: var(--accent); }
+.zone-dialog-hint { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.zone-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.zone-icon-choice {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 38px; border-radius: 12px;
+  border: 1px solid var(--glass-line);
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.zone-icon-choice:hover { color: var(--fg); }
+.zone-icon-choice.is-active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.zone-dialog footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
+.zone-dialog .zone-save { margin-top: 0; padding: 9px 18px; }
+.zone-delete {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--danger) 40%, transparent);
+  background: transparent; color: var(--danger); font: inherit; font-size: 13px; cursor: pointer;
+}

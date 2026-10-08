@@ -6,6 +6,8 @@ import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
 import { isLightGroup, isSensorDevice } from '../constants';
+import { flattenTree } from '../../core/zones';
+import { ZoneIcon } from './zones/zoneIcons';
 import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 
@@ -175,72 +177,87 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
         );
     };
 
+    const renderRoom = (room: YandexRoom) => {
+        const roomDevices = devicesForHome.filter(d => room.devices.includes(d.id));
+        if (roomDevices.length === 0) return null;
+        const isRoomCollapsed = state.collapse.collapsedRooms.has(room.id);
+
+        // Separate standalone devices and devices that belong to groups
+        const groupedDeviceIds = new Set(
+            groupsForHome
+                .filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)))
+                .flatMap(g => g.devices)
+        );
+        const standaloneDevices = roomDevices.filter(d => !groupedDeviceIds.has(d.id));
+        const roomGroups = groupsForHome.filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)));
+
+        return (
+            <div key={room.id} className="room-section">
+                <div className="room-header" onClick={() => state.toggleRoom(room.id)}>
+                    {isRoomCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
+                    <h2>{room.name}</h2>
+                    <span className="room-count">{roomDevices.length}</span>
+                </div>
+                {!isRoomCollapsed && (
+                    <>
+                        {standaloneDevices.length > 0 && (
+                            <div className="device-grid" style={{ marginBottom: 16 }}>
+                                {standaloneDevices
+                                    .filter(d => !state.getEffectiveHidden(`device_${d.id}`))
+                                    .map(dev => (
+                                        <DeviceCardAdapter key={dev.id} device={dev} onToggle={ctx.onToggleDevice} isFavorite={ctx.favoriteDeviceIds.includes(dev.id)} onToggleFavorite={ctx.onToggleDeviceFavorite} onOpenSettings={state.handleOpenDeviceSettings} onOpenCameraStream={state.openCameraStream} isEditMode={state.edit.isEditMode} iconHiddenState={state.getIconHiddenState(`device_${dev.id}`)} onToggleVisibility={() => state.toggleCardVisibility(`device_${dev.id}`)} sensorDisplayConfig={state.sensorDisplayConfig} />
+                                    ))}
+                            </div>
+                        )}
+
+                        {roomGroups.map(group => (
+                            <GroupCard
+                                key={group.id}
+                                group={group}
+                                devices={devicesForHome}
+                                onToggleGroup={ctx.onToggleGroup}
+                                onToggleDevice={ctx.onToggleDevice}
+                                favoriteDeviceIds={ctx.favoriteDeviceIds}
+                                onToggleDeviceFavorite={ctx.onToggleDeviceFavorite}
+                                isFavorite={ctx.favoriteGroupIds.includes(group.id)}
+                                onToggleFavorite={ctx.onToggleGroupFavorite}
+                                onOpenSettings={state.handleOpenDeviceSettings}
+                                onOpenCameraStream={state.openCameraStream}
+                                onOpenGroupSettings={(g) => {
+                                    const gDevices = devicesForHome.filter(d => g.devices.includes(d.id));
+                                    if (isLightGroup(gDevices)) state.openGroupLightSettings(g);
+                                    else if (gDevices.length > 0 && gDevices.every(d => d.type === 'devices.types.thermostat.ac' || d.type === 'devices.types.thermostat')) state.openGroupThermostatSettings(g);
+                                    else if (gDevices.length > 0 && gDevices.every(d => d.type === 'devices.types.ventilation.fan')) state.openGroupFanSettings(g);
+                                }}
+                                isEditMode={state.edit.isEditMode}
+                                getEffectiveHidden={state.getEffectiveHidden}
+                                getIconHiddenState={state.getIconHiddenState}
+                                onToggleDeviceVisibility={state.toggleCardVisibility}
+                            />
+                        ))}
+                    </>
+                )}
+            </div>
+        );
+    };
+
     return (
         <>
             {renderStatsRow()}
             {renderFavoritesSection()}
 
-            {roomsForHome.map(room => {
-                const roomDevices = devicesForHome.filter(d => room.devices.includes(d.id));
-                if (roomDevices.length === 0) return null;
-                const isRoomCollapsed = state.collapse.collapsedRooms.has(room.id);
-
-                // Separate standalone devices and devices that belong to groups
-                const groupedDeviceIds = new Set(
-                    groupsForHome
-                        .filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)))
-                        .flatMap(g => g.devices)
-                );
-                const standaloneDevices = roomDevices.filter(d => !groupedDeviceIds.has(d.id));
-                const roomGroups = groupsForHome.filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)));
-
+            {flattenTree(ctx.zones.tree).map(node => {
+                if (node.kind === 'room') {
+                    const room = roomsForHome.find(r => r.id === node.id);
+                    return room ? <React.Fragment key={node.id}>{renderRoom(room)}</React.Fragment> : null;
+                }
+                // Собственная зона (этаж): заголовок, если внутри есть устройства
+                if (!node.allDeviceIds.some(id => devicesForHome.some(d => d.id === id))) return null;
                 return (
-                    <div key={room.id} className="room-section">
-                        <div className="room-header" onClick={() => state.toggleRoom(room.id)}>
-                            {isRoomCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
-                            <h2>{room.name}</h2>
-                            <span className="room-count">{roomDevices.length}</span>
-                        </div>
-                        {!isRoomCollapsed && (
-                            <>
-                                {standaloneDevices.length > 0 && (
-                                    <div className="device-grid" style={{ marginBottom: 16 }}>
-                                        {standaloneDevices
-                                            .filter(d => !state.getEffectiveHidden(`device_${d.id}`))
-                                            .map(dev => (
-                                                <DeviceCardAdapter key={dev.id} device={dev} onToggle={ctx.onToggleDevice} isFavorite={ctx.favoriteDeviceIds.includes(dev.id)} onToggleFavorite={ctx.onToggleDeviceFavorite} onOpenSettings={state.handleOpenDeviceSettings} onOpenCameraStream={state.openCameraStream} isEditMode={state.edit.isEditMode} iconHiddenState={state.getIconHiddenState(`device_${dev.id}`)} onToggleVisibility={() => state.toggleCardVisibility(`device_${dev.id}`)} sensorDisplayConfig={state.sensorDisplayConfig} />
-                                            ))}
-                                    </div>
-                                )}
-
-                                {roomGroups.map(group => (
-                                    <GroupCard
-                                        key={group.id}
-                                        group={group}
-                                        devices={devicesForHome}
-                                        onToggleGroup={ctx.onToggleGroup}
-                                        onToggleDevice={ctx.onToggleDevice}
-                                        favoriteDeviceIds={ctx.favoriteDeviceIds}
-                                        onToggleDeviceFavorite={ctx.onToggleDeviceFavorite}
-                                        isFavorite={ctx.favoriteGroupIds.includes(group.id)}
-                                        onToggleFavorite={ctx.onToggleGroupFavorite}
-                                        onOpenSettings={state.handleOpenDeviceSettings}
-                                        onOpenCameraStream={state.openCameraStream}
-                                        onOpenGroupSettings={(g) => {
-                                            const gDevices = devicesForHome.filter(d => g.devices.includes(d.id));
-                                            if (isLightGroup(gDevices)) state.openGroupLightSettings(g);
-                                            else if (gDevices.length > 0 && gDevices.every(d => d.type === 'devices.types.thermostat.ac' || d.type === 'devices.types.thermostat')) state.openGroupThermostatSettings(g);
-                                            else if (gDevices.length > 0 && gDevices.every(d => d.type === 'devices.types.ventilation.fan')) state.openGroupFanSettings(g);
-                                        }}
-                                        isEditMode={state.edit.isEditMode}
-                                        getEffectiveHidden={state.getEffectiveHidden}
-                                        getIconHiddenState={state.getIconHiddenState}
-                                        onToggleDeviceVisibility={state.toggleCardVisibility}
-                                    />
-                                ))}
-                            </>
-                        )}
-                    </div>
+                    <button key={node.id} className="zone-floor-heading" style={{ marginLeft: node.depth * 12 }} onClick={() => ctx.onSelectRoom(node.id)}>
+                        <ZoneIcon icon={node.icon} kind="zone" className="w-4 h-4" />
+                        <span>{node.name}</span>
+                    </button>
                 );
             })}
 

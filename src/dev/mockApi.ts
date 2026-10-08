@@ -73,6 +73,12 @@ export function installMockApi() {
       setDeviceMode: async () => { await delay(); },
       runScenario: async () => { await delay(); },
     },
+    zones: {
+      load: async () => {
+        try { return JSON.parse(localStorage.getItem('mock_zones') ?? 'null'); } catch { return null; }
+      },
+      save: async (config: unknown) => { localStorage.setItem('mock_zones', JSON.stringify(config)); },
+    },
     getCameraStream: async () => { throw new Error('CAM_NO_STREAM'); },
     setCameraPrivacyMode: async () => {},
     getQuasarCameraDevice: async () => null,

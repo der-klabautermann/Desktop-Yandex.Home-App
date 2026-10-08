@@ -1,6 +1,7 @@
 import React, { createContext, useContext } from 'react';
 import { YandexUserInfoResponse, YandexHousehold, YandexModeAction, CameraStreamResult } from '../types/index';
 import type { AccountSummary } from '../types/electron-api';
+import type { UseZonesReturn } from '../hooks/useZones';
 
 export interface DashboardContextValue {
     // Данные
@@ -9,6 +10,8 @@ export interface DashboardContextValue {
     activeHouseholdId: string | null;
     /** Подключённые сервисы и их состояние. */
     accounts: AccountSummary[];
+    /** Зоны (этажи и комнаты) активного дома. */
+    zones: UseZonesReturn;
 
     // Избранное
     favoriteDeviceIds: string[];
@@ -26,6 +29,8 @@ export interface DashboardContextValue {
     onGetCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     onSetCameraPrivacy: (deviceId: string, enabled: boolean, instance?: string) => Promise<void>;
     onRefresh: () => void;
+    /** Включить или выключить несколько устройств сразу. */
+    onSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 
     // Навигация
     activeSidebarView: 'home' | 'room' | 'group';

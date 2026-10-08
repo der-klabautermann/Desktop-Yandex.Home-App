@@ -2,7 +2,8 @@ import React, { useMemo, useCallback } from 'react';
 import { YandexScenario } from '../types/index';
 import { Sidebar } from './Sidebar';
 import { DashboardHomeView } from './DashboardHomeView';
-import { DashboardRoomView } from './DashboardRoomView';
+import { DashboardZoneView } from './DashboardZoneView';
+import { findNode } from '../../core/zones';
 import { DashboardGroupView } from './DashboardGroupView';
 import { ThermostatSettingsModal } from './modals/ThermostatSettingsModal';
 import { BrightnessSettingsModal } from './modals/BrightnessSettingsModal';
@@ -140,19 +141,20 @@ export const Dashboard: React.FC = () => {
     // ---- Content title/subtitle ----
     const contentTitle = useMemo(() => {
         if (ctx.activeSidebarView === 'room' && ctx.activeRoomId) {
-            const room = roomsForHome.find(r => r.id === ctx.activeRoomId);
-            if (room) return room.name;
+            const zone = findNode(ctx.zones.tree, ctx.activeRoomId);
+            if (zone) return zone.name;
         }
         if (ctx.activeSidebarView === 'group' && ctx.activeGroupId) {
             const group = groupsForHome.find(g => g.id === ctx.activeGroupId);
             if (group) return group.name;
         }
         return homeName;
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, roomsForHome, groupsForHome, homeName]);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.zones.tree, groupsForHome, homeName]);
 
     const contentSubtitle = useMemo(() => {
         if (ctx.activeSidebarView === 'room' && ctx.activeRoomId) {
-            const roomDevices = devicesForHome.filter(d => d.room === ctx.activeRoomId);
+            const zoneIds = new Set(findNode(ctx.zones.tree, ctx.activeRoomId)?.allDeviceIds ?? []);
+            const roomDevices = devicesForHome.filter(d => zoneIds.has(d.id));
             const onCount = roomDevices.filter(d => {
                 const onOff = d.capabilities.find(c => c.type === 'devices.capabilities.on_off');
                 return onOff?.state?.value === true;
@@ -171,7 +173,7 @@ export const Dashboard: React.FC = () => {
             }
         }
         return tp('dashboard.devicesInHome', devicesForHome.length);
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, devicesForHome, groupsForHome, tp]);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, devicesForHome, groupsForHome, ctx.zones.tree, tp]);
 
     // ---- Content rendering ----
     const renderContent = () => {
@@ -200,10 +202,9 @@ export const Dashboard: React.FC = () => {
                 );
             case 'room':
                 return (
-                    <DashboardRoomView
+                    <DashboardZoneView
                         state={state}
                         activeRoomId={ctx.activeRoomId}
-                        roomsForHome={roomsForHome}
                         groupsForHome={groupsForHome}
                         devicesForHome={devicesForHome}
                     />

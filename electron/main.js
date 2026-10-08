@@ -423,6 +423,19 @@ if (!gotTheLock) {
         ipcMain.handle('hub:toggleGroup', (_e, id, deviceIds, state) => hub.toggleGroup(id, deviceIds, state).catch(rethrow));
         ipcMain.handle('hub:runScenario', (_e, id) => hub.runScenario(id).catch(rethrow));
 
+        // Зоны (этажи и т. п.) хранит само приложение, сервисы о них не знают
+        const zonesFile = path.join(app.getPath('userData'), 'zones.json');
+        ipcMain.handle('zones:load', async () => {
+            try {
+                return JSON.parse(await fs.readFile(zonesFile, 'utf8'));
+            } catch {
+                return null;
+            }
+        });
+        ipcMain.handle('zones:save', async (_e, config) => {
+            await fs.writeFile(zonesFile, JSON.stringify(config, null, 2));
+        });
+
         ipcMain.handle('yandex-api:getCameraStream', async (event, deviceId) => {
             try {
                 const xToken = await getStoredXToken();

@@ -12,7 +12,7 @@ import { NotificationToast } from './components/NotificationToast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import DashboardContext from './contexts/DashboardContext';
 import { useNotification, useAuth, useFavorites, useNavigation, useUpdateNotification,
-         useCameraAuth, useYandexData, useDeviceActions, useHousehold, useAutostart } from './hooks';
+         useCameraAuth, useYandexData, useDeviceActions, useHousehold, useAutostart, useZones } from './hooks';
 import packageJson from '../package.json';
 import { debugLog, debugWarn, refreshDebugFlags } from './utils/debugLog';
 import { useI18n } from './i18n/I18nContext';
@@ -41,9 +41,10 @@ function App() {
     // 4. Зависит от userData, refreshDashboardData, requestXTokenAuth
     const actions = useDeviceActions(userData, showNotification, refreshDashboardData, requestXTokenAuth);
     const { handleToggleDevice, handleToggleGroup, handleExecuteScenario,
-            handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy } = actions;
+            handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower } = actions;
     const household = useHousehold(userData, refreshDashboardData);
     const { activeHouseholdId, handleSwitchHousehold } = household;
+    const zones = useZones(userData, activeHouseholdId);
 
     // 5. Зависит от showNotification
     const { isAutostartEnabled, handleToggleAutostart } = useAutostart(showNotification);
@@ -313,7 +314,9 @@ function App() {
                     onGetCameraStream: handleGetCameraStream,
                     onSetCameraPrivacy: handleSetCameraPrivacy,
                     onRefresh: () => refreshDashboardData(),
+                    onSetPower: handleSetPower,
                     accounts,
+                    zones,
                     activeSidebarView,
                     activeRoomId,
                     activeGroupId,

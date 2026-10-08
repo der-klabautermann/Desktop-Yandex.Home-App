@@ -29,8 +29,14 @@ export interface IHubApi {
     runScenario: (scenarioId: string) => Promise<void>;
 }
 
+export interface IZonesApi {
+    load: () => Promise<import('../../core/zones').ZoneConfig | null>;
+    save: (config: import('../../core/zones').ZoneConfig) => Promise<void>;
+}
+
 export interface IYandexApi {
     hub: IHubApi;
+    zones: IZonesApi;
     setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
     getCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     setCameraPrivacyMode: (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => Promise<void>;
