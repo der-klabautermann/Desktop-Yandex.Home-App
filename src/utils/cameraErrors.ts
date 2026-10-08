@@ -6,6 +6,7 @@ import type { Translate } from '../i18n/core';
  * поэтому знакомые фразы тоже распознаются.
  */
 const RULES: Array<{ test: RegExp; key: string }> = [
+  { test: /ERR_UNREACHABLE/, key: 'camera.errors.unreachable' },
   { test: /CAM_PRIVACY_TOGGLE|изменить режим приватности/i, key: 'camera.errors.privacyToggle' },
   { test: /CAM_TOO_MANY|слишком много|too.?many/i, key: 'camera.errors.tooMany' },
   { test: /CAM_NO_VIDEO|приват|не умеет/i, key: 'camera.errors.privacy' },

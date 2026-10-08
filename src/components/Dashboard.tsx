@@ -13,7 +13,7 @@ import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
 import { InfoModal } from './modals/InfoModal';
-import { Pencil, Power, RefreshCw, Info, LogOut, X } from 'lucide-react';
+import { Pencil, Power, RefreshCw, Info, Plug, CloudOff } from 'lucide-react';
 import { ThemePicker } from './ThemePicker';
 import { LanguagePicker } from './LanguagePicker';
 import { useDashboardContext } from '../contexts/DashboardContext';
@@ -286,44 +286,26 @@ export const Dashboard: React.FC = () => {
                                     <Info className="w-4 h-4" />
                                 </button>
                                 <button
-                                    onClick={() => state.setShowConfirmModal(true)}
+                                    onClick={ctx.onOpenServices}
                                     className="header-btn"
-                                    title={t('dashboard.logout')}
+                                    title={t('services.title')}
                                 >
-                                    <LogOut className="w-4 h-4" />
+                                    <Plug className="w-4 h-4" />
                                 </button>
                             </div>
                         )}
                     </div>
+                    {ctx.accounts.filter(a => a.status !== 'connected').map(a => (
+                        <button key={a.providerId} className="service-alert" onClick={ctx.onOpenServices}>
+                            <CloudOff className="w-4 h-4" />
+                            <span>{t('services.alert', { name: t(`services.names.${a.providerId}`), status: t(`services.status.${a.status}`) })}</span>
+                        </button>
+                    ))}
                     {renderContent()}
                 </main>
             </div>
 
             {/* Modals */}
-            {state.modal.showConfirmModal && (
-                <div className="fixed inset-0 z-[100] bg-black/50 dark:bg-black/70 flex items-center justify-center backdrop-blur-sm">
-                    <div className="bg-white dark:bg-surface border border-gray-200 dark:border-border-soft rounded-2xl p-6 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in duration-300">
-                        <div className="flex items-start justify-between mb-4">
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-card-fg">{t('dashboard.logoutConfirm.title')}</h3>
-                            <button onClick={() => state.setShowConfirmModal(false)} className="text-slate-600 dark:text-muted hover:text-slate-900 dark:hover:text-card-fg transition-colors">
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-                        <p className="text-slate-700 dark:text-card-fg mb-6 text-sm">
-                            {t('dashboard.logoutConfirm.text')}
-                        </p>
-                        <div className="flex justify-end gap-3">
-                            <button onClick={() => state.setShowConfirmModal(false)} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors border border-red-400 dark:border-red-500 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30">
-                                {t('common.no')}
-                            </button>
-                            <button onClick={() => { ctx.onLogout(); state.setShowConfirmModal(false); }} className="px-4 py-2 text-sm font-medium rounded-lg transition-colors bg-primary hover:bg-primary-hover text-white">
-                                {t('dashboard.logoutConfirm.confirm')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {state.modal.selectedThermostatDevice && (
                 <ThermostatSettingsModal
                     device={state.modal.selectedThermostatDevice}

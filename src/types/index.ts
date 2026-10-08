@@ -156,4 +156,6 @@ export interface TrayMenuItem {
     isToggleable?: boolean; 
     isOn?: boolean;
     sensorValue?: string | null;
+    /** Сервис недоступен: в трее пункт неактивен и помечен. */
+    unreachable?: boolean;
 }

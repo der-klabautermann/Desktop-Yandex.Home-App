@@ -205,7 +205,9 @@ function buildTrayMenu() {
                     : ' 🔴';
             }
         }
-        const label = `${item.name}${deviceStatus}`;
+        const label = item.unreachable
+            ? `${item.name} (${tm('unreachable')})`
+            : `${item.name}${deviceStatus}`;
         
         let clickAction = null;
 
@@ -229,6 +231,11 @@ function buildTrayMenu() {
             };
         }
         
+        // Сервис недоступен: пункт виден, но не нажимается
+        if (item.unreachable) {
+            clickAction = null;
+        }
+
         return {
             label: label,
             type: 'normal',

@@ -3,7 +3,7 @@ import Hls from 'hls.js';
 import { YandexDevice, CameraStreamResult, YandexWebRtcRoom } from '../../types/index';
 import { connectYandexGoloomWebRtc, GoloomConnection, waitForVideoFrame, TOO_MANY_PEERS_RETRY_MS } from '../../services/yandexGoloomWebRtc';
 
-import { getQuasarCameraDevice } from '../../services/yandexIoT';
+import { getQuasarCameraDevice } from '../../services/camera';
 import {
   hasCameraPrivacyControl,
   isCameraPrivacyModeEnabled,

@@ -9,6 +9,7 @@ const STRINGS = {
         retry: 'Повторить',
         close: 'Закрыть',
         retryAttempt: 'Попытка повторного подключения {attempt} из {max}...',
+        unreachable: 'нет связи',
     },
     en: {
         trayTooltip: 'Smart home control',
@@ -18,6 +19,7 @@ const STRINGS = {
         retry: 'Retry',
         close: 'Close',
         retryAttempt: 'Reconnecting, attempt {attempt} of {max}...',
+        unreachable: 'unreachable',
     },
     de: {
         trayTooltip: 'Smart-Home-Steuerung',
@@ -27,6 +29,7 @@ const STRINGS = {
         retry: 'Erneut versuchen',
         close: 'Schließen',
         retryAttempt: 'Verbindung wird wiederhergestellt, Versuch {attempt} von {max} …',
+        unreachable: 'nicht erreichbar',
     },
 };
 

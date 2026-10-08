@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { getIconForScenario } from '../../constants';
 import { YandexScenario } from '../../types/index';
 import { Loader2, CheckCircle2, Star, Eye, EyeOff } from 'lucide-react';
+import { ProviderBadge } from '../services/ProviderBadge';
 
 interface ScenarioCardProps {
   scenario: YandexScenario;
@@ -18,6 +19,8 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onExecute,
   const [justExecuted, setJustExecuted] = useState(false);
 
   const handleClick = async () => {
+    // Сервис недоступен: onExecute только сообщит «нет связи», галочку не показываем
+    if (scenario.unreachable) { void onExecute(scenario.id).catch(() => {}); return; }
     if (loading) return;
     setLoading(true);
     try {
@@ -37,7 +40,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onExecute,
     <button
       onClick={handleClick}
       disabled={loading}
-      className={`scenario-card ${loading ? 'opacity-80' : ''} ${justExecuted ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/10' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`scenario-card ${loading ? 'opacity-80' : ''} ${justExecuted ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/10' : ''} ${scenario.unreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
       style={{ position: 'relative' }}
     >
       <div
@@ -71,7 +74,7 @@ export const ScenarioCard: React.FC<ScenarioCardProps> = ({ scenario, onExecute,
       <div className="scenario-icon">
         {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : justExecuted ? <CheckCircle2 className="w-3.5 h-3.5" style={{ color: 'var(--success)' }} /> : React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-3.5 h-3.5' })}
       </div>
-      <span className="scenario-name">{scenario.name}</span>
+      <span className="scenario-name">{scenario.name}<ProviderBadge providerId={scenario.provider_id} unreachable={scenario.unreachable} /></span>
     </button>
   );
 };

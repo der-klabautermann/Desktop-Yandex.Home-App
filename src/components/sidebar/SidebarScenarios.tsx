@@ -28,7 +28,7 @@ export const SidebarScenarios: React.FC<SidebarScenariosProps> = ({
                 {t('dashboard.scenarios')}
             </div>
             {!collapsed && scenarios.map(s => (
-                <div key={s.id} className="sidebar-item" style={{ paddingRight: '8px' }}>
+                <div key={s.id} className={`sidebar-item ${s.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px' }}>
                     <span className="sidebar-item-icon">
                         {loadingItems[`scenario:${s.id}`]
                             ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

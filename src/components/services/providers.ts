@@ -1,0 +1,20 @@
+import type { ProviderId } from '../../types/electron-api';
+
+export interface ProviderInfo {
+  id: ProviderId;
+  /** Короткая метка на карточке устройства. */
+  badge: string;
+  /** Фирменный цвет плашки. */
+  color: string;
+  available: boolean;
+}
+
+// Xiaomi и Aqara включаются в следующих планах.
+export const PROVIDERS: ProviderInfo[] = [
+  { id: 'yandex', badge: 'Я', color: '#FC3F1D', available: true },
+  { id: 'xiaomi', badge: 'Mi', color: '#FF6900', available: false },
+  { id: 'aqara', badge: 'Aq', color: '#2B2B2B', available: false },
+];
+
+export const providerInfo = (id: string | undefined): ProviderInfo =>
+  PROVIDERS.find(p => p.id === id) ?? PROVIDERS[0];

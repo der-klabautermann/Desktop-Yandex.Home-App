@@ -7,7 +7,6 @@ import { SensorDisplayConfig } from '../components/modals/SensorSettingsModal';
 // ---- Types ----
 
 interface ModalState {
-    showConfirmModal: boolean;
     showInfoModal: boolean;
     selectedThermostatDevice: YandexDevice | null;
     selectedLightDevice: YandexDevice | null;
@@ -52,7 +51,6 @@ export interface UseDashboardStateReturn {
     closeCameraStream: () => void;
     openSensorSettings: (device: YandexDevice) => void;
     closeSensorSettings: () => void;
-    setShowConfirmModal: (show: boolean) => void;
     setShowInfoModal: (show: boolean) => void;
 
     // Collapse
@@ -134,7 +132,6 @@ export function useDashboardState(
     isLightGroup: (devices: YandexDevice[]) => boolean,
 ): UseDashboardStateReturn {
     // --- MODAL STATE ---
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
     const [showInfoModal, setShowInfoModal] = useState(false);
     const [selectedThermostatDevice, setSelectedThermostatDevice] = useState<YandexDevice | null>(null);
     const [selectedLightDevice, setSelectedLightDevice] = useState<YandexDevice | null>(null);
@@ -465,7 +462,6 @@ export function useDashboardState(
     return {
         // Modal
         modal: {
-            showConfirmModal,
             showInfoModal,
             selectedThermostatDevice,
             selectedLightDevice,
@@ -492,7 +488,6 @@ export function useDashboardState(
         closeCameraStream,
         openSensorSettings,
         closeSensorSettings,
-        setShowConfirmModal,
         setShowInfoModal,
 
         // Collapse

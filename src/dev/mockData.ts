@@ -67,3 +67,21 @@ export const createMockHome = (): YandexUserInfoResponse => {
     ],
   };
 };
+
+/** Второй демо-сервис (как Xiaomi): ID с префиксом, комната «Кухня» совпадает с Яндексом. */
+export const createMockXiaomiHome = (): YandexUserInfoResponse => ({
+  status: 'ok',
+  request_id: 'mock-xiaomi',
+  households: [{ id: 'xiaomi:home', name: 'Дом' }],
+  rooms: [
+    { id: 'xiaomi:kitchen', name: 'кухня', household_id: 'xiaomi:home', devices: ['xiaomi:purifier'] },
+    { id: 'xiaomi:study', name: 'Кабинет', household_id: 'xiaomi:home', devices: ['xiaomi:desk-lamp', 'xiaomi:plug'] },
+  ],
+  groups: [],
+  devices: [
+    { id: 'xiaomi:purifier', name: 'Очиститель воздуха', type: 'devices.types.purifier', room: 'xiaomi:kitchen', household_id: 'xiaomi:home', capabilities: [onOff(true)] },
+    { id: 'xiaomi:desk-lamp', name: 'Настольная лампа', type: 'devices.types.light', room: 'xiaomi:study', household_id: 'xiaomi:home', capabilities: [onOff(true), brightness(55)] },
+    { id: 'xiaomi:plug', name: 'Умная розетка', type: 'devices.types.socket', room: 'xiaomi:study', household_id: 'xiaomi:home', capabilities: [onOff(false)] },
+  ],
+  scenarios: [{ id: 'xiaomi:scene-away', name: 'Ухожу из дома', is_active: true }],
+});

@@ -1,11 +1,14 @@
 import React, { createContext, useContext } from 'react';
-import { YandexUserInfoResponse, YandexHousehold, YandexDevice, YandexGroup, YandexModeAction, CameraStreamResult } from '../types/index';
+import { YandexUserInfoResponse, YandexHousehold, YandexModeAction, CameraStreamResult } from '../types/index';
+import type { AccountSummary } from '../types/electron-api';
 
 export interface DashboardContextValue {
     // Данные
     data: YandexUserInfoResponse;
     households: YandexHousehold[];
     activeHouseholdId: string | null;
+    /** Подключённые сервисы и их состояние. */
+    accounts: AccountSummary[];
 
     // Избранное
     favoriteDeviceIds: string[];
@@ -37,7 +40,7 @@ export interface DashboardContextValue {
     isAutostartEnabled: boolean;
     onToggleAutostart: () => void;
     onSwitchHousehold: (householdId?: string) => void;
-    onLogout: () => void;
+    onOpenServices: () => void;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);

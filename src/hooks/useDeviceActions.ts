@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
-import { toggleDevice, toggleGroup, executeScenario, setDeviceMode, getCameraStream, setCameraPrivacyMode } from '../services/yandexIoT';
+import { toggleDevice, toggleGroup, runScenario, setDeviceMode } from '../services/hub';
+import { getCameraStream, setCameraPrivacyMode } from '../services/camera';
 import { YandexUserInfoResponse, YandexModeAction, CameraStreamResult } from '../types/index';
 import { cleanErrorMessage } from '../utils/errors';
 import { useI18n } from '../i18n/I18nContext';
@@ -13,68 +14,82 @@ interface UseDeviceActionsReturn {
     handleSetCameraPrivacy: (deviceId: string, enabled: boolean, instance?: string) => Promise<void>;
 }
 
+type Item = { unreachable?: boolean; provider_id?: string } | undefined;
+
 export function useDeviceActions(
-    token: string | null,
     userData: YandexUserInfoResponse | null,
     showNotification: (message: string, type?: 'error' | 'success') => void,
-    refreshDashboardData: (apiToken: string, silent?: boolean) => Promise<void>,
+    refreshDashboardData: (silent?: boolean) => Promise<void>,
     requestXTokenAuth: () => Promise<boolean>
 ): UseDeviceActionsReturn {
     const { t } = useI18n();
+
+    /** Сервис недоступен: ничего не отправляем, а коротко сообщаем «нет связи». */
+    const blockedByOutage = useCallback((item: Item) => {
+        if (!item?.unreachable) return false;
+        const name = t(`services.names.${item.provider_id ?? 'yandex'}`);
+        showNotification(t('services.unreachable', { name }), 'error');
+        return true;
+    }, [showNotification, t]);
+
+    const fail = useCallback((err: unknown) => {
+        showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+    }, [showNotification, t]);
+
     const handleToggleDevice = useCallback(async (deviceId: string, currentState: boolean) => {
-        if (!token || !userData) return;
-        const newState = !currentState;
+        if (!userData) return;
+        if (blockedByOutage(userData.devices.find(d => d.id === deviceId))) return;
         try {
-            await toggleDevice(token, deviceId, newState);
-            // Оптимистичное обновление делает setUserData, но у нас нет доступа к setUserData здесь
-            // Пока оставим refreshDashboardData
-            refreshDashboardData(token);
+            await toggleDevice(deviceId, !currentState);
+            refreshDashboardData(true);
         } catch (err) {
-            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+            fail(err);
             throw err;
         }
-    }, [token, userData, refreshDashboardData, showNotification, t]);
+    }, [userData, refreshDashboardData, blockedByOutage, fail]);
 
     const handleToggleGroup = useCallback(async (groupId: string, currentState: boolean) => {
-        if (!token || !userData) return;
-        const newState = !currentState;
+        if (!userData) return;
         const group = userData.groups.find(g => g.id === groupId);
-        const deviceIds = group?.devices || [];
+        if (blockedByOutage(group)) return;
         try {
-            await toggleGroup(token, groupId, deviceIds, newState);
-            refreshDashboardData(token);
+            await toggleGroup(groupId, group?.devices || [], !currentState);
+            refreshDashboardData(true);
             showNotification(t('actions.groupToggled'), 'success');
         } catch (err) {
-            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+            fail(err);
             throw err;
         }
-    }, [token, userData, refreshDashboardData, showNotification, t]);
+    }, [userData, refreshDashboardData, showNotification, blockedByOutage, fail, t]);
 
     const handleExecuteScenario = useCallback(async (scenarioId: string) => {
-        if (!token) return;
+        if (blockedByOutage(userData?.scenarios.find(s => s.id === scenarioId))) return;
         try {
-            await executeScenario(token, scenarioId);
+            await runScenario(scenarioId);
             showNotification(t('actions.scenarioStarted'), 'success');
-            refreshDashboardData(token);
+            refreshDashboardData(true);
         } catch (err) {
-            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+            fail(err);
             throw err;
         }
-    }, [token, refreshDashboardData, showNotification, t]);
+    }, [userData, refreshDashboardData, showNotification, blockedByOutage, fail, t]);
 
     const handleSetDeviceMode = useCallback(async (deviceId: string, modeActions: YandexModeAction[], turnOn: boolean = false) => {
-        if (!token) return;
+        if (blockedByOutage(userData?.devices.find(d => d.id === deviceId))) return;
         try {
-            await setDeviceMode(token, deviceId, modeActions, turnOn);
+            await setDeviceMode(deviceId, modeActions, turnOn);
             showNotification(t('actions.settingsApplied'), 'success');
-            refreshDashboardData(token);
+            refreshDashboardData(true);
         } catch (err) {
-            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+            fail(err);
             throw err;
         }
-    }, [token, refreshDashboardData, showNotification, t]);
+    }, [userData, refreshDashboardData, showNotification, blockedByOutage, fail, t]);
 
     const handleGetCameraStream = useCallback(async (deviceId: string) => {
+        if (userData?.devices.find(d => d.id === deviceId)?.unreachable) {
+            throw new Error('ERR_UNREACHABLE');
+        }
         const isXTokenError = (message: string) =>
             message.includes('X_TOKEN_REQUIRED')
             || message.includes('Quasar auth')
@@ -92,7 +107,7 @@ export function useDeviceActions(
             }
             throw err;
         }
-    }, [requestXTokenAuth]);
+    }, [userData, requestXTokenAuth]);
 
     const handleSetCameraPrivacy = useCallback(async (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => {
         await setCameraPrivacyMode(deviceId, privacyEnabled, toggleInstance);

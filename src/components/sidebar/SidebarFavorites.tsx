@@ -81,7 +81,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
             </div>
             {!collapsed && (<>
                 {favoriteScenarios.map(s => (
-                    <div key={s.id} className="sidebar-item" style={{ paddingRight: '8px' }}>
+                    <div key={s.id} className={`sidebar-item ${s.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px' }}>
                         <span className="sidebar-item-icon">
                             {loadingItems[`scenario:${s.id}`]
                                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -105,7 +105,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
                     const onOff = d.capabilities?.find(c => c.type === 'devices.capabilities.on_off');
                     const isOn = onOff?.state?.value === true;
                     return (
-                        <div key={d.id} className="sidebar-item" style={{ paddingRight: '8px', opacity: 0.7 }}>
+                        <div key={d.id} className={`sidebar-item ${d.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px', opacity: 0.7 }}>
                             <span className="sidebar-item-icon">
                                 {loadingItems[`device:${d.id}`]
                                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -138,7 +138,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
                     const onOff = d.capabilities?.find(c => c.type === 'devices.capabilities.on_off');
                     const isOn = onOff?.state?.value === true;
                     return (
-                        <div key={d.id} className="sidebar-item" style={{ paddingRight: '8px', opacity: 0.7 }}>
+                        <div key={d.id} className={`sidebar-item ${d.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px', opacity: 0.7 }}>
                             <span className="sidebar-item-icon">
                                 {loadingItems[`device:${d.id}`]
                                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -171,7 +171,7 @@ export const SidebarFavorites: React.FC<SidebarFavoritesProps> = ({
                     const onOff = g.capabilities?.find(c => c.type === 'devices.capabilities.on_off');
                     const isOn = onOff?.state?.value === true;
                     return (
-                        <div key={g.id} className="sidebar-item" style={{ paddingRight: '8px', opacity: 0.7 }}>
+                        <div key={g.id} className={`sidebar-item ${g.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px', opacity: 0.7 }}>
                             <span className="sidebar-item-icon">
                                 {loadingItems[`group:${g.id}`]
                                     ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

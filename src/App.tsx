@@ -1,9 +1,9 @@
-import React, { useEffect, useCallback } from 'react';
-import { TokenInput } from './components/TokenInput';
+import React, { useEffect, useCallback, useRef, useState } from 'react';
 import { Dashboard } from './components/Dashboard';
+import { ServicesScreen } from './components/services/ServicesScreen';
 import { UpdateNotificationModal } from './components/modals/UpdateNotificationModal';
 import { QrAuthModal } from './components/modals/QrAuthModal';
-import { fetchUserInfo } from './services/yandexIoT';
+import { listAccounts, loadHome } from './services/hub';
 import { AppState, YandexUserInfoResponse, YandexDevice, YandexScenario, YandexGroup, TrayMenuItem, TrayItemType, YandexHousehold } from './types/index';
 import { formatSensorValueForTray, TraySensorDisplayConfig } from './constants';
 import { stableSortData } from './utils/dataUtils';
@@ -24,24 +24,25 @@ function App() {
     // 1. Нет зависимостей
     const { t } = useI18n();
     const { notification, showNotification, clearNotification } = useNotification();
-    const { token, setToken, appState, setAppState, errorMsg, retryInfo, setErrorMsg } = useAuth();
-    const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite, isFavorite } = useFavorites();
+    const { accounts, setAccounts, appState, setAppState, errorMsg, setErrorMsg, retryInfo } = useAuth();
+    const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite } = useFavorites();
     const { activeSidebarView, activeRoomId, activeGroupId, onSelectHome, onSelectRoom, onSelectGroup } = useNavigation();
     const { showUpdateNotification, setShowUpdateNotification, updateInfo } = useUpdateNotification();
+    const [showServices, setShowServices] = useState(false);
 
     // 2. Зависит от showNotification
     const cameraAuth = useCameraAuth(showNotification);
     const { showQrAuth, promptXTokenIfNeeded, requestXTokenAuth, handleQrAuthSuccess, handleQrAuthClose } = cameraAuth;
 
-    // 3. Зависит от (showNotification, token, appState, setAppState, setToken, promptXTokenIfNeeded)
-    const yandexData = useYandexData(showNotification, token, appState, setAppState, setToken, promptXTokenIfNeeded);
+    // 3. Данные всех сервисов
+    const yandexData = useYandexData(showNotification, setAccounts);
     const { userData, isRefreshing, refreshDashboardData, setUserData } = yandexData;
 
-    // 4. Зависит от userData, token, refreshDashboardData, requestXTokenAuth
-    const actions = useDeviceActions(token, userData, showNotification, refreshDashboardData, requestXTokenAuth);
+    // 4. Зависит от userData, refreshDashboardData, requestXTokenAuth
+    const actions = useDeviceActions(userData, showNotification, refreshDashboardData, requestXTokenAuth);
     const { handleToggleDevice, handleToggleGroup, handleExecuteScenario,
             handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy } = actions;
-    const household = useHousehold(userData, token, refreshDashboardData);
+    const household = useHousehold(userData, refreshDashboardData);
     const { activeHouseholdId, handleSwitchHousehold } = household;
 
     // 5. Зависит от showNotification
@@ -53,84 +54,74 @@ function App() {
     useEffect(() => {
         if (prevAppStateRef.current !== appState) {
             debugLog('app', 'appState', prevAppStateRef.current, '→', appState, {
-                hasToken: Boolean(token),
+                accounts: accounts.length,
                 hasUserData: Boolean(userData),
             });
             prevAppStateRef.current = appState;
         }
-    }, [appState, token, userData]);
+    }, [appState, accounts, userData]);
 
-    // --- Колбэки для связывания хуков ---
+    // --- Загрузка данных всех сервисов ---
 
-    const handleLoadData = useCallback(async (apiToken: string) => {
-        debugLog('app', 'handleLoadData start');
+    // Номер загрузки: результат устаревшей (отменённой) загрузки игнорируем
+    const loadSeqRef = useRef(0);
+
+    const loadData = useCallback(async () => {
+        const seq = ++loadSeqRef.current;
+        debugLog('app', 'loadData start');
         setAppState(AppState.LOADING);
         setErrorMsg(undefined);
         try {
-            const data = await fetchUserInfo(apiToken);
-            const sortedData = stableSortData(data);
+            const result = await loadHome();
+            if (seq !== loadSeqRef.current) return;
+            const sortedData = stableSortData(result.data);
             setUserData(sortedData);
+            setAccounts(result.accounts);
             setAppState(AppState.DASHBOARD);
-            await promptXTokenIfNeeded(sortedData);
-            debugLog('app', 'handleLoadData ok', { devices: sortedData.devices?.length });
-        } catch (err) {
-            debugWarn('app', 'handleLoadData failed', err);
-            setErrorMsg(cleanErrorMessage(err, t));
-            setAppState(AppState.AUTH);
-            if (err instanceof Error && (err.message.includes('401') || err.message.includes('403'))) {
-                await yandexApi.deleteSecureToken();
-                setToken(null);
+            if (result.accounts.some(a => a.providerId === 'yandex' && a.status === 'connected')) {
+                await promptXTokenIfNeeded(sortedData);
             }
+            debugLog('app', 'loadData ok', { devices: sortedData.devices?.length });
+        } catch (err) {
+            if (seq !== loadSeqRef.current) return;
+            debugWarn('app', 'loadData failed', err);
+            setErrorMsg(cleanErrorMessage(err, t));
+            setAccounts(await listAccounts().catch(() => []));
+            setAppState(AppState.AUTH);
         }
-    }, [setUserData, setAppState, setErrorMsg, setToken, promptXTokenIfNeeded, t]);
+    }, [setUserData, setAppState, setErrorMsg, setAccounts, promptXTokenIfNeeded, t]);
 
-    const handleLoadDataRef = React.useRef(handleLoadData);
+    const loadDataRef = useRef(loadData);
     useEffect(() => {
-        handleLoadDataRef.current = handleLoadData;
-    }, [handleLoadData]);
+        loadDataRef.current = loadData;
+    }, [loadData]);
 
-    const handleTokenSubmit = useCallback(async (newToken: string) => {
-        setToken(newToken);
-        await yandexApi.setSecureToken(newToken);
-        await handleLoadData(newToken);
-    }, [setToken, handleLoadData]);
-
-    const handleLogout = useCallback(async () => {
-        debugLog('app', 'logout');
-        await yandexApi.deleteSecureToken();
-        setToken(null);
-        setUserData(null);
-        setErrorMsg(undefined);
-        setAppState(AppState.AUTH);
-    }, [setToken, setUserData, setErrorMsg, setAppState]);
-
+    // Отмена ожидания на экране загрузки: открываем «Мои сервисы», данные входа не трогаем
     const handleCancelRetry = useCallback(async () => {
         debugLog('app', 'cancel retry');
-        await yandexApi.deleteSecureToken();
-        setToken(null);
-        setUserData(null);
-        setErrorMsg(undefined);
+        loadSeqRef.current += 1;
+        setAccounts(await listAccounts().catch(() => []));
         setAppState(AppState.AUTH);
-    }, [setToken, setUserData, setErrorMsg, setAppState]);
+    }, [setAccounts, setAppState]);
 
-    // --- 1. Init-эффект (проверка токена при запуске) ---
-    // Intentionally empty deps: must run once. Re-running on handleLoadData identity
-    // would set AppState.LOADING and wipe the dashboard (transparent bg = "only background").
+    // --- 1. Init-эффект: какие сервисы подключены ---
+    // Intentionally empty deps: must run once. Re-running would set AppState.LOADING
+    // and wipe the dashboard.
     useEffect(() => {
         refreshDebugFlags();
-        debugLog('app', 'init: checkToken');
-        const checkToken = async () => {
+        debugLog('app', 'init: accounts');
+        const start = async () => {
             setAppState(AppState.LOADING);
-            const storedToken = await yandexApi.getSecureToken();
-            if (storedToken) {
-                setToken(storedToken);
-                await handleLoadDataRef.current(storedToken);
+            const connected = await listAccounts().catch(() => []);
+            setAccounts(connected);
+            if (connected.length > 0) {
+                await loadDataRef.current();
             } else {
                 setErrorMsg(undefined);
                 setAppState(AppState.AUTH);
             }
         };
-        void checkToken();
+        void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -182,9 +173,10 @@ function App() {
                     id: device.id,
                     name: device.name,
                     type: 'device' as TrayItemType,
-                    isToggleable: isToggleable,
+                    isToggleable: isToggleable && !device.unreachable,
                     isOn: onOffCapability?.state?.value === true,
                     sensorValue: sensorValue,
+                    unreachable: device.unreachable,
                 };
             });
 
@@ -213,7 +205,8 @@ function App() {
                     id: group.id,
                     name: group.name,
                     type: 'group' as TrayItemType,
-                    isToggleable: isToggleable,
+                    isToggleable: isToggleable && !group.unreachable,
+                    unreachable: group.unreachable,
                     isOn: isGroupOn,
                 };
             });
@@ -226,6 +219,7 @@ function App() {
                 id: scenario.id,
                 name: scenario.name,
                 type: 'scenario' as TrayItemType,
+                unreachable: scenario.unreachable,
             }));
 
         return [...favDeviceItems, ...favGroupItems, ...favScenarioItems];
@@ -251,19 +245,19 @@ function App() {
             }
         });
         return () => { yandexApi.removeTrayCommandListener(); };
-    }, [handleToggleDevice, handleToggleGroup, handleExecuteScenario, token]);
+    }, [handleToggleDevice, handleToggleGroup, handleExecuteScenario]);
 
     // --- 5. Polling-эффект (автосинхронизация) ---
     useEffect(() => {
-        if (appState !== AppState.DASHBOARD || !token) return;
+        if (appState !== AppState.DASHBOARD || accounts.length === 0) return;
         const POLLING_INTERVAL = 120000;
         const pollingInterval = setInterval(() => {
-            refreshDashboardData(token, true).catch(err => {
+            refreshDashboardData(true).catch(err => {
                 console.error('Polling sync error:', err);
             });
         }, POLLING_INTERVAL);
         return () => { clearInterval(pollingInterval); };
-    }, [appState, token, refreshDashboardData]);
+    }, [appState, accounts.length, refreshDashboardData]);
 
     // --- Рендеринг ---
 
@@ -318,7 +312,8 @@ function App() {
                     onSetDeviceMode: handleSetDeviceMode,
                     onGetCameraStream: handleGetCameraStream,
                     onSetCameraPrivacy: handleSetCameraPrivacy,
-                    onRefresh: () => token && refreshDashboardData(token),
+                    onRefresh: () => refreshDashboardData(),
+                    accounts,
                     activeSidebarView,
                     activeRoomId,
                     activeGroupId,
@@ -329,9 +324,17 @@ function App() {
                     isAutostartEnabled,
                     onToggleAutostart: handleToggleAutostart,
                     onSwitchHousehold: handleSwitchHousehold,
-                    onLogout: handleLogout,
+                    onOpenServices: () => setShowServices(true),
                 }}>
-                    <Dashboard />
+                    {showServices ? (
+                        <ServicesScreen
+                            accounts={accounts}
+                            onChanged={() => { setShowServices(false); void loadData(); }}
+                            onClose={() => setShowServices(false)}
+                        />
+                    ) : (
+                        <Dashboard />
+                    )}
                 </DashboardContext.Provider>
                 {updateInfo && (
                     <UpdateNotificationModal
@@ -356,10 +359,11 @@ function App() {
     // Экран авторизации (по умолчанию)
     return (
         <ThemeProvider>
-            <TokenInput
-                onTokenSubmit={handleTokenSubmit}
-                isLoading={false}
+            <ServicesScreen
+                accounts={accounts}
                 error={errorMsg}
+                onChanged={() => { void loadData(); }}
+                onRetry={accounts.length > 0 ? () => { void loadData(); } : undefined}
             />
             <NotificationToast notification={notification} onClose={clearNotification} />
         </ThemeProvider>

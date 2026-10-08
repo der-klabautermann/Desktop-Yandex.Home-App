@@ -9,6 +9,7 @@ import {
   MousePointerClick, CircleDot
 } from 'lucide-react';
 import { useI18n } from '../../i18n/I18nContext';
+import { ProviderBadge } from '../services/ProviderBadge';
 
 const INSTANCE_ICON_COMPONENTS: Record<string, React.ElementType> = {
   temperature: Thermometer,
@@ -165,7 +166,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({
 
   const icon = getIconForDevice(device.type);
 
+  const isUnreachable = Boolean(device.unreachable);
+
   const handleClick = () => {
+    // Сервис недоступен: onToggle только сообщит «нет связи»
+    if (isUnreachable) { void onToggle(device.id, false).catch(() => {}); return; }
     if (onOpenSettings) {
       onOpenSettings(device);
     }
@@ -183,11 +188,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({
     <div
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`device-card sensor-card is-on ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`device-card sensor-card ${isUnreachable ? 'is-unreachable' : 'is-on'} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className="device-icon is-on">
+          <div className={`device-icon ${isUnreachable ? '' : 'is-on'}`}>
             {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
           </div>
         </div>
@@ -220,7 +225,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
         </div>
       </div>
 
-      <div className="device-name">{device.name}</div>
+      <div className="device-name">{device.name}<ProviderBadge providerId={device.provider_id} unreachable={isUnreachable} /></div>
 
       {secondaryProps.length > 0 && (
         <div className="device-type-label">

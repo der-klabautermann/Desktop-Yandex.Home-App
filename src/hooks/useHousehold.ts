@@ -10,8 +10,7 @@ interface UseHouseholdReturn {
 
 export function useHousehold(
     userData: YandexUserInfoResponse | null,
-    token: string | null,
-    refreshDashboardData: (apiToken: string, silent?: boolean) => Promise<void>
+    refreshDashboardData: (silent?: boolean) => Promise<void>
 ): UseHouseholdReturn {
     // Lazy init from localStorage — читаем сохранённый дом при монтировании
     const [activeHouseholdId, setActiveHouseholdId] = useState<string | null>(() => {
@@ -69,10 +68,8 @@ export function useHousehold(
             return households[nextIndex].id;
         });
 
-        if (token) {
-            refreshDashboardData(token);
-        }
-    }, [userData, token, refreshDashboardData]);
+        refreshDashboardData(true);
+    }, [userData, refreshDashboardData]);
 
     return { activeHouseholdId, handleSwitchHousehold };
 }

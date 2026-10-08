@@ -3,6 +3,7 @@ import { YandexGroup, YandexDevice } from '../../types/index';
 import { DeviceCardAdapter } from './DeviceCardAdapter';
 import { Loader2, Power, ChevronDown, ChevronRight, Settings, Star } from 'lucide-react';
 import { useI18n } from '../../i18n/I18nContext';
+import { ProviderBadge } from '../services/ProviderBadge';
 
 
 interface GroupCardProps {
@@ -97,7 +98,7 @@ export const GroupCard: React.FC<GroupCardProps> = ({
       <div className="group-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }} onClick={() => setIsCollapsed(!isCollapsed)}>
           {isCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'rgba(255,255,255,0.5)' }} />}
-          <h3>{group.name}</h3>
+          <h3>{group.name}<ProviderBadge providerId={group.provider_id} unreachable={group.unreachable} /></h3>
           <span className="sidebar-item-badge" style={{ fontSize: 11 }}>{groupDevices.length}</span>
         </div>
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>

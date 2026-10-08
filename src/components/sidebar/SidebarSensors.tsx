@@ -43,7 +43,7 @@ export const SidebarSensors: React.FC<SidebarSensorsProps> = ({ collapsed, onTog
             {!collapsed && allSensors.map(d => {
                 const isFav = ctx.favoriteDeviceIds.includes(d.id);
                 return (
-                    <div key={d.id} className="sidebar-item" style={{ paddingRight: '8px', opacity: 0.7 }}>
+                    <div key={d.id} className={`sidebar-item ${d.unreachable ? 'is-unreachable' : ''}`} style={{ paddingRight: '8px', opacity: 0.7 }}>
                         <span className="sidebar-item-icon">
                             {React.cloneElement(getIconForDevice(d.type) as React.ReactElement<{ className?: string }>, { className: 'w-3.5 h-3.5' })}
                         </span>

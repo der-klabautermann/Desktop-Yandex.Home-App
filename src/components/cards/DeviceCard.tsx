@@ -5,6 +5,7 @@ import { Loader2, Star, Settings, Eye, EyeOff, Video, Mic, MicOff, Thermometer, 
 import { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
 import { useI18n } from '../../i18n/I18nContext';
+import { ProviderBadge } from '../services/ProviderBadge';
 
 const loggedCameraCardIds = new Set<string>();
 
@@ -156,7 +157,12 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
       ? `${rawSensorValue}${resolvedUnit ?? ''}`
         : null;
 
+  // Сервис недоступен: вместо действия коротко сообщаем «нет связи» (это делает onToggle)
+  const isUnreachable = Boolean(device.unreachable);
+  const reportUnreachable = () => { void onToggle(device.id, isOn).catch(() => {}); };
+
   const handleClick = async () => {
+    if (isUnreachable) { reportUnreachable(); return; }
     if (isCamera && onOpenCameraStream) { onOpenCameraStream(device); return; }
     if (!isToggleable || loading) return;
     setLoading(true);
@@ -166,6 +172,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
+    if (isUnreachable) { e.preventDefault(); reportUnreachable(); return; }
     if (isCamera && onOpenCameraStream) { e.preventDefault(); e.stopPropagation(); onOpenCameraStream(device); return; }
     if ((isThermostat || isLight || isFan) && onOpenSettings) { e.preventDefault(); e.stopPropagation(); onOpenSettings(device); }
   };
@@ -176,11 +183,11 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
     <div
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`device-card ${(isToggleable && isOn) || isCamera || isAlwaysOn ? 'is-on' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`device-card ${!isUnreachable && ((isToggleable && isOn) || isCamera || isAlwaysOn) ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className={`device-icon ${(isOn && isToggleable) || isCamera || isAlwaysOn ? 'is-on' : ''}`}>
+          <div className={`device-icon ${!isUnreachable && ((isOn && isToggleable) || isCamera || isAlwaysOn) ? 'is-on' : ''}`}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
           </div>
           {showMicStatus && (
@@ -207,7 +214,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
           )}
           {(isThermostat || isLight || isFan) && onOpenSettings && (
             <div
-              onClick={(e) => { e.stopPropagation(); onOpenSettings(device); }}
+              onClick={(e) => { e.stopPropagation(); if (isUnreachable) reportUnreachable(); else onOpenSettings(device); }}
               style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
               className="settings-btn"
               title={isThermostat ? t('cards.climateSettings') : isFan ? t('cards.fanSettings') : t('cards.lightSettings')}
@@ -224,9 +231,9 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
         </div>
       </div>
 
-      <div className="device-name">{device.name}</div>
+      <div className="device-name">{device.name}<ProviderBadge providerId={device.provider_id} unreachable={isUnreachable} /></div>
       <div className="device-type-label">
-        {loading ? t('cards.updating') : (
+        {isUnreachable ? t('services.status.offline') : loading ? t('cards.updating') : (
           temperatureValue !== null || humidityValue !== null ? (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
               {temperatureValue !== null && (
