@@ -4,14 +4,14 @@ import { app, BrowserWindow, ipcMain, Menu, Tray, Notification } from 'electron'
 import path from 'path';
 import { fileURLToPath } from 'url';
 // Импорт yandex-api.js
-import * as yandexApi from './yandex-api.js';
 import {
+    yandexApi,
     startQrAuth,
     pollQrAuth,
     cancelQrAuth,
     validateStoredXToken,
-} from './yandex-x-token-auth.js';
-import { clearQuasarSessionCache } from './yandex-quasar.js';
+    clearQuasarSessionCache,
+} from './core.js';
 import { setMainLanguage, tm } from './i18n.js';
 import keytar from 'keytar';
 

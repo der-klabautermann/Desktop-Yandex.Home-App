@@ -1,6 +1,6 @@
 // yandex-api.js (Это будет чистый Node.js код)
 
-import { getCameraStreamFromQuasar, sendQuasarDeviceActions, getQuasarDevice, buildPrivacyActionCandidates } from './yandex-quasar.js';
+import { getCameraStreamFromQuasar, sendQuasarDeviceActions, getQuasarDevice, buildPrivacyActionCandidates } from './quasar.js';
 
 const BASE_URL = 'https://api.iot.yandex.net/v1.0';
 
