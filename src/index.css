@@ -2110,7 +2110,7 @@ body::after {
 }
 .zone-dialog input:focus, .zone-dialog select:focus { outline: none; border-color: var(--accent); }
 .zone-dialog-hint { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
-.zone-icon-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.zone-icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; }
 .zone-icon-choice {
   display: inline-flex; align-items: center; justify-content: center;
   height: 38px; border-radius: 12px;

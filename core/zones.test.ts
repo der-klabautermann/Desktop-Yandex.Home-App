@@ -115,3 +115,30 @@ describe('summarizeDevices', () => {
     expect(isZoneActive(summary)).toBe(false);
   });
 });
+
+import { guessRoomIcon, setZoneIcon } from './zones';
+
+describe('Symbole für Räume', () => {
+  it('erraten das Symbol aus dem Namen in drei Sprachen', () => {
+    expect(guessRoomIcon('Кухня')).toBe('kitchen');
+    expect(guessRoomIcon('Wohnzimmer')).toBe('living');
+    expect(guessRoomIcon('Master Bedroom')).toBe('bedroom');
+    expect(guessRoomIcon('Ванная')).toBe('bath');
+    expect(guessRoomIcon('Abstellraum')).toBeUndefined();
+  });
+
+  it('Räume bekommen ohne Einrichtung das erratene Symbol', () => {
+    expect(buildZoneTree(home, EMPTY_ZONE_CONFIG, 'h1')[0].icon).toBe('kitchen');
+  });
+
+  it('auch Räume aus Diensten lassen sich umstellen', () => {
+    const config = setZoneIcon(EMPTY_ZONE_CONFIG, 'kitchen', 'balcony');
+    expect(buildZoneTree(home, config, 'h1')[0].icon).toBe('balcony');
+    expect(config.zones).toEqual([]);
+  });
+
+  it('eigene Zonen speichern das Symbol an der Zone', () => {
+    const { config, id } = addZone(EMPTY_ZONE_CONFIG, { name: 'EG', householdId: 'h1' }, () => 'zone:eg');
+    expect(setZoneIcon(config, id, 'garden').zones[0].icon).toBe('garden');
+  });
+});

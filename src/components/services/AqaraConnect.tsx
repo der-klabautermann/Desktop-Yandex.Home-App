@@ -8,6 +8,17 @@ import { ProviderMark } from './ProviderMark';
 
 const REGIONS = ['europe', 'russia', 'china', 'usa', 'korea'] as const;
 
+/** Регион Aqara по часовому поясу компьютера; пользователь всегда может выбрать другой. */
+const guessRegion = (): typeof REGIONS[number] => {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone ?? '';
+  const russian = ['Moscow', 'Kaliningrad', 'Samara', 'Volgograd', 'Saratov', 'Ulyanovsk', 'Astrakhan', 'Kirov', 'Yekaterinburg', 'Omsk', 'Novosibirsk', 'Barnaul', 'Tomsk', 'Novokuznetsk', 'Krasnoyarsk', 'Irkutsk', 'Chita', 'Yakutsk', 'Vladivostok', 'Magadan', 'Sakhalin', 'Kamchatka', 'Anadyr', 'Minsk'];
+  if (russian.some(city => zone.includes(city))) return 'russia';
+  if (/Asia\/(Shanghai|Chongqing|Harbin|Urumqi|Hong_Kong|Macau)/.test(zone)) return 'china';
+  if (zone.includes('Seoul')) return 'korea';
+  if (zone.startsWith('America/')) return 'usa';
+  return 'europe';
+};
+
 /**
  * Вход в Aqara: ключ разработчика (App ID, Key ID, App Key), регион и аккаунт Aqara Home.
  * Сначала Aqara присылает код, затем код подтверждает вход.
@@ -15,7 +26,7 @@ const REGIONS = ['europe', 'russia', 'china', 'usa', 'korea'] as const;
 export const AqaraConnect: React.FC<{ onConnected: () => void }> = ({ onConnected }) => {
   const { t } = useI18n();
   const [form, setForm] = useState({
-    region: 'russia',
+    region: guessRegion(),
     appId: '', keyId: '', appKey: '', account: '', code: '',
   });
   const [codeSent, setCodeSent] = useState(false);

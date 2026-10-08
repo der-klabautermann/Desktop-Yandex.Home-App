@@ -15,6 +15,8 @@ export interface ZoneConfig {
   zones: CustomZone[];
   /** Родитель комнаты или зоны (ID зоны). Нет записи: прямо в доме. */
   parents: Record<string, string>;
+  /** Значки, выбранные для комнат из сервисов (у собственных зон значок хранится в самой зоне). */
+  icons?: Record<string, string>;
 }
 
 export const EMPTY_ZONE_CONFIG: ZoneConfig = { version: 1, zones: [], parents: {} };
@@ -61,7 +63,8 @@ export const buildZoneTree = (home: HomeData, config: ZoneConfig, householdId: s
   }
   for (const room of rooms) {
     const deviceIds = room.devices.filter(id => knownDevices.has(id));
-    nodes.set(room.id, { id: room.id, kind: 'room', name: room.name, children: [], deviceIds, allDeviceIds: [] });
+    const icon = config.icons?.[room.id] ?? guessRoomIcon(room.name);
+    nodes.set(room.id, { id: room.id, kind: 'room', name: room.name, icon, children: [], deviceIds, allDeviceIds: [] });
   }
 
   const ids = new Set(nodes.keys());
@@ -120,10 +123,37 @@ export const renameZone = (config: ZoneConfig, id: string, name: string): ZoneCo
   zones: config.zones.map(z => (z.id === id ? { ...z, name: name.trim() || z.name } : z)),
 });
 
-export const setZoneIcon = (config: ZoneConfig, id: string, icon: string): ZoneConfig => ({
-  ...config,
-  zones: config.zones.map(z => (z.id === id ? { ...z, icon } : z)),
-});
+/** Значок для собственной зоны или для комнаты из сервиса. */
+export const setZoneIcon = (config: ZoneConfig, id: string, icon: string): ZoneConfig =>
+  isCustomZoneId(id)
+    ? { ...config, zones: config.zones.map(z => (z.id === id ? { ...z, icon } : z)) }
+    : { ...config, icons: { ...config.icons, [id]: icon } };
+
+// Ключевые слова названий комнат (русский, немецкий, английский) -> значок
+const ROOM_KEYWORDS: Array<[string, string[]]> = [
+  ['kitchen', ['кухн', 'küche', 'kueche', 'kitchen']],
+  ['bedroom', ['спальн', 'schlafzimmer', 'schlafraum', 'bedroom']],
+  ['kids', ['детск', 'kinder', 'kids', 'nursery']],
+  ['living', ['гостин', 'зал', 'wohnzimmer', 'living', 'lounge']],
+  ['dining', ['столов', 'esszimmer', 'dining']],
+  ['bath', ['ванн', 'туалет', 'санузел', 'bad', 'wc', 'toilet', 'bath']],
+  ['office', ['кабинет', 'офис', 'büro', 'buero', 'arbeitszimmer', 'office', 'study']],
+  ['hall', ['прихож', 'коридор', 'холл', 'flur', 'diele', 'eingang', 'hall', 'entrance', 'corridor']],
+  ['garage', ['гараж', 'garage']],
+  ['garden', ['сад', 'двор', 'участ', 'garten', 'hof', 'garden', 'yard']],
+  ['balcony', ['балкон', 'терраса', 'лоджия', 'balkon', 'terrasse', 'balcony', 'terrace']],
+  ['basement', ['подвал', 'погреб', 'keller', 'basement', 'cellar']],
+  ['laundry', ['прачеч', 'постироч', 'waschküche', 'hauswirtschaft', 'laundry']],
+  ['workshop', ['мастерск', 'werkstatt', 'workshop']],
+  ['gym', ['спортзал', 'тренаж', 'fitness', 'gym']],
+  ['sauna', ['баня', 'сауна', 'sauna']],
+];
+
+/** Подбирает значок по названию комнаты; undefined, если ничего не подошло. */
+export const guessRoomIcon = (name: string): string | undefined => {
+  const lower = name.toLowerCase();
+  return ROOM_KEYWORDS.find(([, words]) => words.some(word => lower.includes(word)))?.[0];
+};
 
 /** Переносит комнату или зону в другую зону (null: прямо в дом). Кольца не допускаются. */
 export const moveNode = (config: ZoneConfig, id: string, parentId: string | null): ZoneConfig => {

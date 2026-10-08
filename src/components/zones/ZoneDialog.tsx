@@ -22,7 +22,7 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
   const isCustom = mode === 'create' || (nodeId ? isCustomZoneId(nodeId) : false);
 
   const [name, setName] = useState(node?.name ?? '');
-  const [icon, setIcon] = useState(node?.icon ?? 'layers');
+  const [icon, setIcon] = useState(node?.icon ?? (mode === 'create' ? 'layers' : 'room'));
   const [parentId, setParentId] = useState<string>(nodeId ? zones.config.parents[nodeId] ?? '' : '');
 
   // Куда можно перенести: только собственные зоны, не сама зона и не её потомки
@@ -36,7 +36,7 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
       const id = zones.createZone(name, icon, parentId || null);
       if (id) ctx.onSelectRoom(id);
     } else if (nodeId) {
-      zones.updateZone(nodeId, isCustom ? { name, icon, parentId: parentId || null } : { parentId: parentId || null });
+      zones.updateZone(nodeId, isCustom ? { name, icon, parentId: parentId || null } : { icon, parentId: parentId || null });
     }
     onClose();
   };
@@ -61,18 +61,19 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
           <>
             <label htmlFor="zone-name">{t('zones.name')}</label>
             <input id="zone-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('zones.namePlaceholder')} autoFocus />
-            <label>{t('zones.icon')}</label>
-            <div className="zone-icon-grid">
-              {Object.keys(ZONE_ICONS).map(key => (
-                <button key={key} className={`zone-icon-choice ${icon === key ? 'is-active' : ''}`} onClick={() => setIcon(key)} title={key}>
-                  <ZoneIcon icon={key} kind="zone" className="w-4 h-4" />
-                </button>
-              ))}
-            </div>
           </>
         ) : (
           <p className="zone-dialog-hint">{t('zones.roomHint')}</p>
         )}
+
+        <label>{t('zones.icon')}</label>
+        <div className="zone-icon-grid">
+          {Object.keys(ZONE_ICONS).map(key => (
+            <button key={key} className={`zone-icon-choice ${icon === key ? 'is-active' : ''}`} onClick={() => setIcon(key)} title={t(`zones.icons.${key}`)}>
+              <ZoneIcon icon={key} kind="zone" className="w-4 h-4" />
+            </button>
+          ))}
+        </div>
 
         <label htmlFor="zone-parent">{t('zones.parent')}</label>
         <select id="zone-parent" value={parentId} onChange={e => setParentId(e.target.value)}>

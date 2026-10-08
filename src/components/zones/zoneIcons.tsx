@@ -1,19 +1,33 @@
 import React from 'react';
-import { Layers, Home, Trees, Car, BedDouble, Sofa, CookingPot, Bath, Briefcase, Baby, Warehouse, Sun, SquareSquare } from 'lucide-react';
+import {
+  Layers, Home, Trees, Car, BedDouble, Sofa, CookingPot, Bath, Briefcase, Baby, Warehouse, Sun, SquareSquare,
+  UtensilsCrossed, DoorOpen, WashingMachine, Wrench, Dumbbell, Flame, Tv, Gamepad2, BookOpen, Shirt,
+} from 'lucide-react';
 
-/** Значки, которые можно выбрать для собственной зоны. */
+/** Значки для комнат и зон. Ключи хранятся в zones.json, поэтому их не переименовываем. */
 export const ZONE_ICONS: Record<string, React.ElementType> = {
+  room: SquareSquare,
   layers: Layers,
   home: Home,
-  garden: Trees,
-  garage: Car,
-  bedroom: BedDouble,
   living: Sofa,
   kitchen: CookingPot,
+  dining: UtensilsCrossed,
+  bedroom: BedDouble,
+  kids: Baby,
   bath: Bath,
   office: Briefcase,
-  kids: Baby,
+  hall: DoorOpen,
+  wardrobe: Shirt,
+  library: BookOpen,
+  media: Tv,
+  games: Gamepad2,
+  gym: Dumbbell,
+  sauna: Flame,
+  laundry: WashingMachine,
+  workshop: Wrench,
   basement: Warehouse,
+  garage: Car,
+  garden: Trees,
   balcony: Sun,
 };
 
