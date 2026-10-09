@@ -7,6 +7,7 @@ import { findNode } from '../../core/zones';
 import { DashboardGroupView } from './DashboardGroupView';
 import { DashboardDeviceView } from './DashboardDeviceView';
 import { DashboardCamerasView } from './DashboardCamerasView';
+import { GroupsPage, RoomsPage, ScenariosPage, SensorsPage } from './DashboardPages';
 import { ThermostatSettingsModal } from './modals/ThermostatSettingsModal';
 import { BrightnessSettingsModal } from './modals/BrightnessSettingsModal';
 import { GroupLightSettingsModal } from './modals/GroupLightSettingsModal';
@@ -16,7 +17,9 @@ import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
 import { DeviceDetailModal } from './modals/DeviceDetailModal';
-import { Check, CloudOff, Plug, Settings } from 'lucide-react';
+import { Check, CloudOff, Search, Settings, X } from 'lucide-react';
+import { DaylightButton } from './DaylightButton';
+import { WeatherProvider } from '../contexts/WeatherContext';
 import { ActivityButton } from './activity/ActivityButton';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -30,6 +33,8 @@ export const Dashboard: React.FC = () => {
     const { t, tp } = useI18n();
 
     const [pinnedEl, setPinnedEl] = useState<HTMLDivElement | null>(null);
+    // Поиск в шапке работает на странице «Все устройства»
+    const [query, setQuery] = useState('');
     const state = useDashboardState(
         ctx.activeHouseholdId,
         ctx.activeSidebarView,
@@ -163,6 +168,10 @@ export const Dashboard: React.FC = () => {
             if (device) return device.name;
         }
         if (ctx.activeSidebarView === 'cameras') return t('camera.title');
+        const pageTitles: Record<string, string> = {
+            rooms: 'sidebar.rooms', sensors: 'sidebar.sensors', groups: 'sidebar.groups', scenarios: 'sidebar.scenarios',
+        };
+        if (pageTitles[ctx.activeSidebarView]) return t(pageTitles[ctx.activeSidebarView]);
         return homeName;
     }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, ctx.zones.tree, groupsForHome, homeName, t]);
 
@@ -218,6 +227,7 @@ export const Dashboard: React.FC = () => {
                         visibleFavoriteGroups={visibleFavoriteGroups}
                         hasFavorites={hasFavorites}
                         hasFavoriteSensors={hasFavoriteSensors}
+                        query={query}
                     />
                 );
             case 'room':
@@ -231,6 +241,14 @@ export const Dashboard: React.FC = () => {
                 );
             case 'device':
                 return <DashboardDeviceView deviceId={ctx.activeDeviceId} />;
+            case 'rooms':
+                return <RoomsPage devicesForHome={devicesForHome} />;
+            case 'sensors':
+                return <SensorsPage state={state} devicesForHome={devicesForHome} />;
+            case 'groups':
+                return <GroupsPage groupsForHome={groupsForHome} devicesForHome={devicesForHome} />;
+            case 'scenarios':
+                return <ScenariosPage scenarios={activeScenarios} />;
             case 'cameras':
                 return <DashboardCamerasView state={state} cameras={devicesForHome.filter(isCameraDevice)} />;
             case 'group':
@@ -262,12 +280,14 @@ export const Dashboard: React.FC = () => {
                         visibleFavoriteGroups={visibleFavoriteGroups}
                         hasFavorites={hasFavorites}
                         hasFavoriteSensors={hasFavoriteSensors}
+                        query={query}
                     />
                 );
         }
     };
 
     return (
+        <WeatherProvider>
         <div className="window">
             <div className="body">
                 <Sidebar onOpenCameraStream={state.openCameraStream} />
@@ -284,10 +304,24 @@ export const Dashboard: React.FC = () => {
                                     <Check className="w-4 h-4" /> {t('header.done')}
                                 </button>
                             )}
+                            <label className="home-search header-search">
+                                <Search className="w-4 h-4" />
+                                <input
+                                    type="search"
+                                    value={query}
+                                    placeholder={t('dashboard.search')}
+                                    aria-label={t('dashboard.search')}
+                                    onChange={e => { setQuery(e.target.value); if (ctx.activeSidebarView !== 'home') ctx.onSelectHome(); }}
+                                    onKeyDown={e => { if (e.key === 'Escape') setQuery(''); }}
+                                />
+                                {query && (
+                                    <button onClick={() => setQuery('')} title={t('common.close')} aria-label={t('common.close')}>
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                )}
+                            </label>
                             <ActivityButton />
-                            <button onClick={ctx.onOpenServices} className="header-btn" title={t('services.title')}>
-                                <Plug className="w-4 h-4" />
-                            </button>
+                            <DaylightButton />
                             <button onClick={ctx.onOpenSettings} className="header-btn" title={t('settings.title')}>
                                 <Settings className="w-4 h-4" />
                             </button>
@@ -399,5 +433,6 @@ export const Dashboard: React.FC = () => {
             )}
 
         </div>
+        </WeatherProvider>
     );
 };

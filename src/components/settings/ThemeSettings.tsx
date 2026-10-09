@@ -2,7 +2,9 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useI18n } from '../../i18n/I18nContext';
-import { INTERVAL_OPTIONS, PALETTES, PaletteId, ThemeMode, nextChange } from '../../themes/palettes';
+import { Daylight, INTERVAL_OPTIONS, PALETTES, PaletteId, ThemeMode, nextChange } from '../../themes/palettes';
+
+const DAYLIGHT: Daylight[] = ['auto', 'day', 'night'];
 
 const MODES: ThemeMode[] = ['cycle', 'fixed'];
 
@@ -62,6 +64,19 @@ export const ThemeSettings: React.FC = () => {
                     ))}
                 </div>
             )}
+
+            <div className="theme-interval">
+                <span>{t('daylight.title')}</span>
+                {DAYLIGHT.map(option => (
+                    <button
+                        key={option}
+                        className={`theme-interval-chip ${settings.daylight === option ? 'is-active' : ''}`}
+                        onClick={() => updateSettings({ daylight: option })}
+                    >
+                        {t(`daylight.${option}`)}
+                    </button>
+                ))}
+            </div>
 
             <div className="theme-grid settings-theme-grid">
                 {PALETTES.map(p => {

@@ -42,6 +42,8 @@ export const de = {
     groups: 'Gruppen',
     noRoom: 'Ohne Raum',
     noScenarios: 'Sie haben keine aktiven Szenarien.',
+    noSensors: 'Keine Sensoren verbunden.',
+    noGroups: 'Noch keine Gruppen.',
     roomNotFound: 'Raum nicht gefunden',
     roomEmpty: 'In diesem Raum gibt es keine Geräte',
     groupNotFound: 'Gruppe nicht gefunden',
@@ -50,7 +52,24 @@ export const de = {
   sidebar: {
     allDevices: 'Alle Geräte',
     groups: 'Gerätegruppen',
-    rooms: 'Räume',
+    rooms: 'Räume und Zonen',
+    sensors: 'Sensoren',
+    scenarios: 'Szenarien',
+    system: 'System',
+  },
+  weather: {
+    setPlace: 'Ort festlegen',
+    choosePlace: 'Ort für das Wetter',
+    searchPlace: 'Stadt suchen',
+    removePlace: 'Ort entfernen',
+    clear: 'Klar', partly: 'Heiter', cloudy: 'Bewölkt', fog: 'Nebel', drizzle: 'Nieselregen',
+    rain: 'Regen', snow: 'Schnee', storm: 'Gewitter',
+  },
+  daylight: {
+    day: 'Tagansicht',
+    night: 'Nachtansicht',
+    auto: 'Automatisch',
+    title: 'Tag und Nacht',
   },
   cards: {
     on: 'Eingeschaltet',
@@ -441,6 +460,7 @@ export const de = {
       fixed: { label: 'Ein Theme', hint: 'Tippen Sie auf ein Theme, um es festzulegen.' },
     },
     palettes: {
+      nachtwald: { name: 'Nachtwald', mood: 'Tiefes Navy wie ein Abend in den Bergen' },
       volna: { name: 'Meine Welle', mood: 'Schwarzer Hintergrund mit Farbverläufen' },
       alisa: { name: 'Alice', mood: 'Tiefes Violett mit blauem Leuchten' },
       muzyka: { name: 'Musik', mood: 'Schwarz mit dem typischen Gelb' },

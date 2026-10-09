@@ -4,7 +4,8 @@ import { getIconForDevice } from '../../constants';
 import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { Star, Eye, EyeOff, Settings } from 'lucide-react';
 import DashboardContext from '../../contexts/DashboardContext';
-import { InstanceIcon, formatPropertyValue } from '../../utils/deviceInfo';
+import { InstanceIcon, deviceArtUrl, deviceCategory, formatPropertyValue } from '../../utils/deviceInfo';
+import { WeatherContext } from '../../contexts/WeatherContext';
 import { useI18n } from '../../i18n/I18nContext';
 import { ProviderBadge } from '../services/ProviderBadge';
 
@@ -81,6 +82,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
 }) => {
   const { t, lang } = useI18n();
   const ctx = useContext(DashboardContext);
+  const art = deviceArtUrl(device.type, useContext(WeatherContext)?.isNight ?? false);
   const allProps = extractProperties(device);
   const formatMainValue = (prop: PropertyData) => formatPropertyValue((device.properties ?? [])[prop.originalIndex], t, lang);
 
@@ -138,8 +140,10 @@ export const SensorCard: React.FC<SensorCardProps> = ({
     <div
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`device-card sensor-card ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      data-cat={deviceCategory(device.type)}
+      className={`device-card tile sensor-card ${art ? 'has-art' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
     >
+      {art && <div className="tile-art" style={{ backgroundImage: `url(${art})` }} aria-hidden />}
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <div className="device-icon">

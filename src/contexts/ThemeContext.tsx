@@ -39,6 +39,7 @@ const loadSettings = (): ThemeSettings => {
         return valid.length >= 2 ? valid : DEFAULT_SETTINGS.cycle;
       })(),
       font: migrateFont(parsed as { font?: unknown; headingFont?: unknown }),
+      daylight: parsed.daylight === 'day' || parsed.daylight === 'night' ? parsed.daylight : 'auto',
     };
   } catch {
     return DEFAULT_SETTINGS;

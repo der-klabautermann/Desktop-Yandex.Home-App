@@ -1,23 +1,29 @@
-import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { YandexDevice, YandexScenario } from '../types/index';
-import { Home } from 'lucide-react';
+import React, { useMemo, useRef, useState } from 'react';
+import { Gauge, Home, LayoutGrid, Play, Server, Settings, SquareStack } from 'lucide-react';
+import { YandexDevice } from '../types/index';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { SidebarHeader } from './sidebar/SidebarHeader';
-import { SidebarFavorites } from './sidebar/SidebarFavorites';
-import { SidebarSensors } from './sidebar/SidebarSensors';
-import { SidebarZones } from './sidebar/SidebarZones';
-import { SidebarGroups } from './sidebar/SidebarGroups';
-import { SidebarScenarios } from './sidebar/SidebarScenarios';
+import { SidebarLandscape } from './sidebar/SidebarLandscape';
+import { WeatherWidget } from './sidebar/WeatherWidget';
+import { isSensorDevice } from '../constants';
 import { useI18n } from '../i18n/I18nContext';
+import type { PageView } from '../hooks/useNavigation';
 
-type SectionKey = 'rooms' | 'favorites' | 'sensors' | 'groups' | 'scenarios';
-const DEFAULT_ORDER: SectionKey[] = ['rooms', 'favorites', 'sensors', 'groups', 'scenarios'];
-const ORDER_KEY = 'sidebar:sectionOrder';
+type NavKey = 'rooms' | 'sensors' | 'groups' | 'scenarios';
+const DEFAULT_ORDER: NavKey[] = ['rooms', 'sensors', 'groups', 'scenarios'];
+const ORDER_KEY = 'sidebar:navOrder';
 
-/** Сохранённый порядок разделов; новые разделы добавляются в конец. */
-const loadOrder = (): SectionKey[] => {
+const NAV: Record<NavKey, { icon: React.ElementType; label: string; views: string[] }> = {
+    rooms: { icon: LayoutGrid, label: 'sidebar.rooms', views: ['rooms', 'room'] },
+    sensors: { icon: Gauge, label: 'sidebar.sensors', views: ['sensors'] },
+    groups: { icon: SquareStack, label: 'sidebar.groups', views: ['groups', 'group'] },
+    scenarios: { icon: Play, label: 'sidebar.scenarios', views: ['scenarios'] },
+};
+
+/** Сохранённый порядок пунктов; новые пункты добавляются в конец. */
+const loadOrder = (): NavKey[] => {
     try {
-        const saved = JSON.parse(localStorage.getItem(ORDER_KEY) ?? '[]') as SectionKey[];
+        const saved = JSON.parse(localStorage.getItem(ORDER_KEY) ?? '[]') as NavKey[];
         const known = saved.filter(key => DEFAULT_ORDER.includes(key));
         return [...known, ...DEFAULT_ORDER.filter(key => !known.includes(key))];
     } catch {
@@ -29,18 +35,21 @@ interface SidebarProps {
     onOpenCameraStream?: (device: YandexDevice) => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
+/** Боковое меню: разделы как страницы, внизу пейзаж с погодой. Разделы можно перетаскивать. */
+export const Sidebar: React.FC<SidebarProps> = () => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
-    const [loadingItems, setLoadingItems] = useState<Record<string, boolean>>({});
-    const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
-    // Разделы перетаскиваются за заголовок (мышью, без HTML-drag: надёжнее в Electron)
-    const [order, setOrder] = useState<SectionKey[]>(loadOrder);
-    const [dragging, setDragging] = useState<SectionKey | null>(null);
-    const [dropAt, setDropAt] = useState<{ key: SectionKey; after: boolean } | null>(null);
-    const dropRef = useRef<{ key: SectionKey; after: boolean } | null>(null);
+    const [order, setOrder] = useState<NavKey[]>(loadOrder);
+    const [dragging, setDragging] = useState<NavKey | null>(null);
+    const [dropAt, setDropAt] = useState<{ key: NavKey; after: boolean } | null>(null);
+    const dropRef = useRef<{ key: NavKey; after: boolean } | null>(null);
 
-    const moveSection = (from: SectionKey, to: SectionKey, after: boolean) => {
+    const sensorCount = useMemo(
+        () => ctx.data.devices.filter(d => isSensorDevice(d) && (!ctx.activeHouseholdId || !d.household_id || d.household_id === ctx.activeHouseholdId)).length,
+        [ctx.data.devices, ctx.activeHouseholdId],
+    );
+
+    const move = (from: NavKey, to: NavKey, after: boolean) => {
         if (from === to) return;
         setOrder(prev => {
             const without = prev.filter(key => key !== from);
@@ -51,20 +60,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
         });
     };
 
-    const startDrag = (key: SectionKey, down: React.PointerEvent) => {
-        const title = (down.target as HTMLElement).closest('.sidebar-section-title');
-        if (!title || (down.target as HTMLElement).closest('button') || down.button !== 0) return;
+    // Перетаскивание мышью: короткий клик открывает раздел, движение больше 6 px переставляет
+    const startDrag = (key: NavKey, down: React.PointerEvent) => {
+        if (down.button !== 0) return;
         const startY = down.clientY;
         let active = false;
-
         const onMove = (e: PointerEvent) => {
             if (!active && Math.abs(e.clientY - startY) < 6) return;
             active = true;
             setDragging(key);
-            const section = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest<HTMLElement>('.sidebar-section');
-            const target = section?.dataset.section as SectionKey | undefined;
-            if (!section || !target) return;
-            const box = section.getBoundingClientRect();
+            const item = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest<HTMLElement>('[data-nav]');
+            const target = item?.dataset.nav as NavKey | undefined;
+            if (!item || !target) return;
+            const box = item.getBoundingClientRect();
             dropRef.current = { key: target, after: e.clientY > box.top + box.height / 2 };
             setDropAt(dropRef.current);
         };
@@ -72,8 +80,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
             window.removeEventListener('pointermove', onMove);
             window.removeEventListener('pointerup', onUp);
             if (active) {
-                if (dropRef.current) moveSection(key, dropRef.current.key, dropRef.current.after);
-                // Отпускание после перетаскивания не должно сворачивать раздел
+                if (dropRef.current) move(key, dropRef.current.key, dropRef.current.after);
                 const swallow = (e: MouseEvent) => e.stopPropagation();
                 window.addEventListener('click', swallow, true);
                 setTimeout(() => window.removeEventListener('click', swallow, true), 0);
@@ -86,156 +93,41 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
         window.addEventListener('pointerup', onUp);
     };
 
-    const getStorageKey = (baseKey: string): string => {
-        if (!ctx.activeHouseholdId) return baseKey;
-        return `${baseKey}:household:${ctx.activeHouseholdId}`;
-    };
-
-    const loadCollapsedSections = (): Record<string, boolean> => {
-        try {
-            const stored = localStorage.getItem(getStorageKey('sidebar:collapsedSections'));
-            return stored ? JSON.parse(stored) : {};
-        } catch { return {}; }
-    };
-
-    const saveCollapsedSections = (sections: Record<string, boolean>) => {
-        try {
-            localStorage.setItem(getStorageKey('sidebar:collapsedSections'), JSON.stringify(sections));
-        } catch (e) { console.error(e); }
-    };
-
-    useEffect(() => {
-        setCollapsedSections(loadCollapsedSections());
-    }, [ctx.activeHouseholdId]);
-
-    const toggleSection = (key: string) => {
-        setCollapsedSections(prev => {
-            const updated = { ...prev, [key]: !prev[key] };
-            saveCollapsedSections(updated);
-            return updated;
-        });
-    };
-
-    const withLoading = (key: string, action: () => Promise<void>): (() => void) => {
-        return () => {
-            if (loadingItems[key]) return;
-            setLoadingItems(prev => ({ ...prev, [key]: true }));
-            action().finally(() => {
-                setLoadingItems(prev => ({ ...prev, [key]: false }));
-            });
-        };
-    };
-
-    // Household-aware scenario filtering (same logic as Dashboard.tsx)
-    const currentHousehold = useMemo(() => {
-        if (!ctx.households || ctx.households.length === 0) return null;
-        if (ctx.activeHouseholdId) {
-            const found = ctx.households.find(h => h.id === ctx.activeHouseholdId);
-            if (found) return found;
-        }
-        return ctx.households[0];
-    }, [ctx.households, ctx.activeHouseholdId]);
-
-    const deviceHouseholdMap = useMemo(() => {
-        const map = new Map<string, string>();
-        ctx.data.devices.forEach(device => {
-            const anyDevice = device as any;
-            let householdId: string | undefined =
-                typeof anyDevice.household_id === 'string' ? anyDevice.household_id : undefined;
-            if (!householdId && device.room) {
-                const room = ctx.data.rooms.find(r => r.id === device.room);
-                if (room) householdId = room.household_id;
-            }
-            if (householdId) map.set(device.id, householdId);
-        });
-        ctx.data.rooms.forEach(room => {
-            room.devices.forEach(deviceId => {
-                if (!map.has(deviceId)) map.set(deviceId, room.household_id);
-            });
-        });
-        return map;
-    }, [ctx.data.devices, ctx.data.rooms]);
-
-    const isScenarioInCurrentHome = useCallback(
-        (scenario: YandexScenario) => {
-            if (!ctx.households || ctx.households.length <= 1) return true;
-            if (!currentHousehold) return false;
-            const steps = scenario.steps || [];
-            const items: Array<{ id: string }> = [];
-            for (const step of steps) {
-                if (!step?.parameters?.items) continue;
-                for (const it of step.parameters.items) items.push(it);
-            }
-            if (items.length === 0) return true;
-            const targetHouseholdId = currentHousehold.id;
-            for (const item of items) {
-                const deviceId = typeof item.id === 'string' ? item.id : null;
-                if (!deviceId) continue;
-                if (deviceHouseholdMap.get(deviceId) === targetHouseholdId) return true;
-            }
-            return false;
-        },
-        [ctx.households, currentHousehold, deviceHouseholdMap]
+    const item = (key: string, Icon: React.ElementType, label: string, active: boolean, onClick: () => void, badge?: number) => (
+        <button className={`nav-item ${active ? 'active' : ''}`} onClick={onClick}>
+            <span className="nav-item-icon"><Icon /></span>
+            <span className="nav-item-label">{label}</span>
+            {badge !== undefined && badge > 0 && <span className="nav-item-badge">{badge}</span>}
+        </button>
     );
-
-    const activeScenarios = ctx.data.scenarios.filter(
-        s => s.is_active && isScenarioInCurrentHome(s)
-    );
-
-    const renderSection = (key: SectionKey): React.ReactNode => {
-        switch (key) {
-            case 'favorites':
-                return (
-                    <SidebarFavorites
-                        collapsed={!!collapsedSections['favorites']}
-                        onToggle={() => toggleSection('favorites')}
-                        loadingItems={loadingItems}
-                        withLoading={withLoading}
-                        onOpenCameraStream={onOpenCameraStream}
-                    />
-                );
-            case 'sensors':
-                return <SidebarSensors collapsed={!!collapsedSections['sensors']} onToggle={() => toggleSection('sensors')} />;
-            case 'rooms':
-                return <SidebarZones collapsed={!!collapsedSections['rooms']} onToggle={() => toggleSection('rooms')} />;
-            case 'groups':
-                return <SidebarGroups collapsed={!!collapsedSections['groups']} onToggle={() => toggleSection('groups')} />;
-            case 'scenarios':
-                return activeScenarios.length > 0 ? (
-                    <SidebarScenarios
-                        collapsed={!!collapsedSections['scenarios']}
-                        onToggle={() => toggleSection('scenarios')}
-                        loadingItems={loadingItems}
-                        withLoading={withLoading}
-                        scenarios={activeScenarios}
-                    />
-                ) : null;
-        }
-    };
 
     return (
         <aside className="sidebar">
             <SidebarHeader />
             <nav className="sidebar-nav">
-                <button
-                    className={`sidebar-item ${ctx.activeSidebarView === 'home' ? 'active' : ''}`}
-                    onClick={ctx.onSelectHome}
-                >
-                    <span className="sidebar-item-icon"><Home /></span>
-                    {t('sidebar.allDevices')}
-                </button>
-
-                {order.map(key => (
-                    <div
-                        key={key}
-                        data-section={key}
-                        className={`sidebar-section ${dragging === key ? 'is-dragging' : ''} ${dropAt?.key === key && dragging !== key ? (dropAt.after ? 'drop-after' : 'drop-before') : ''}`}
-                        onPointerDown={e => startDrag(key, e)}
-                    >
-                        {renderSection(key)}
-                    </div>
-                ))}
+                {item('home', Home, t('sidebar.allDevices'), ctx.activeSidebarView === 'home', ctx.onSelectHome)}
+                {order.map(key => {
+                    const nav = NAV[key];
+                    return (
+                        <div
+                            key={key}
+                            data-nav={key}
+                            className={`nav-slot ${dragging === key ? 'is-dragging' : ''} ${dropAt?.key === key && dragging !== key ? (dropAt.after ? 'drop-after' : 'drop-before') : ''}`}
+                            onPointerDown={e => startDrag(key, e)}
+                        >
+                            {item(key, nav.icon, t(nav.label), nav.views.includes(ctx.activeSidebarView),
+                                () => ctx.onSelectPage(key as PageView), key === 'sensors' ? sensorCount : undefined)}
+                        </div>
+                    );
+                })}
+                <div className="nav-divider" />
+                {item('settings', Settings, t('settings.title'), false, ctx.onOpenSettings)}
+                {item('system', Server, t('sidebar.system'), false, ctx.onOpenServices)}
             </nav>
+            <div className="sidebar-landscape">
+                <SidebarLandscape />
+                <WeatherWidget />
+            </div>
         </aside>
     );
 };

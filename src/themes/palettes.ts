@@ -3,7 +3,7 @@
 
 import { DEFAULT_FONT, type FontId } from './fonts';
 
-export type PaletteId = 'volna' | 'alisa' | 'muzyka' | 'dom' | 'gorod' | 'plus' | 'biryuza';
+export type PaletteId = 'nachtwald' | 'volna' | 'alisa' | 'muzyka' | 'dom' | 'gorod' | 'plus' | 'biryuza';
 
 export interface Palette {
     id: PaletteId;
@@ -71,6 +71,20 @@ const build = (spec: PaletteSpec): Record<string, string> => {
 // Вдохновлено оформлением сервисов Яндекса: волны "Моей волны", фиолетовый Алисы,
 // жёлтый Музыки, лавандовый Дома с Алисой, ночные Карты, градиент Плюса, бирюза Браузера.
 export const PALETTES: Palette[] = [
+    {
+        // Ночной лес: тёмно-синий, как вечер в горах; цвет значков задаёт категория устройства
+        id: 'nachtwald',
+        base: 'dark',
+        swatch: ['#0A1322', '#5B9BFF', '#34C17B', '#16233B'],
+        tokens: build({
+            base: 'dark', bg: '#0A1322', surface: '#14203A', fg: '#EAF0FA', fg2: '#B7C3D8', muted: '#7F8DA8',
+            border: '#1F2D47', glassRgb: '200, 220, 255',
+            accent: '#5B9BFF', accentOn: '#FFFFFF', accentHover: '#7DB0FF',
+            glowRgb: '91, 155, 255',
+            toggle: '#34C17B', star: '#F5C451',
+            auroraA: 'rgba(91, 155, 255, 0.12)', auroraB: 'rgba(52, 193, 123, 0.06)', auroraC: 'rgba(255, 255, 255, 0.02)',
+        }),
+    },
     {
         id: 'volna',
         base: 'dark',
@@ -180,16 +194,21 @@ export interface ThemeSettings {
     cycle: PaletteId[];
     /** Шрифт интерфейса (заголовки и текст). */
     font: FontId;
+    /** День или ночь для картинок устройств и пейзажа: по времени или вручную. */
+    daylight: Daylight;
 }
+
+export type Daylight = 'auto' | 'day' | 'night';
 
 export const INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12];
 
 export const DEFAULT_SETTINGS: ThemeSettings = {
-    mode: 'cycle',
-    fixed: 'alisa',
+    mode: 'fixed',
+    fixed: 'nachtwald',
     intervalHours: 3,
     cycle: PALETTES.map(p => p.id),
     font: DEFAULT_FONT,
+    daylight: 'auto',
 };
 
 /** Номер текущего "слота" смены: считается от полуночи местного времени, смена всегда в ровный час. */

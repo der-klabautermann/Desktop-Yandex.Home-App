@@ -155,3 +155,57 @@ export const deviceTypeLabel = (type: string, t: Translate) => {
   const key = TYPE_KEYS.find(([prefix]) => short.startsWith(prefix))?.[1] ?? 'other';
   return lookup(t, `deviceTypes.${key}`, short);
 };
+
+// --- Внешний вид карточек: картинка и цвет значка по типу устройства ---
+
+/** Категория задаёт цвет значка у включённого устройства. */
+export type DeviceCategory = 'light' | 'climate' | 'water' | 'power' | 'security' | 'media' | 'kitchen' | 'appliance' | 'sensor';
+
+const CATEGORY_RULES: Array<[string, DeviceCategory]> = [
+  ['light', 'light'], ['sensor.illumination', 'light'],
+  ['thermostat', 'climate'], ['ventilation', 'climate'], ['humidifier', 'climate'], ['purifier', 'climate'], ['sensor.climate', 'climate'],
+  ['openable.valve', 'water'], ['sensor.water_leak', 'water'], ['smart_meter.cold_water', 'water'], ['smart_meter.hot_water', 'water'],
+  ['pet_drinking_fountain', 'water'],
+  ['socket', 'power'], ['switch', 'power'], ['smart_meter', 'power'], ['hub', 'power'], ['other', 'power'],
+  ['sensor.open', 'security'], ['sensor.motion', 'sensor'], ['sensor.smoke', 'security'], ['sensor.gas', 'security'],
+  ['camera', 'security'], ['openable', 'security'],
+  ['media_device', 'media'], ['smart_speaker', 'media'],
+  ['cooking', 'kitchen'], ['pet_feeder', 'kitchen'],
+  ['washing_machine', 'appliance'], ['dishwasher', 'appliance'], ['iron', 'appliance'], ['vacuum_cleaner', 'appliance'],
+];
+
+export const deviceCategory = (type: string): DeviceCategory => {
+  const short = type.replace('devices.types.', '');
+  return CATEGORY_RULES.find(([prefix]) => short.startsWith(prefix))?.[1] ?? 'sensor';
+};
+
+// Картинка на карточке: ключ файла в public/device-art/<ключ>-day.webp и -night.webp
+const ART_RULES: Array<[string, string]> = [
+  ['light.ceiling', 'ceiling-light'], ['light.lamp', 'desk-lamp'], ['light.strip', 'light-strip'], ['light', 'bulb'],
+  ['socket', 'socket'], ['switch', 'switch'],
+  ['thermostat.ac', 'air-conditioner'], ['thermostat', 'radiator'],
+  ['ventilation.fan', 'fan'], ['ventilation', 'bath-fan'], ['humidifier', 'humidifier'], ['purifier', 'purifier'],
+  ['media_device.tv_box', 'tv-box'], ['media_device.receiver', 'receiver'], ['media_device', 'tv'], ['smart_speaker', 'speaker'],
+  ['cooking.coffee_maker', 'coffee-maker'], ['cooking.kettle', 'kettle'], ['cooking', 'multicooker'],
+  ['washing_machine', 'washing-machine'], ['dishwasher', 'dishwasher'], ['iron', 'iron'], ['vacuum_cleaner', 'robot-vacuum'],
+  ['openable.curtain', 'curtains'], ['openable.valve', 'water-valve'], ['openable', 'blinds'],
+  ['pet_feeder', 'pet-feeder'], ['pet_drinking_fountain', 'pet-fountain'],
+  ['sensor.motion', 'motion-sensor'], ['sensor.open', 'door-sensor'], ['sensor.water_leak', 'leak-sensor'],
+  ['sensor.smoke', 'smoke-detector'], ['sensor.gas', 'gas-detector'], ['sensor.button', 'button'],
+  ['sensor.vibration', 'vibration-sensor'], ['sensor.illumination', 'light-sensor'], ['sensor', 'climate-sensor'],
+  ['smart_meter', 'meter'], ['camera', 'camera'], ['hub', 'hub'], ['other', 'hub'],
+];
+
+/** Картинки, которые уже лежат в public/device-art (обе версии: день и ночь). */
+export const AVAILABLE_ART = new Set<string>([]);
+
+export const deviceArtKey = (type: string): string => {
+  const short = type.replace('devices.types.', '');
+  return ART_RULES.find(([prefix]) => short.startsWith(prefix))?.[1] ?? 'hub';
+};
+
+/** Путь к картинке для карточки или null, если картинки пока нет. */
+export const deviceArtUrl = (type: string, night: boolean): string | null => {
+  const key = deviceArtKey(type);
+  return AVAILABLE_ART.has(key) ? `./device-art/${key}-${night ? 'night' : 'day'}.webp` : null;
+};

@@ -1,9 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { YandexDevice } from '../../types/index';
 import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
-import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets, Settings, Zap } from 'lucide-react';
+import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets, Settings, Zap, Power } from 'lucide-react';
 import DashboardContext from '../../contexts/DashboardContext';
-import { formatPropertyValue } from '../../utils/deviceInfo';
+import { deviceArtUrl, deviceCategory, formatPropertyValue } from '../../utils/deviceInfo';
+import { WeatherContext } from '../../contexts/WeatherContext';
 import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
 import { useI18n } from '../../i18n/I18nContext';
@@ -28,6 +29,10 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
   const [loading, setLoading] = useState(false);
   const { t, lang } = useI18n();
   const ctx = useContext(DashboardContext);
+  const night = useContext(WeatherContext)?.isNight ?? false;
+  const art = deviceArtUrl(device.type, night);
+  const brightnessCap = device.capabilities.find(c => c.type === 'devices.capabilities.range' && (c.parameters as any)?.instance === 'brightness');
+  const brightness = typeof brightnessCap?.state?.value === 'number' ? Math.round(brightnessCap.state.value as number) : null;
   // Потребление показываем на карточке, если устройство его измеряет
   const powerProperty = (device.properties ?? []).find((p: any) =>
     p?.type === 'devices.properties.float' && (p.parameters?.instance ?? p.state?.instance) === 'power');
@@ -191,8 +196,10 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
     <div
       onClick={openDetail}
       onContextMenu={handleContextMenu}
-      className={`device-card ${!isUnreachable && isToggleable && isOn ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`device-card tile ${art ? 'has-art' : ''} ${!isUnreachable && isToggleable && isOn ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      data-cat={deviceCategory(device.type)}
     >
+      {art && <div className="tile-art" style={{ backgroundImage: `url(${art})` }} aria-hidden />}
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {isToggleable ? (
@@ -273,11 +280,29 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
         )}
       </div>
 
-      {powerProperty && !isUnreachable && (
-        <div className="device-draw" title={t('sensors.power')}>
-          <Zap className="w-3.5 h-3.5" />{formatPropertyValue(powerProperty, t, lang)}
-        </div>
-      )}
+      <div className="tile-foot">
+        {brightness !== null && isOn && !isUnreachable ? (
+          <span className="tile-level" title={t('capabilityNames.brightness')}>
+            <span className="tile-level-bar"><i style={{ width: `${brightness}%` }} /></span>
+            {brightness} %
+          </span>
+        ) : <span />}
+        {powerProperty && !isUnreachable ? (
+          <span className="device-draw" title={t('sensors.power')}>
+            <Zap className="w-3.5 h-3.5" />{formatPropertyValue(powerProperty, t, lang)}
+          </span>
+        ) : isToggleable && !isUnreachable ? (
+          <button
+            className={`tile-power ${isOn ? 'is-on' : ''}`}
+            onClick={handlePower}
+            disabled={loading}
+            title={isOn ? t('cards.turnOff') : t('cards.turnOn')}
+            aria-label={isOn ? t('cards.turnOff') : t('cards.turnOn')}
+          >
+            <Power className="w-4 h-4" />
+          </button>
+        ) : null}
+      </div>
 
       {isSensor && formattedSensorValue && !showMicStatus && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 'auto' }}>

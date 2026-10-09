@@ -11,6 +11,7 @@ import { ZoneIcon } from './zones/zoneIcons';
 import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown, Search, X, Check, Cctv } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { Pinned } from './Pinned';
+import { ClimateChip } from './DashboardPages';
 
 interface DashboardHomeViewProps {
     state: UseDashboardStateReturn;
@@ -30,6 +31,8 @@ interface DashboardHomeViewProps {
     visibleFavoriteGroups: YandexGroup[];
     hasFavorites: boolean;
     hasFavoriteSensors: boolean;
+    /** Строка поиска из шапки. */
+    query: string;
 }
 
 export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
@@ -50,12 +53,12 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
     visibleFavoriteGroups,
     hasFavorites,
     hasFavoriteSensors,
+    query,
 }) => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
     // Фильтр по чипам сверху и строка поиска
     const [filter, setFilter] = useState<'all' | 'rooms' | 'devices' | 'scenarios'>('all');
-    const [query, setQuery] = useState('');
     const [homesOpen, setHomesOpen] = useState(false);
     const searching = query.trim().length > 0;
     const matches = useMemo(
@@ -110,22 +113,6 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <Cctv /> {t('dashboard.stats.cameras', { count: cameraCount })}
                 </button>
             )}
-            <label className="home-search">
-                <Search className="w-4 h-4" />
-                <input
-                    type="search"
-                    value={query}
-                    placeholder={t('dashboard.search')}
-                    aria-label={t('dashboard.search')}
-                    onChange={e => setQuery(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Escape') setQuery(''); }}
-                />
-                {query && (
-                    <button onClick={() => setQuery('')} title={t('common.close')} aria-label={t('common.close')}>
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                )}
-            </label>
         </div>
         </Pinned>
     );
@@ -253,6 +240,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                     <span className="room-icon"><ZoneIcon icon={findNode(ctx.zones.tree, room.id)?.icon} kind="room" className="w-4 h-4" /></span>
                     <h2>{room.name}</h2>
                     <span className="room-count">{roomDevices.length}</span>
+                    <ClimateChip devices={devicesForHome.filter(d => room.devices.includes(d.id))} />
                 </div>
                 {!isRoomCollapsed && (
                     <>

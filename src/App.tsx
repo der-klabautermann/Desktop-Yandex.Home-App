@@ -28,7 +28,7 @@ function App() {
     const { notification, showNotification, clearNotification } = useNotification();
     const { accounts, setAccounts, appState, setAppState, errorMsg, setErrorMsg, retryInfo } = useAuth();
     const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite } = useFavorites();
-    const { activeSidebarView, activeRoomId, activeGroupId, activeDeviceId, onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack, onSelectCameras } = useNavigation();
+    const { activeSidebarView, activeRoomId, activeGroupId, activeDeviceId, onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack, onSelectCameras, onSelectPage } = useNavigation();
     const { showUpdateNotification, setShowUpdateNotification, updateInfo } = useUpdateNotification();
     // Что показано вместо панели: настройки, список сервисов или выбор нового сервиса
     const [screen, setScreen] = useState<'dashboard' | 'settings' | 'services' | 'add'>('dashboard');
@@ -348,6 +348,7 @@ function App() {
                     onSelectDevice,
                     onBack,
                     onSelectCameras,
+                    onSelectPage,
                     onDeleteDevice: handleDeleteDevice,
                     deletableProviders,
                     isRefreshing,

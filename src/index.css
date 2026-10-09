@@ -2867,3 +2867,207 @@ button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offse
 .dp-room-picker:focus-within { border-color: var(--accent); }
 .dp-room-caret { color: var(--muted); }
 .dp-select-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; }
+
+/* ==========================================================================
+   Neuer Look nach Entwurf: flache Navigation, Landschaft mit Wetter,
+   Kacheln mit Gerätebild und Farbe je Gerätekategorie
+   ========================================================================== */
+
+/* Kategorienfarben der Symbole */
+[data-cat="light"] { --cat: #F0A43A; }
+[data-cat="climate"] { --cat: #2FB67C; }
+[data-cat="water"] { --cat: #3B82F6; }
+[data-cat="power"] { --cat: #34C17B; }
+[data-cat="security"] { --cat: #F59E0B; }
+[data-cat="media"] { --cat: #8B5CF6; }
+[data-cat="kitchen"] { --cat: #F97316; }
+[data-cat="appliance"] { --cat: #64748B; }
+[data-cat="sensor"] { --cat: #5B6B85; }
+
+/* Seitenleiste */
+.sidebar { overflow: hidden; }
+.sidebar-nav { padding: 6px 12px 12px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 12px; border-radius: 12px; border: none; background: transparent;
+  color: var(--fg-2, var(--fg)); font: inherit; font-size: 14.5px; text-align: left; cursor: pointer;
+  -webkit-user-select: none; user-select: none;
+  transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard);
+}
+.nav-item:hover { background: color-mix(in oklab, var(--fg) 5%, transparent); color: var(--fg); }
+.nav-item.active { background: color-mix(in oklab, var(--fg) 9%, transparent); color: var(--fg); font-weight: 600; }
+.nav-item-icon { display: inline-flex; }
+.nav-item-icon svg { width: 19px; height: 19px; color: var(--muted); }
+.nav-item.active .nav-item-icon svg { color: var(--fg); }
+.nav-item-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-item-badge {
+  min-width: 28px; padding: 2px 8px; border-radius: 999px; text-align: center;
+  font-size: 12px; font-variant-numeric: tabular-nums;
+  background: color-mix(in oklab, var(--fg) 9%, transparent); color: var(--fg-2, var(--fg));
+}
+.nav-divider { height: 1px; margin: 10px 12px; background: var(--glass-line); }
+.nav-slot.is-dragging { opacity: 0.4; }
+.nav-slot.drop-before { box-shadow: inset 0 2px 0 var(--accent); border-radius: 12px; }
+.nav-slot.drop-after { box-shadow: inset 0 -2px 0 var(--accent); border-radius: 12px; }
+
+/* Landschaft und Wetter */
+:root, :root[data-daylight="night"] {
+  --land-sky-top: #0A1322; --land-sky-mid: #11203A; --land-sky-low: #1A2C4A; --land-glow: #4A6FA8;
+  --land-star: #D6E4FF; --land-far: #1C2C47; --land-mid: #13223A; --land-near: #0A1424; --land-text: #EAF0FA;
+}
+:root[data-daylight="day"] {
+  --land-sky-top: #6F93C4; --land-sky-mid: #8FB0DA; --land-sky-low: #C2D6EE; --land-glow: #FFE6A8;
+  --land-star: transparent; --land-far: #6C8AB3; --land-mid: #4A6A92; --land-near: #1E3657; --land-text: #FFFFFF;
+}
+.sidebar-landscape { position: relative; height: 210px; flex-shrink: 0; }
+.sidebar-landscape-art { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sidebar-landscape-stars { transition: opacity 600ms ease; }
+.weather { position: absolute; left: 12px; right: 12px; bottom: 14px; }
+.weather-main {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 8px 10px; border-radius: 14px; border: none; background: transparent;
+  color: var(--land-text); font: inherit; text-align: left; cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+.weather-main:hover { background: rgba(255, 255, 255, 0.07); }
+.weather-icon { display: inline-flex; color: #FFC94D; filter: drop-shadow(0 0 10px rgba(255, 201, 77, 0.45)); }
+.weather-icon.is-cloudy, .weather-icon.is-fog { color: #C9D6EA; filter: none; }
+.weather-icon.is-rain, .weather-icon.is-drizzle, .weather-icon.is-storm { color: #8EC0FF; filter: none; }
+.weather-icon.is-snow { color: #FFFFFF; filter: none; }
+:root[data-daylight="night"] .weather-icon.is-clear, :root[data-daylight="night"] .weather-icon.is-partly { color: #E7EEFF; filter: drop-shadow(0 0 10px rgba(200, 220, 255, 0.4)); }
+.weather-text { display: flex; flex-direction: column; min-width: 0; }
+.weather-text b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.1; }
+.weather-text b.weather-placeholder { font-size: 14px; }
+.weather-text small { font-size: 12.5px; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.weather-picker {
+  position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 40;
+  display: flex; flex-direction: column; gap: 2px; padding: 8px;
+  border-radius: 16px; background: var(--surface); border: 1px solid var(--glass-line-strong);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.6);
+  animation: popIn 160ms var(--ease-standard);
+}
+.weather-search {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; margin-bottom: 4px;
+  border-radius: 10px; border: 1px solid var(--glass-line-strong); color: var(--muted);
+}
+.weather-search:focus-within { border-color: var(--accent); }
+.weather-search input { flex: 1; min-width: 0; border: none; outline: none; background: transparent; color: var(--fg); font: inherit; font-size: 13px; }
+.weather-result {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  padding: 7px 10px; border-radius: 10px; border: none; background: transparent;
+  color: var(--fg); font: inherit; text-align: left; cursor: pointer;
+}
+.weather-result:hover { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.weather-result b { font-size: 13.5px; font-weight: 600; }
+.weather-result small { font-size: 11.5px; color: var(--muted); }
+.weather-result.is-remove { flex-direction: row; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+
+/* Kopfbereich */
+.content-actions { gap: 10px; }
+.content-actions .header-btn { width: 40px; height: 40px; border-radius: 50%; }
+.header-search { flex: 0 1 300px; min-width: 200px; height: 40px; margin-left: 0; }
+@media (max-width: 900px) { .header-search { flex-basis: 200px; min-width: 140px; } }
+.stats-row button.stat-chip, .stats-row .stat-chip { padding: 9px 16px; font-size: 13.5px; border-radius: 999px; }
+.stats-row .stat-chip svg { width: 16px; height: 16px; }
+
+/* Raum-Kopfzeile mit Klima rechts */
+.room-header::after { order: 5; }
+.room-header .climate-chip { order: 10; }
+.climate-chip {
+  display: inline-flex; align-items: center; gap: 12px; flex-shrink: 0;
+  padding: 5px 12px; border-radius: 999px;
+  border: 1px solid var(--glass-line); background: color-mix(in oklab, var(--surface) 70%, transparent);
+  font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--fg-2, var(--fg));
+}
+.climate-chip span { display: inline-flex; align-items: center; gap: 5px; }
+.climate-chip svg { color: var(--muted); }
+.climate-chip .is-humidity svg { color: #5AA2FF; }
+
+/* Kacheln */
+.device-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 16px; }
+.device-card.tile,
+[data-theme="dark"] .device-card.tile {
+  position: relative; overflow: hidden; min-height: 176px; padding: 16px;
+  border-radius: 18px; gap: 8px;
+  background: color-mix(in oklab, var(--surface) 88%, transparent);
+  border: 1px solid var(--glass-line);
+  animation: none;
+}
+.device-card.tile.is-on,
+[data-theme="dark"] .device-card.tile.is-on {
+  background: color-mix(in oklab, var(--cat) 9%, var(--surface));
+  border-color: color-mix(in oklab, var(--cat) 30%, var(--glass-line));
+  box-shadow: 0 18px 40px -26px var(--cat);
+}
+.device-card.tile:hover { transform: translateY(-2px); border-color: var(--glass-line-strong); }
+.tile-art {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 64%;
+  background-size: cover; background-position: center;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 30%, #000 60%);
+  mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, 0.55) 30%, #000 60%);
+  opacity: 0.92; pointer-events: none; transition: transform 600ms var(--ease-standard);
+}
+.device-card.tile:hover .tile-art { transform: scale(1.03); }
+.device-card.tile.has-art::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(0deg, color-mix(in oklab, var(--surface) 70%, transparent) 0%, transparent 45%);
+}
+.device-card.tile > :not(.tile-art) { position: relative; z-index: 1; }
+.device-card.tile .device-icon {
+  width: 46px; height: 46px; border-radius: 14px; opacity: 1;
+  background: color-mix(in oklab, var(--fg) 10%, transparent); color: var(--fg-2, var(--fg));
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+}
+.device-card.tile .device-icon svg { width: 22px; height: 22px; filter: none; }
+.device-card.tile.is-on .device-icon,
+.device-card.tile.sensor-card .device-icon {
+  background: var(--cat); color: #FFFFFF;
+  box-shadow: 0 8px 22px -10px var(--cat);
+}
+.device-card.tile.is-unreachable .device-icon { background: color-mix(in oklab, var(--fg) 8%, transparent); color: var(--muted); box-shadow: none; }
+.device-card.tile .device-name { font-size: 16px; margin-top: 6px; }
+.device-card.tile .device-type-label { font-size: 13.5px; margin-top: 0; }
+.device-card.tile.is-on .device-type-label { color: var(--fg-2, var(--fg)); }
+.tile-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; min-height: 38px; }
+.tile-level { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--fg-2, var(--fg)); }
+.tile-level-bar { width: 96px; height: 6px; border-radius: 999px; background: color-mix(in oklab, var(--fg) 16%, transparent); overflow: hidden; }
+.tile-level-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #FFFFFF, var(--cat)); }
+.tile-power {
+  width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--glass-line-strong); color: var(--fg-2, var(--fg));
+  background: color-mix(in oklab, var(--bg) 45%, transparent);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  cursor: pointer; transition: all var(--motion-fast) var(--ease-standard);
+}
+.tile-power:hover:not(:disabled) { color: var(--fg); border-color: var(--fg-2, var(--fg)); }
+.tile-power.is-on { color: var(--fg); background: color-mix(in oklab, var(--fg) 16%, transparent); }
+.device-card.tile .device-draw {
+  margin-top: 0; padding: 5px 10px;
+  background: color-mix(in oklab, var(--bg) 55%, transparent);
+  border: 1px solid var(--glass-line); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.device-card.tile .sensor-main-value { margin-top: auto; }
+
+/* Menü-Seiten */
+.rooms-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); align-items: start; }
+.rooms-zone { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 12px; }
+.room-card {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 14px; border-radius: 18px;
+  background: color-mix(in oklab, var(--surface) 88%, transparent); border: 1px solid var(--glass-line);
+  color: var(--fg); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-standard), transform var(--motion-fast) var(--ease-standard);
+}
+.room-card:hover { border-color: var(--glass-line-strong); transform: translateY(-1px); }
+.room-card-icon {
+  width: 44px; height: 44px; border-radius: 14px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--accent); background: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+.room-card-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.room-card-text strong { font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.room-card-text small { font-size: 12.5px; color: var(--muted); }
+.room-card .climate-chip { padding: 0; gap: 10px; border: none; background: none; margin-top: 3px; align-self: flex-start; }
+.room-card-chevron { color: var(--muted); flex-shrink: 0; }
+.group-tile.is-on .room-card-icon { color: #FFFFFF; background: var(--accent); }

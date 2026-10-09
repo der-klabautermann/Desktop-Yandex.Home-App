@@ -1,3 +1,4 @@
+import type { PageView, SidebarView } from '../hooks/useNavigation';
 import React, { createContext, useContext } from 'react';
 import { YandexUserInfoResponse, YandexHousehold, YandexModeAction, CameraStreamResult } from '../types/index';
 import type { AccountSummary } from '../types/electron-api';
@@ -35,7 +36,7 @@ export interface DashboardContextValue {
     onSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 
     // Навигация
-    activeSidebarView: 'home' | 'room' | 'group' | 'device' | 'cameras';
+    activeSidebarView: SidebarView;
     activeRoomId: string | null;
     activeGroupId: string | null;
     onSelectHome: () => void;
@@ -45,6 +46,7 @@ export interface DashboardContextValue {
     onSelectDevice: (deviceId: string) => void;
     onBack: () => void;
     onSelectCameras: () => void;
+    onSelectPage: (page: PageView) => void;
     /** Удаление устройства в его сервисе; список сервисов, где это возможно. */
     onDeleteDevice: (deviceId: string) => Promise<boolean>;
     deletableProviders: string[];

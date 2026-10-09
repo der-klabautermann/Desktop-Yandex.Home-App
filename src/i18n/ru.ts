@@ -42,6 +42,8 @@ export const ru = {
     groups: 'Группы',
     noRoom: 'Без комнаты',
     noScenarios: 'У вас нет активных сценариев.',
+    noSensors: 'Датчики не подключены.',
+    noGroups: 'Групп пока нет.',
     roomNotFound: 'Комната не найдена',
     roomEmpty: 'В этой комнате нет устройств',
     groupNotFound: 'Группа не найдена',
@@ -50,7 +52,24 @@ export const ru = {
   sidebar: {
     allDevices: 'Все устройства',
     groups: 'Группы устройств',
-    rooms: 'Комнаты',
+    rooms: 'Комнаты и зоны',
+    sensors: 'Датчики',
+    scenarios: 'Сценарии',
+    system: 'Система',
+  },
+  weather: {
+    setPlace: 'Указать место',
+    choosePlace: 'Место для погоды',
+    searchPlace: 'Поиск города',
+    removePlace: 'Убрать место',
+    clear: 'Ясно', partly: 'Малооблачно', cloudy: 'Облачно', fog: 'Туман', drizzle: 'Морось',
+    rain: 'Дождь', snow: 'Снег', storm: 'Гроза',
+  },
+  daylight: {
+    day: 'Дневной вид',
+    night: 'Ночной вид',
+    auto: 'Автоматически',
+    title: 'День и ночь',
   },
   cards: {
     on: 'Включено',
@@ -441,6 +460,7 @@ export const ru = {
       fixed: { label: 'Одна тема', hint: 'Нажмите на тему, чтобы закрепить её.' },
     },
     palettes: {
+      nachtwald: { name: 'Ночной лес', mood: 'Глубокий синий, как вечер в горах' },
       volna: { name: 'Моя волна', mood: 'Чёрный фон и цветные переливы' },
       alisa: { name: 'Алиса', mood: 'Глубокий фиолетовый и синее сияние' },
       muzyka: { name: 'Музыка', mood: 'Чёрный фон и фирменный жёлтый' },

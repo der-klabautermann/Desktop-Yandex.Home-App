@@ -42,6 +42,8 @@ export const en = {
     groups: 'Groups',
     noRoom: 'No room',
     noScenarios: 'You have no active scenarios.',
+    noSensors: 'No sensors connected.',
+    noGroups: 'No groups yet.',
     roomNotFound: 'Room not found',
     roomEmpty: 'There are no devices in this room',
     groupNotFound: 'Group not found',
@@ -50,7 +52,24 @@ export const en = {
   sidebar: {
     allDevices: 'All devices',
     groups: 'Device groups',
-    rooms: 'Rooms',
+    rooms: 'Rooms and zones',
+    sensors: 'Sensors',
+    scenarios: 'Scenarios',
+    system: 'System',
+  },
+  weather: {
+    setPlace: 'Set location',
+    choosePlace: 'Weather location',
+    searchPlace: 'Search city',
+    removePlace: 'Remove location',
+    clear: 'Clear', partly: 'Partly cloudy', cloudy: 'Cloudy', fog: 'Fog', drizzle: 'Drizzle',
+    rain: 'Rain', snow: 'Snow', storm: 'Thunderstorm',
+  },
+  daylight: {
+    day: 'Day view',
+    night: 'Night view',
+    auto: 'Automatic',
+    title: 'Day and night',
   },
   cards: {
     on: 'On',
@@ -441,6 +460,7 @@ export const en = {
       fixed: { label: 'One theme', hint: 'Tap a theme to pin it.' },
     },
     palettes: {
+      nachtwald: { name: 'Night forest', mood: 'Deep navy like an evening in the mountains' },
       volna: { name: 'My Wave', mood: 'Black background with shimmering colors' },
       alisa: { name: 'Alice', mood: 'Deep violet with a blue glow' },
       muzyka: { name: 'Music', mood: 'Black with the signature yellow' },
