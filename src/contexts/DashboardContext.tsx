@@ -29,7 +29,8 @@ export interface DashboardContextValue {
     onSetDeviceMode: (deviceId: string, modeActions: YandexModeAction[], turnOn?: boolean) => Promise<void>;
     onGetCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     onSetCameraPrivacy: (deviceId: string, enabled: boolean, instance?: string) => Promise<void>;
-    onRefresh: () => void;
+    /** silent: без индикатора и сообщения (фоновый опрос). */
+    onRefresh: (silent?: boolean) => void;
     /** Включить или выключить несколько устройств сразу. */
     onSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 

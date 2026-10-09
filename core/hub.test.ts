@@ -144,3 +144,22 @@ describe('Geräte löschen', () => {
     await expect(hub.deleteDevice('aqara:x')).rejects.toThrow('ERR_UNSUPPORTED');
   });
 });
+
+describe('Geräte hinzufügen', () => {
+  it('kennt je Dienst den Weg und reicht Hub-IDs mit Präfix durch', async () => {
+    const start = vi.fn(async () => {});
+    const pairing = { hubs: vi.fn(async () => [{ id: 'hub1', name: 'Hub', online: true }]), start, stop: vi.fn(async () => {}) };
+    const hub = new Hub([
+      fakeProvider('yandex', { addDeviceUrl: async () => 'https://yandex.ru/quasar/iot' }),
+      fakeProvider('aqara', { pairing }),
+      fakeProvider('xiaomi'),
+    ]);
+    expect(hub.addOptions()).toEqual({ yandex: 'external', aqara: 'pairing', xiaomi: 'none' });
+    expect(await hub.pairingHubs('aqara')).toEqual([{ id: 'aqara:hub1', name: 'Hub', online: true }]);
+    await hub.startPairing('aqara:hub1');
+    expect(start).toHaveBeenCalledWith('hub1');
+    expect(await hub.addDeviceUrl('yandex')).toBe('https://yandex.ru/quasar/iot');
+    await expect(hub.addDeviceUrl('xiaomi')).rejects.toThrow('ERR_UNSUPPORTED');
+  });
+});
+

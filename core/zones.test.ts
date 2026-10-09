@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACTIVITY_HOLD_MS, EMPTY_ZONE_CONFIG, addZone, buildZoneTree, categoryOf, flattenTree, isZoneActive, moveNode, removeZone, renameZone,
-  summarizeDevices, zoneCategories,
+  searchDevices, summarizeDevices, zoneCategories,
   type ZoneConfig,
 } from './zones';
 import type { HomeData } from './model';
@@ -198,5 +198,21 @@ describe('Kategorien der Zonen-Steuerung', () => {
     ]);
     expect(categories.map(c => c.key)).toEqual(['light', 'socket', 'climate']);
     expect(categories[0]).toMatchObject({ on: 1, total: 2, deviceIds: ['l1', 'l2'] });
+  });
+});
+
+describe('Suche nach Gerät, Raum oder Zone', () => {
+  const { config } = withFloor();
+  const tree = buildZoneTree(home, config, 'h1');
+
+  it('findet über Gerätename, Raumname und Zonenname', () => {
+    expect([...searchDevices(home.devices, tree, 'ламп')]).toEqual(['lamp']);
+    expect([...searchDevices(home.devices, tree, 'кухня')]).toEqual(['lamp', 'plug']);
+    expect([...searchDevices(home.devices, tree, 'erdge')]).toEqual(['lamp', 'plug', 'sensor']);
+  });
+
+  it('ignoriert Groß- und Kleinschreibung und findet sonst nichts', () => {
+    expect(searchDevices(home.devices, tree, 'ГОСТИН').has('sensor')).toBe(true);
+    expect(searchDevices(home.devices, tree, 'garage').size).toBe(0);
   });
 });

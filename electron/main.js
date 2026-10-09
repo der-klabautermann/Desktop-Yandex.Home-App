@@ -521,6 +521,16 @@ if (!gotTheLock) {
         ipcMain.handle('hub:runScenario', (_e, id) => hub.runScenario(id).catch(rethrow));
         ipcMain.handle('hub:deleteDevice', (_e, id) => hub.deleteDevice(id).catch(rethrow));
         ipcMain.handle('hub:deletableProviders', () => hub.deletableProviders());
+        ipcMain.handle('hub:addOptions', () => hub.addOptions());
+        ipcMain.handle('hub:pairingHubs', (_e, providerId) => hub.pairingHubs(providerId).catch(rethrow));
+        ipcMain.handle('hub:startPairing', (_e, hubId) => hub.startPairing(hubId).catch(rethrow));
+        ipcMain.handle('hub:stopPairing', (_e, hubId) => hub.stopPairing(hubId).catch(rethrow));
+        // Страницу сервиса открываем в браузере; только http(s), чтобы не запустить что-то постороннее
+        ipcMain.handle('hub:openAddDevice', async (_e, providerId) => {
+            const url = await hub.addDeviceUrl(providerId).catch(rethrow);
+            if (!/^https?:\/\//i.test(url)) throw new Error('ERR_UNSUPPORTED');
+            await shell.openExternal(url);
+        });
 
         // Зоны (этажи и т. п.) хранит само приложение, сервисы о них не знают
         const zonesFile = path.join(app.getPath('userData'), 'zones.json');

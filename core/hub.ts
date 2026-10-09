@@ -1,7 +1,7 @@
-import { providerOf, stripPrefix } from './ids';
+import { providerOf, stripPrefix, withPrefix } from './ids';
 import { mergeHomes, ProviderHome } from './merge';
 import type { AccountSummary, HomeData, HubLoadResult, ModeAction, ProviderId } from './model';
-import type { HomeCache, Provider } from './provider';
+import type { HomeCache, PairingHub, Provider } from './provider';
 
 /** Распределитель: собирает все подключённые сервисы и направляет команды. */
 export class Hub {
@@ -113,6 +113,35 @@ export class Hub {
     const provider = this.provider(providerOf(deviceId));
     if (!provider.deleteDevice) throw new Error('ERR_UNSUPPORTED');
     await provider.deleteDevice(stripPrefix(deviceId));
+  }
+
+  /** Как в каждом сервисе добавляются устройства: сопряжение через хаб или страница сервиса. */
+  addOptions(): Record<string, 'pairing' | 'external' | 'none'> {
+    return Object.fromEntries(this.providers.map(p => [p.id, p.pairing ? 'pairing' : p.addDeviceUrl ? 'external' : 'none']));
+  }
+
+  async pairingHubs(providerId: ProviderId): Promise<PairingHub[]> {
+    const pairing = this.provider(providerId).pairing;
+    if (!pairing) throw new Error('ERR_UNSUPPORTED');
+    return (await pairing.hubs()).map(h => ({ ...h, id: withPrefix(providerId, h.id) }));
+  }
+
+  async startPairing(hubId: string) {
+    const pairing = this.provider(providerOf(hubId)).pairing;
+    if (!pairing) throw new Error('ERR_UNSUPPORTED');
+    await pairing.start(stripPrefix(hubId));
+  }
+
+  async stopPairing(hubId: string) {
+    const pairing = this.provider(providerOf(hubId)).pairing;
+    if (!pairing) throw new Error('ERR_UNSUPPORTED');
+    await pairing.stop(stripPrefix(hubId));
+  }
+
+  async addDeviceUrl(providerId: ProviderId): Promise<string> {
+    const provider = this.provider(providerId);
+    if (!provider.addDeviceUrl) throw new Error('ERR_UNSUPPORTED');
+    return provider.addDeviceUrl();
   }
 
   runScenario(scenarioId: string) {

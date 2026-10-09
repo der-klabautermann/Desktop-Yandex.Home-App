@@ -29,6 +29,11 @@ export interface IHubApi {
     runScenario: (scenarioId: string) => Promise<void>;
     deleteDevice: (deviceId: string) => Promise<void>;
     deletableProviders: () => Promise<string[]>;
+    addOptions: () => Promise<Record<string, 'pairing' | 'external' | 'none'>>;
+    pairingHubs: (providerId: string) => Promise<Array<{ id: string; name: string; online: boolean }>>;
+    startPairing: (hubId: string) => Promise<void>;
+    stopPairing: (hubId: string) => Promise<void>;
+    openAddDevice: (providerId: string) => Promise<void>;
 }
 
 export interface IZonesApi {

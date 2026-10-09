@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
-import { ArrowLeft, Loader2, Power, Trash2, X, Zap } from 'lucide-react';
+import { ArrowLeft, Loader2, Power, Trash2, Zap } from 'lucide-react';
+import { ConfirmDialog } from './ConfirmDialog';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useI18n } from '../i18n/I18nContext';
 import { findNode } from '../../core/zones';
@@ -37,9 +37,7 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
     };
 
     const remove = async () => {
-        setBusy(true);
         const deleted = await ctx.onDeleteDevice(device.id);
-        setBusy(false);
         setConfirming(false);
         if (deleted) ctx.onBack();
     };
@@ -111,24 +109,14 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
                 </div>
             </div>
 
-            {confirming && createPortal(
-                <div className="zone-dialog-backdrop" onMouseDown={e => { if (e.target === e.currentTarget && !busy) setConfirming(false); }}>
-                    <div className="zone-dialog" role="alertdialog" aria-label={t('devicePage.delete')}>
-                        <header>
-                            <h3>{t('devicePage.delete')}</h3>
-                            <button className="header-btn" onClick={() => setConfirming(false)} disabled={busy} title={t('common.close')}><X className="w-4 h-4" /></button>
-                        </header>
-                        <p className="zone-dialog-hint">{t('devicePage.deleteConfirm', { name: device.name, service })}</p>
-                        <footer>
-                            <span style={{ flex: 1 }} />
-                            <button className="service-action" onClick={() => setConfirming(false)} disabled={busy}>{t('common.cancel')}</button>
-                            <button className="dp-delete-confirm" onClick={remove} disabled={busy}>
-                                {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} {t('devicePage.deleteYes')}
-                            </button>
-                        </footer>
-                    </div>
-                </div>,
-                document.body,
+            {confirming && (
+                <ConfirmDialog
+                    title={t('devicePage.delete')}
+                    text={t('devicePage.deleteConfirm', { name: device.name, service })}
+                    confirmLabel={t('devicePage.deleteYes')}
+                    onConfirm={remove}
+                    onClose={() => setConfirming(false)}
+                />
             )}
         </>
     );

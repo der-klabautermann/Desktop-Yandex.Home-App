@@ -158,5 +158,21 @@ export const createAqaraProvider = (
     async runScenario(scenarioId) {
       await call('config.scene.run', { sceneId: scenarioId });
     },
+
+    // Новые устройства Zigbee подключаются через хаб: включаем у него режим добавления
+    pairing: {
+      async hubs() {
+        const devices = await allPages<AqaraDeviceInfo>('query.device.info', { dids: [], positionId: '' });
+        return devices
+          .filter(d => d.modelType === 1)
+          .map(d => ({ id: d.did, name: d.deviceName, online: d.state === 1 }));
+      },
+      async start(hubId) {
+        await call('write.device.openConnect', { did: hubId });
+      },
+      async stop(hubId) {
+        await call('write.device.closeConnect', { did: hubId });
+      },
+    },
   };
 };

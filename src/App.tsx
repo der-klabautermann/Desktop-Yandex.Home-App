@@ -334,7 +334,7 @@ function App() {
                     onSetDeviceMode: handleSetDeviceMode,
                     onGetCameraStream: handleGetCameraStream,
                     onSetCameraPrivacy: handleSetCameraPrivacy,
-                    onRefresh: () => refreshDashboardData(),
+                    onRefresh: (silent?: boolean) => refreshDashboardData(silent),
                     onSetPower: handleSetPower,
                     accounts,
                     zones,
@@ -372,8 +372,9 @@ function App() {
                             key={screen}
                             accounts={accounts}
                             initialView={screen === 'add' ? 'pick' : 'list'}
-                            onChanged={() => { setScreen('dashboard'); void loadData(); }}
+                            onChanged={(stay?: boolean) => { if (!stay) setScreen('dashboard'); void loadData(); }}
                             onClose={() => setScreen('dashboard')}
+                            onOpenDevice={id => { setScreen('dashboard'); onSelectDevice(id); }}
                         />
                     ) : (
                         <Dashboard />

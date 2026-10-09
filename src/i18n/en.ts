@@ -16,6 +16,9 @@ export const en = {
     ru: 'Русский',
   },
   dashboard: {
+    search: 'Search device, room or zone',
+    nothingFound: 'Nothing found',
+    filter: { switchHome: 'Switch home' },
     defaultHomeName: 'My home',
     devicesOn: { one: '{count} device, {on} on', other: '{count} devices, {on} on' },
     devicesInHome: { one: '{count} device at home', other: '{count} devices at home' },
@@ -343,6 +346,28 @@ export const en = {
     autostartOff: 'Launch at login is off. The app will only start when you open it.',
     autostartFailed: 'Could not change the launch at login setting',
   },
+  addDevice: {
+    count: { one: '{count} device', other: '{count} devices' },
+    title: 'Add device',
+    method: { pairing: 'Pair via the hub', external: 'In the service’s app', none: 'Not possible' },
+    newService: 'Connect another service',
+    hub: 'Hub',
+    noHub: 'No hub found that can take new devices.',
+    startPairing: 'Start pairing',
+    stopPairing: 'Stop',
+    pairingActive: 'Put the device into pairing mode now (usually hold its button until it blinks).',
+    external: {
+      yandex: 'New devices are paired in the “Дом с Алисой” app. They then appear here.',
+      homeassistant: 'New devices are added in Home Assistant. They then appear here.',
+      xiaomi: 'New devices are added in Home Assistant. They then appear here.',
+      aqara: 'New devices are paired in the Aqara app. They then appear here.',
+    },
+    openService: 'Open {name}',
+    search: 'Look for new devices',
+    noneYet: 'No new devices yet.',
+    found: 'Newly found',
+    emptyService: 'This service has no devices yet.',
+  },
   devicePage: {
     open: 'Device page',
     back: 'Back',
@@ -419,6 +444,7 @@ export const en = {
     },
   },
   services: {
+    showDevices: 'Show devices',
     homeassistant: {
       url: 'Home Assistant address',
       urlPlaceholder: 'http://homeassistant.local:8123',

@@ -36,4 +36,14 @@ export interface Provider {
   runScenario(scenarioId: string): Promise<void>;
   /** Удаляет устройство в самом сервисе. Нет метода: сервис удаление не поддерживает. */
   deleteDevice?(deviceId: string): Promise<void>;
+  /** Добавление через хаб сервиса: список хабов и режим сопряжения (ID хабов без префикса). */
+  pairing?: {
+    hubs(): Promise<PairingHub[]>;
+    start(hubId: string): Promise<void>;
+    stop(hubId: string): Promise<void>;
+  };
+  /** Страница сервиса, где добавляют устройства, если приложение само этого не умеет. */
+  addDeviceUrl?(): Promise<string>;
 }
+
+export interface PairingHub { id: string; name: string; online: boolean }

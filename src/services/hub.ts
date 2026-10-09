@@ -16,3 +16,8 @@ export const toggleGroup = (groupId: string, deviceIds: string[], newState: bool
 export const runScenario = (scenarioId: string) => hub().runScenario(scenarioId);
 export const deleteDevice = (deviceId: string) => hub().deleteDevice(deviceId);
 export const deletableProviders = () => hub().deletableProviders();
+export const addOptions = () => hub().addOptions();
+export const pairingHubs = (providerId: string) => hub().pairingHubs(providerId);
+export const startPairing = (hubId: string) => hub().startPairing(hubId);
+export const stopPairing = (hubId: string) => hub().stopPairing(hubId);
+export const openAddDevice = (providerId: string) => hub().openAddDevice(providerId);

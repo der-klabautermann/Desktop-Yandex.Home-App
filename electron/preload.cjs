@@ -26,6 +26,11 @@ contextBridge.exposeInMainWorld('api', {
         runScenario: (scenarioId) => ipcRenderer.invoke('hub:runScenario', scenarioId),
         deleteDevice: (deviceId) => ipcRenderer.invoke('hub:deleteDevice', deviceId),
         deletableProviders: () => ipcRenderer.invoke('hub:deletableProviders'),
+        addOptions: () => ipcRenderer.invoke('hub:addOptions'),
+        pairingHubs: (providerId) => ipcRenderer.invoke('hub:pairingHubs', providerId),
+        startPairing: (hubId) => ipcRenderer.invoke('hub:startPairing', hubId),
+        stopPairing: (hubId) => ipcRenderer.invoke('hub:stopPairing', hubId),
+        openAddDevice: (providerId) => ipcRenderer.invoke('hub:openAddDevice', providerId),
     },
 
     zones: {

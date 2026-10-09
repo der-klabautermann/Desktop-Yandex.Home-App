@@ -114,6 +114,11 @@ export const createHomeAssistantProvider = (
       for (const deviceId of deviceIds) await callService(serviceForToggle(deviceId, newState));
     },
 
+    // Интеграции в Home Assistant добавляются его собственными мастерами
+    async addDeviceUrl() {
+      return `${(await load()).url}/config/integrations/dashboard`;
+    },
+
     async runScenario(scenarioId) {
       await callService(serviceForToggle(scenarioId, true));
     },

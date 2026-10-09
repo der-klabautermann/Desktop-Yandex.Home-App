@@ -57,6 +57,11 @@ export const createYandexProvider = (store: CredentialStore, hooks: ProviderHook
       await api.toggleGroup(await token(), groupId, deviceIds, newState, retry('toggleGroup', false));
     },
 
+    // Публичного API для добавления нет: устройства подключают в приложении «Дом с Алисой»
+    async addDeviceUrl() {
+      return 'https://yandex.ru/quasar/iot';
+    },
+
     async deleteDevice(deviceId) {
       await api.deleteDevice(await token(), deviceId);
     },

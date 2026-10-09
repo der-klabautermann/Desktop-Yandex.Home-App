@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, RefreshCw, LogIn, Unplug } from 'lucide-react';
+import React, { useContext, useState } from 'react';
+import { ArrowLeft, Plus, RefreshCw, LogIn, Unplug, ChevronRight, PackagePlus } from 'lucide-react';
+import DashboardContext from '../../contexts/DashboardContext';
+import { ProviderDevices } from './ProviderDevices';
+import { AddDeviceDialog } from './AddDeviceDialog';
 import { useI18n } from '../../i18n/I18nContext';
 import { disconnectProvider } from '../../services/hub';
 import type { AccountSummary, ProviderId } from '../../types/electron-api';
@@ -13,8 +16,10 @@ import { HomeAssistantConnect } from './HomeAssistantConnect';
 
 interface ServicesScreenProps {
   accounts: AccountSummary[];
-  /** Сервис подключён или отключён: нужно заново загрузить дом. */
-  onChanged: () => void;
+  /** Сервис подключён или отключён: нужно заново загрузить дом. stay: остаться на этом экране. */
+  onChanged: (stay?: boolean) => void;
+  /** Открыть страницу устройства (из списка устройств сервиса). */
+  onOpenDevice?: (deviceId: string) => void;
   /** Нет, если открыто вместо панели (тогда кнопка «назад» не нужна). */
   onClose?: () => void;
   /** Ошибка последней загрузки. */
@@ -24,11 +29,29 @@ interface ServicesScreenProps {
   initialView?: 'list' | 'pick';
 }
 
-type View = { kind: 'list' } | { kind: 'pick' } | { kind: 'connect'; providerId: ProviderId };
+type View = { kind: 'list' } | { kind: 'pick' } | { kind: 'connect'; providerId: ProviderId } | { kind: 'provider'; providerId: ProviderId };
 
 /** «Мои сервисы»: список подключённых сервисов, выбор нового и вход в него. */
-export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChanged, onClose, error, onRetry, initialView }) => {
+export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChanged, onClose, error, onRetry, initialView, onOpenDevice }) => {
   const { t } = useI18n();
+  // Без панели (первый запуск) списков устройств ещё нет
+  const dashboard = useContext(DashboardContext);
+  // Окно добавления устройства: для какого сервиса (или выбор сервиса)
+  const [adding, setAdding] = useState<{ providerId?: ProviderId } | null>(null);
+  // Новый сервис подключают ради устройства: после входа сразу продолжить добавление
+  const [addAfterConnect, setAddAfterConnect] = useState(false);
+
+  const connectedNew = (providerId: ProviderId) => {
+    if (addAfterConnect) {
+      setAddAfterConnect(false);
+      onChanged(true);
+      setView({ kind: 'provider', providerId });
+      setAdding({ providerId });
+    } else {
+      setView({ kind: 'list' });
+      onChanged();
+    }
+  };
   const [view, setView] = useState<View>(accounts.length === 0 || initialView === 'pick' ? { kind: 'pick' } : { kind: 'list' });
   const [busy, setBusy] = useState<ProviderId | null>(null);
   const [actionError, setActionError] = useState<string>();
@@ -49,13 +72,14 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
 
   const back = () => {
     if (view.kind === 'list') onClose?.();
+    else if (view.kind === 'provider') setView({ kind: 'list' });
     else setView(accounts.length ? { kind: 'list' } : { kind: 'pick' });
   };
-  const showBack = view.kind === 'list' ? Boolean(onClose) : view.kind === 'connect' || accounts.length > 0;
+  const showBack = view.kind === 'list' ? Boolean(onClose) : view.kind === 'connect' || view.kind === 'provider' || accounts.length > 0;
 
   const title = view.kind === 'pick'
     ? (accounts.length === 0 ? t('services.welcome') : t('services.choose'))
-    : view.kind === 'connect' ? t(`services.names.${view.providerId}`) : t('services.title');
+    : view.kind === 'connect' || view.kind === 'provider' ? t(`services.names.${view.providerId}`) : t('services.title');
   const subtitle = view.kind === 'list' ? t('services.subtitle') : view.kind === 'pick' ? t('services.chooseHint') : undefined;
 
   return (
@@ -87,11 +111,19 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
           <div className="services-list">
             {accounts.map((account, index) => (
               <div key={account.providerId} className={`service-card is-${account.status}`} style={{ animationDelay: `${index * 60}ms` }}>
-                <ProviderMark id={account.providerId} />
-                <div className="service-card-text">
-                  <strong>{t(`services.names.${account.providerId}`)}</strong>
-                  <span className="service-status"><i />{t(`services.status.${account.status}`)}</span>
-                </div>
+                <button
+                  className="service-card-open"
+                  disabled={!dashboard}
+                  onClick={() => setView({ kind: 'provider', providerId: account.providerId })}
+                  title={t('services.showDevices')}
+                >
+                  <ProviderMark id={account.providerId} />
+                  <div className="service-card-text">
+                    <strong>{t(`services.names.${account.providerId}`)}</strong>
+                    <span className="service-status"><i />{t(`services.status.${account.status}`)}</span>
+                  </div>
+                  {dashboard && <ChevronRight className="w-4 h-4 service-card-chevron" />}
+                </button>
                 {account.status === 'relogin' && (
                   <button className="service-action" onClick={() => setView({ kind: 'connect', providerId: account.providerId })}>
                     <LogIn className="w-3.5 h-3.5" /> {t('services.relogin')}
@@ -103,10 +135,34 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
               </div>
             ))}
           </div>
-          <button className="services-add" onClick={() => setView({ kind: 'pick' })}>
-            <Plus className="w-4 h-4" /> {t('services.add')}
-          </button>
+          <div className="services-add-row">
+            {dashboard && (
+              <button className="services-add" onClick={() => setAdding({})}>
+                <PackagePlus className="w-4 h-4" /> {t('addDevice.title')}
+              </button>
+            )}
+            <button className="services-add" onClick={() => setView({ kind: 'pick' })}>
+              <Plus className="w-4 h-4" /> {t('services.add')}
+            </button>
+          </div>
         </>
+      )}
+
+      {view.kind === 'provider' && dashboard && (
+        <ProviderDevices
+          providerId={view.providerId}
+          onAdd={() => setAdding({ providerId: view.providerId })}
+          onOpenDevice={id => onOpenDevice?.(id)}
+        />
+      )}
+
+      {adding && dashboard && (
+        <AddDeviceDialog
+          providerId={adding.providerId}
+          onClose={() => setAdding(null)}
+          onConnectNew={() => { setAdding(null); setAddAfterConnect(true); setView({ kind: 'pick' }); }}
+          onOpenDevice={id => { setAdding(null); onOpenDevice?.(id); }}
+        />
       )}
 
       {view.kind === 'pick' && (
@@ -117,17 +173,17 @@ export const ServicesScreen: React.FC<ServicesScreenProps> = ({ accounts, onChan
       )}
 
       {view.kind === 'connect' && view.providerId === 'yandex' && (
-        <YandexConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />
+        <YandexConnect onConnected={() => connectedNew('yandex')} />
       )}
       {view.kind === 'connect' && (view.providerId === 'homeassistant' || view.providerId === 'xiaomi') && (
         <HomeAssistantConnect
           variant={view.providerId}
           alreadyConnected={view.providerId === 'xiaomi' && accounts.some(a => a.providerId === 'homeassistant')}
-          onConnected={() => { setView({ kind: 'list' }); onChanged(); }}
+          onConnected={() => connectedNew(view.providerId === 'xiaomi' ? 'homeassistant' : view.providerId)}
         />
       )}
       {view.kind === 'connect' && view.providerId === 'aqara' && (
-        <AqaraConnect onConnected={() => { setView({ kind: 'list' }); onChanged(); }} />
+        <AqaraConnect onConnected={() => connectedNew('aqara')} />
       )}
     </div>
   );

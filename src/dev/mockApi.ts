@@ -17,6 +17,7 @@ export function installMockApi() {
   );
   const offline = new Set<MockProvider>(mode === 'outage' ? ['xiaomi'] : []);
   const delay = (ms = 250) => new Promise(resolve => setTimeout(resolve, ms));
+  let pairingTimer: ReturnType<typeof setTimeout> | undefined;
 
   const allDevices = () => showroom ? showroom.devices : [...homes.yandex.devices, ...homes.xiaomi.devices];
   const setOn = (id: string, value: boolean) => {
@@ -100,6 +101,26 @@ export function installMockApi() {
       },
       runScenario: async () => { await delay(); },
       deletableProviders: async () => ['yandex'],
+      addOptions: async () => ({ yandex: 'external', aqara: 'pairing', homeassistant: 'external', xiaomi: 'external' }),
+      pairingHubs: async () => [{ id: 'aqara:hub-m2', name: 'Aqara Hub M2', online: true }],
+      // Через несколько секунд после включения сопряжения «находится» новый датчик
+      startPairing: async () => {
+        await delay();
+        pairingTimer = setTimeout(() => {
+          const home = showroom ?? homes.yandex;
+          const room = home.rooms[0];
+          const id = `aqara:new-${Date.now().toString(36)}`;
+          home.devices.push({
+            id, name: 'Neuer Türkontakt', type: 'devices.types.sensor.open', room: room?.id, household_id: room?.household_id,
+            provider_id: 'aqara', capabilities: [],
+            properties: [{ type: 'devices.properties.event', retrievable: true, reportable: true,
+              parameters: { instance: 'open', events: [{ value: 'opened' }, { value: 'closed' }] }, state: { instance: 'open', value: 'closed' } }],
+          } as any);
+          room?.devices.push(id);
+        }, 6000);
+      },
+      stopPairing: async () => { if (pairingTimer) clearTimeout(pairingTimer); },
+      openAddDevice: async () => { await delay(); },
       deleteDevice: async (id: string) => {
         await delay();
         const home = showroom ?? homes.yandex;

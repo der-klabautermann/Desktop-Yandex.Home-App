@@ -16,6 +16,9 @@ export const de = {
     ru: 'Русский',
   },
   dashboard: {
+    search: 'Gerät, Raum oder Zone suchen',
+    nothingFound: 'Nichts gefunden',
+    filter: { switchHome: 'Haus wechseln' },
     defaultHomeName: 'Mein Zuhause',
     devicesOn: { one: '{count} Gerät, {on} eingeschaltet', other: '{count} Geräte, {on} eingeschaltet' },
     devicesInHome: { one: '{count} Gerät im Haus', other: '{count} Geräte im Haus' },
@@ -343,6 +346,28 @@ export const de = {
     autostartOff: 'Start bei Anmeldung ist aus. Die App startet nur, wenn Sie sie öffnen.',
     autostartFailed: 'Die Einstellung für den Start bei Anmeldung konnte nicht geändert werden',
   },
+  addDevice: {
+    count: { one: '{count} Gerät', other: '{count} Geräte' },
+    title: 'Gerät hinzufügen',
+    method: { pairing: 'Über den Hub koppeln', external: 'In der App des Dienstes', none: 'Nicht möglich' },
+    newService: 'Weiteren Dienst verbinden',
+    hub: 'Hub',
+    noHub: 'Kein Hub gefunden, der neue Geräte aufnimmt.',
+    startPairing: 'Kopplung starten',
+    stopPairing: 'Beenden',
+    pairingActive: 'Gerät jetzt in den Kopplungsmodus versetzen (meist Taste halten, bis es blinkt).',
+    external: {
+      yandex: 'Neue Geräte koppelt man in der App „Дом с Алисой“. Danach erscheinen sie hier.',
+      homeassistant: 'Neue Geräte fügt man in Home Assistant hinzu. Danach erscheinen sie hier.',
+      xiaomi: 'Neue Geräte fügt man in Home Assistant hinzu. Danach erscheinen sie hier.',
+      aqara: 'Neue Geräte koppelt man in der Aqara-App. Danach erscheinen sie hier.',
+    },
+    openService: '{name} öffnen',
+    search: 'Nach neuen Geräten suchen',
+    noneYet: 'Noch keine neuen Geräte.',
+    found: 'Neu gefunden',
+    emptyService: 'Bei diesem Dienst sind noch keine Geräte.',
+  },
   devicePage: {
     open: 'Geräteseite',
     back: 'Zurück',
@@ -419,6 +444,7 @@ export const de = {
     },
   },
   services: {
+    showDevices: 'Geräte anzeigen',
     homeassistant: {
       url: 'Adresse von Home Assistant',
       urlPlaceholder: 'http://homeassistant.local:8123',

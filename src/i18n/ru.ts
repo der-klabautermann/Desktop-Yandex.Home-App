@@ -16,6 +16,9 @@ export const ru = {
     ru: 'Русский',
   },
   dashboard: {
+    search: 'Поиск устройства, комнаты или зоны',
+    nothingFound: 'Ничего не найдено',
+    filter: { switchHome: 'Сменить дом' },
     defaultHomeName: 'Мой дом',
     devicesOn: { one: '{count} устройство, включено: {on}', few: '{count} устройства, включено: {on}', many: '{count} устройств, включено: {on}', other: '{count} устройства, включено: {on}' },
     devicesInHome: { one: '{count} устройство в доме', few: '{count} устройства в доме', many: '{count} устройств в доме', other: '{count} устройства в доме' },
@@ -343,6 +346,28 @@ export const ru = {
     autostartOff: 'Автозапуск выключен. Приложение будет запускаться только вручную.',
     autostartFailed: 'Не удалось изменить настройки автозапуска',
   },
+  addDevice: {
+    count: { one: '{count} устройство', few: '{count} устройства', many: '{count} устройств', other: '{count} устройства' },
+    title: 'Добавить устройство',
+    method: { pairing: 'Через хаб', external: 'В приложении сервиса', none: 'Недоступно' },
+    newService: 'Подключить другой сервис',
+    hub: 'Хаб',
+    noHub: 'Не найден хаб, который может подключать новые устройства.',
+    startPairing: 'Начать поиск',
+    stopPairing: 'Остановить',
+    pairingActive: 'Переведите устройство в режим сопряжения (обычно удерживайте кнопку, пока не замигает).',
+    external: {
+      yandex: 'Новые устройства подключаются в приложении «Дом с Алисой». После этого они появятся здесь.',
+      homeassistant: 'Новые устройства добавляются в Home Assistant. После этого они появятся здесь.',
+      xiaomi: 'Новые устройства добавляются в Home Assistant. После этого они появятся здесь.',
+      aqara: 'Новые устройства подключаются в приложении Aqara. После этого они появятся здесь.',
+    },
+    openService: 'Открыть {name}',
+    search: 'Искать новые устройства',
+    noneYet: 'Новых устройств пока нет.',
+    found: 'Найдено',
+    emptyService: 'В этом сервисе пока нет устройств.',
+  },
   devicePage: {
     open: 'Страница устройства',
     back: 'Назад',
@@ -419,6 +444,7 @@ export const ru = {
     },
   },
   services: {
+    showDevices: 'Показать устройства',
     homeassistant: {
       url: 'Адрес Home Assistant',
       urlPlaceholder: 'http://homeassistant.local:8123',

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { YandexRoom, YandexDevice, YandexGroup, YandexScenario } from '../types/index';
 import { ScenarioCard } from './cards/ScenarioCard';
 import { GroupCard } from './cards/GroupCard';
@@ -6,9 +6,9 @@ import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
 import { isLightGroup, isSensorDevice } from '../constants';
-import { findNode, flattenTree } from '../../core/zones';
+import { findNode, flattenTree, searchDevices } from '../../core/zones';
 import { ZoneIcon } from './zones/zoneIcons';
-import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown } from 'lucide-react';
+import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown, Search, X, Check } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { Pinned } from './Pinned';
 
@@ -53,23 +53,73 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
 }) => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
+    // Фильтр по чипам сверху и строка поиска
+    const [filter, setFilter] = useState<'all' | 'rooms' | 'devices' | 'scenarios'>('all');
+    const [query, setQuery] = useState('');
+    const [homesOpen, setHomesOpen] = useState(false);
+    const searching = query.trim().length > 0;
+    const matches = useMemo(
+        () => (searching ? searchDevices(devicesForHome, ctx.zones.tree, query) : null),
+        [searching, devicesForHome, ctx.zones.tree, query],
+    );
+    const visible = (id: string) => !matches || matches.has(id);
+    const toggleFilter = (next: typeof filter) => setFilter(current => (current === next ? 'all' : next));
+    const multipleHomes = ctx.households.length > 1;
+    const shownScenarios = searching
+        ? activeScenarios.filter(sc => sc.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
+        : activeScenarios;
+    const scenariosCollapsed = filter === 'scenarios' ? false : state.collapse.isScenariosCollapsed;
+    const nothingFound = searching && (filter === 'scenarios' ? shownScenarios.length === 0 : matches?.size === 0);
 
     // ---- Render helpers ----
     const renderStatsRow = () => (
         <Pinned>
         <div className="stats-row">
-            <div className="stat-chip">
-                <Building2 /> {t('dashboard.stats.homes', { count: ctx.households.length })}
+            <div className="stat-homes">
+                <button
+                    className={`stat-chip ${homesOpen ? 'is-active' : ''}`}
+                    disabled={!multipleHomes}
+                    onClick={() => setHomesOpen(open => !open)}
+                    title={multipleHomes ? t('dashboard.filter.switchHome') : undefined}
+                >
+                    <Building2 /> {t('dashboard.stats.homes', { count: ctx.households.length })}
+                </button>
+                {homesOpen && multipleHomes && (
+                    <div className="stat-menu" role="menu">
+                        {ctx.households.map(h => (
+                            <button key={h.id} role="menuitem" onClick={() => { ctx.onSwitchHousehold(h.id); setHomesOpen(false); }}>
+                                <span>{h.name}</span>
+                                {h.id === ctx.activeHouseholdId && <Check className="w-4 h-4" />}
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
-            <div className="stat-chip">
+            <button className={`stat-chip ${filter === 'rooms' ? 'is-active' : ''}`} onClick={() => toggleFilter('rooms')} aria-pressed={filter === 'rooms'}>
                 <SquareSquare /> {t('dashboard.stats.rooms', { count: roomsForHome.length })}
-            </div>
-            <div className="stat-chip">
+            </button>
+            <button className={`stat-chip ${filter === 'scenarios' ? 'is-active' : ''}`} onClick={() => toggleFilter('scenarios')} aria-pressed={filter === 'scenarios'}>
                 <ScrollText /> {t('dashboard.stats.scenarios', { count: activeScenarios.length })}
-            </div>
-            <div className="stat-chip">
+            </button>
+            <button className={`stat-chip ${filter === 'devices' ? 'is-active' : ''}`} onClick={() => toggleFilter('devices')} aria-pressed={filter === 'devices'}>
                 <Lightbulb /> {t('dashboard.stats.devices', { count: devicesForHome.length })}
-            </div>
+            </button>
+            <label className="home-search">
+                <Search className="w-4 h-4" />
+                <input
+                    type="search"
+                    value={query}
+                    placeholder={t('dashboard.search')}
+                    aria-label={t('dashboard.search')}
+                    onChange={e => setQuery(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Escape') setQuery(''); }}
+                />
+                {query && (
+                    <button onClick={() => setQuery('')} title={t('common.close')} aria-label={t('common.close')}>
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                )}
+            </label>
         </div>
         </Pinned>
     );
@@ -181,18 +231,14 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
     };
 
     const renderRoom = (room: YandexRoom) => {
-        const roomDevices = devicesForHome.filter(d => room.devices.includes(d.id));
+        const roomDevices = devicesForHome.filter(d => room.devices.includes(d.id) && visible(d.id));
         if (roomDevices.length === 0) return null;
-        const isRoomCollapsed = state.collapse.collapsedRooms.has(room.id);
+        const isRoomCollapsed = !searching && state.collapse.collapsedRooms.has(room.id);
 
-        // Separate standalone devices and devices that belong to groups
-        const groupedDeviceIds = new Set(
-            groupsForHome
-                .filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)))
-                .flatMap(g => g.devices)
-        );
+        // Separate standalone devices and devices that belong to groups (при поиске только найденные карточки)
+        const roomGroups = searching ? [] : groupsForHome.filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)));
+        const groupedDeviceIds = new Set(roomGroups.flatMap(g => g.devices));
         const standaloneDevices = roomDevices.filter(d => !groupedDeviceIds.has(d.id));
-        const roomGroups = groupsForHome.filter(g => g.devices.some(deviceId => roomDevices.some(d => d.id === deviceId)));
 
         return (
             <div key={room.id} className="room-section">
@@ -248,15 +294,27 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
     return (
         <>
             {renderStatsRow()}
-            {renderFavoritesSection()}
+            {nothingFound && <div className="empty-state"><p>{t('dashboard.nothingFound')}</p></div>}
+            {filter === 'all' && !searching && renderFavoritesSection()}
 
-            {flattenTree(ctx.zones.tree).map(node => {
+            {filter === 'devices' && (() => {
+                const list = devicesForHome.filter(d => visible(d.id)).sort((a, b) => a.name.localeCompare(b.name));
+                return (
+                    <div className="device-grid">
+                        {list.map(dev => (
+                            <DeviceCardAdapter key={dev.id} device={dev} onToggle={ctx.onToggleDevice} isFavorite={ctx.favoriteDeviceIds.includes(dev.id)} onToggleFavorite={ctx.onToggleDeviceFavorite} onOpenSettings={state.handleOpenDeviceSettings} onOpenCameraStream={state.openCameraStream} sensorDisplayConfig={state.sensorDisplayConfig} />
+                        ))}
+                    </div>
+                );
+            })()}
+
+            {(filter === 'all' || filter === 'rooms') && flattenTree(ctx.zones.tree).map(node => {
                 if (node.kind === 'room') {
                     const room = roomsForHome.find(r => r.id === node.id);
                     return room ? <React.Fragment key={node.id}>{renderRoom(room)}</React.Fragment> : null;
                 }
-                // Собственная зона (этаж): заголовок, если внутри есть устройства
-                if (!node.allDeviceIds.some(id => devicesForHome.some(d => d.id === id))) return null;
+                // Собственная зона (этаж): заголовок, если внутри есть (найденные) устройства
+                if (!node.allDeviceIds.some(id => visible(id) && devicesForHome.some(d => d.id === id))) return null;
                 return (
                     <button key={node.id} className="zone-floor-heading" style={{ marginLeft: node.depth * 12 }} onClick={() => ctx.onSelectRoom(node.id)}>
                         <ZoneIcon icon={node.icon} kind="zone" className="w-4 h-4" />
@@ -266,9 +324,9 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             })}
 
             {/* Unassigned Devices */}
-            {(() => {
+            {(filter === 'all' || filter === 'rooms') && (() => {
                 const assignedIds = new Set(roomsForHome.flatMap(r => r.devices));
-                const unassignedDevices = devicesForHome.filter(d => !assignedIds.has(d.id));
+                const unassignedDevices = devicesForHome.filter(d => !assignedIds.has(d.id) && visible(d.id));
                 if (unassignedDevices.length === 0) return null;
                 return (
                     <div className="room-section">
@@ -291,22 +349,22 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             })()}
 
             {/* Scenarios Section */}
-            {activeScenarios.length > 0 && (
+            {(filter === 'all' || filter === 'scenarios') && !(searching && filter === 'all') && shownScenarios.length > 0 && (
                 <section style={{ marginTop: 32 }}>
                     <div className="section-header">
                         <button onClick={state.toggleScenarios} style={{ display: 'flex', alignItems: 'center', gap: 8, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}>
-                            {state.collapse.isScenariosCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
+                            {scenariosCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
                             <h2>{t('dashboard.scenarios')}</h2>
-                            <span className="section-count">{activeScenarios.filter(s => !state.getEffectiveHidden(`scenario_${s.id}`)).length}</span>
+                            <span className="section-count">{shownScenarios.filter(s => !state.getEffectiveHidden(`scenario_${s.id}`)).length}</span>
                         </button>
                     </div>
-                    {!state.collapse.isScenariosCollapsed && (
+                    {!scenariosCollapsed && (
                         <>
-                            {activeScenarios.length === 0 ? (
+                            {shownScenarios.length === 0 ? (
                                 <div className="empty-state"><p>{t('dashboard.noScenarios')}</p></div>
                             ) : (
                                 <div className="scenario-grid">
-                                    {activeScenarios.map(scenario => {
+                                    {shownScenarios.map(scenario => {
                                         const cardId = `scenario_${scenario.id}`;
                                         const isHidden = state.getEffectiveHidden(cardId);
                                         if (!state.edit.isEditMode && isHidden) return null;

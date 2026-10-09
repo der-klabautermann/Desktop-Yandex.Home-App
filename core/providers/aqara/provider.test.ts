@@ -91,3 +91,24 @@ describe('Aqara-Provider', () => {
     await expect(createAqaraProvider(memoryStore()).loadHome({ retry: false })).rejects.toThrow('ERR_AUTH');
   });
 });
+
+describe('Aqara: Geräte hinzufügen über den Hub', () => {
+  it('listet nur Hubs, die Untergeräte aufnehmen können, und schaltet den Kopplungsmodus', async () => {
+    const call = vi.fn(async (intent: string) => (intent === 'query.device.info' ? {
+      totalCount: 3,
+      data: [
+        { did: 'lumi.hub1', deviceName: 'Hub M2', model: 'lumi.gateway.agl02', positionId: 'p', state: 1, modelType: 1 },
+        { did: 'lumi.cam', deviceName: 'Kamera', model: 'lumi.camera.gwagl02', positionId: 'p', state: 0, modelType: 2 },
+        { did: 'lumi.s1', deviceName: 'Sensor', model: 'lumi.sensor_ht', positionId: 'p', state: 1, modelType: 3 },
+      ],
+    } : {}));
+    const provider = createAqaraProvider(memoryStore({ [AQARA_ACCOUNT]: stored() }), () => ({ call }) as any);
+
+    expect(await provider.pairing!.hubs()).toEqual([{ id: 'lumi.hub1', name: 'Hub M2', online: true }]);
+    await provider.pairing!.start('lumi.hub1');
+    expect(call).toHaveBeenCalledWith('write.device.openConnect', { did: 'lumi.hub1' }, 'tok');
+    await provider.pairing!.stop('lumi.hub1');
+    expect(call).toHaveBeenCalledWith('write.device.closeConnect', { did: 'lumi.hub1' }, 'tok');
+  });
+});
+

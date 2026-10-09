@@ -101,6 +101,25 @@ export interface FlatZoneNode extends ZoneNode {
 export const flattenTree = (nodes: ZoneNode[], depth = 0): FlatZoneNode[] =>
   nodes.flatMap(node => [{ ...node, depth }, ...flattenTree(node.children, depth + 1)]);
 
+/** Для поиска: устройство → названия его комнаты и всех зон над ней. */
+export const placeNames = (nodes: ZoneNode[], above: string[] = [], result = new Map<string, string[]>()): Map<string, string[]> => {
+  for (const node of nodes) {
+    const names = [...above, node.name];
+    node.deviceIds.forEach(id => result.set(id, names));
+    placeNames(node.children, names, result);
+  }
+  return result;
+};
+
+/** Устройства, у которых название, комната или зона содержит запрос (без учёта регистра). */
+export const searchDevices = (devices: Array<{ id: string; name: string }>, tree: ZoneNode[], query: string): Set<string> => {
+  const needle = query.trim().toLocaleLowerCase();
+  const places = placeNames(tree);
+  return new Set(devices
+    .filter(d => [d.name, ...(places.get(d.id) ?? [])].some(text => text.toLocaleLowerCase().includes(needle)))
+    .map(d => d.id));
+};
+
 export const findNode = (nodes: ZoneNode[], id: string): ZoneNode | undefined => {
   for (const node of nodes) {
     if (node.id === id) return node;

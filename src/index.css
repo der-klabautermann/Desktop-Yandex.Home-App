@@ -2662,3 +2662,160 @@ button.device-power:disabled { cursor: progress; }
 .sidebar-section.is-dragging { opacity: 0.4; }
 .sidebar-section.drop-before { box-shadow: inset 0 2px 0 var(--accent); }
 .sidebar-section.drop-after { box-shadow: inset 0 -2px 0 var(--accent); }
+
+/* ==========================================================================
+   Filter-Chips, Suche, Geräte je Dienst, Gerät hinzufügen
+   ========================================================================== */
+
+.stats-row { align-items: center; }
+button.stat-chip {
+  font: inherit; font-size: 12px; cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard),
+    border-color var(--motion-fast) var(--ease-standard);
+}
+button.stat-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--fg); }
+button.stat-chip:disabled { cursor: default; }
+button.stat-chip.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
+button.stat-chip.is-active svg { color: var(--accent-on); opacity: 1; }
+button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.stat-homes { position: relative; }
+.stat-menu {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 50; min-width: 200px;
+  display: flex; flex-direction: column; padding: 6px;
+  border-radius: 16px; background: var(--surface); border: 1px solid var(--glass-line-strong);
+  box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
+  animation: popIn 160ms var(--ease-standard);
+}
+.stat-menu button {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 9px 12px; border-radius: 10px; border: none; background: transparent;
+  color: var(--fg); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+}
+.stat-menu button:hover { background: color-mix(in oklab, var(--accent) 12%, transparent); }
+.stat-menu svg { color: var(--accent); }
+
+.home-search {
+  flex: 1 1 220px; min-width: 180px; max-width: 360px; margin-left: auto;
+  display: flex; align-items: center; gap: 8px;
+  height: 34px; padding: 0 10px 0 12px; border-radius: 999px;
+  background: var(--card-bg); border: 1px solid var(--glass-line);
+  color: var(--muted);
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+.home-search:focus-within { border-color: var(--accent); color: var(--accent); }
+.home-search input {
+  flex: 1; min-width: 0; border: none; background: transparent; outline: none;
+  color: var(--fg); font: inherit; font-size: 13px;
+}
+.home-search input::placeholder { color: var(--muted); }
+.home-search input::-webkit-search-cancel-button { display: none; }
+.home-search button {
+  display: inline-flex; padding: 3px; border: none; border-radius: 50%; cursor: pointer;
+  background: color-mix(in oklab, var(--fg) 10%, transparent); color: var(--fg-2, var(--fg));
+}
+@media (max-width: 640px) {
+  .home-search { flex-basis: 100%; max-width: none; margin-left: 0; }
+}
+
+/* Meine Dienste: Karte führt zur Geräteliste */
+.service-card-open {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 14px;
+  padding: 0; border: none; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.service-card-open:disabled { cursor: default; }
+.service-card-chevron { color: var(--muted); margin-right: 6px; transition: transform var(--motion-fast) var(--ease-standard); }
+.service-card-open:hover .service-card-chevron { transform: translateX(2px); color: var(--accent); }
+.services-add-row { display: flex; flex-wrap: wrap; gap: 10px; }
+
+.provider-devices { display: flex; flex-direction: column; gap: 18px; }
+.provider-devices-bar { display: flex; align-items: center; gap: 12px; }
+.provider-devices-count { font-size: 13px; color: var(--muted); }
+.provider-devices-bar .zone-save { display: inline-flex; align-items: center; gap: 7px; }
+.provider-room h3 {
+  display: flex; align-items: center; gap: 8px; margin: 0 0 8px;
+  font-family: var(--font-label, var(--font-display)); font-weight: var(--display-weight, 500);
+  font-size: calc(12px * var(--display-scale, 1)); letter-spacing: 0.12em; text-transform: uppercase;
+}
+.provider-room h3 svg { color: var(--accent); }
+.provider-room .room-count {
+  font-size: 11px; letter-spacing: 0; padding: 1px 8px; border-radius: 10px;
+  background: color-mix(in oklab, var(--fg) 8%, transparent); color: var(--fg-2, var(--fg));
+}
+.provider-device {
+  display: flex; align-items: center; gap: 6px;
+  border-radius: 16px; background: var(--card-bg); border: 1px solid var(--glass-line);
+  margin-bottom: 6px; padding-right: 8px;
+}
+.provider-device.is-unreachable { opacity: 0.55; }
+.provider-device-main {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px;
+  padding: 10px 6px 10px 12px; border: none; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.provider-device-icon {
+  width: 34px; height: 34px; border-radius: 11px; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.provider-device-icon svg { width: 17px; height: 17px; }
+.provider-device-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.provider-device-text strong { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.provider-device-text small { font-size: 12px; color: var(--muted); }
+.provider-device-chevron { color: var(--muted); }
+.provider-device-main:hover .provider-device-chevron { color: var(--accent); }
+.provider-device-delete {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; background: transparent; color: var(--muted); cursor: pointer;
+}
+.provider-device-delete:hover:not(:disabled) { color: var(--danger); background: color-mix(in oklab, var(--danger) 10%, transparent); }
+.provider-device-delete:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Gerät hinzufügen */
+.add-device header { gap: 8px; }
+.add-device header h3 { flex: 1; }
+.add-choose { display: flex; flex-direction: column; gap: 8px; }
+.add-choice {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 10px 12px; border-radius: 16px;
+  border: 1px solid var(--glass-line); background: var(--card-bg);
+  color: var(--fg); font: inherit; text-align: left; cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+.add-choice:hover:not(:disabled) { border-color: var(--accent); }
+.add-choice:disabled { opacity: 0.5; cursor: not-allowed; }
+.add-choice > svg { color: var(--muted); }
+.add-choice-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.add-choice-text strong { font-size: 14px; font-weight: 600; }
+.add-choice-text small { font-size: 12px; color: var(--muted); }
+.add-choice.is-new { border-style: dashed; background: transparent; }
+.add-choice-plus {
+  width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.add-pairing { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 10px 0 4px; }
+.add-pairing strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.add-pairing p { margin: 0; font-size: 13px; color: var(--muted); line-height: 1.5; max-width: 320px; }
+.add-radar {
+  width: 64px; height: 64px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--accent-on); background: var(--accent);
+  animation: radarPulse 1.8s ease-out infinite;
+}
+@keyframes radarPulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent) 55%, transparent); }
+  100% { box-shadow: 0 0 0 22px transparent; }
+}
+.add-none { margin: 0; font-size: 13px; color: var(--muted); }
+.add-found h4 { margin: 6px 0; font-size: 12px; color: var(--muted); font-weight: 600; }
+.add-found-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border-radius: 12px; border: 1px solid color-mix(in oklab, var(--success) 40%, transparent);
+  background: color-mix(in oklab, var(--success) 8%, transparent);
+  color: var(--fg); font: inherit; font-size: 14px; text-align: left; cursor: pointer; margin-bottom: 6px;
+  animation: popIn 220ms var(--ease-standard);
+}
+.add-found-item .group-pick-icon { color: var(--success); }
+.add-device footer { flex-wrap: wrap; justify-content: flex-end; }
+.add-device footer .zone-save, .add-device footer .service-action { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .add-radar { animation: none; } }
