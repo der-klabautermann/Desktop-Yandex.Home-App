@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACTIVITY_HOLD_MS, EMPTY_ZONE_CONFIG, addZone, buildZoneTree, categoryOf, flattenTree, isZoneActive, moveNode, removeZone, renameZone,
-  guessRoomIcon, searchDevices, summarizeDevices, zoneCategories, applyDeviceOverrides, setDeviceName, setDeviceRoom,
+  searchDevices, summarizeDevices, zoneCategories, applyDeviceOverrides, setDeviceName, setDeviceRoom,
   type ZoneConfig,
 } from './zones';
 import type { HomeData } from './model';
