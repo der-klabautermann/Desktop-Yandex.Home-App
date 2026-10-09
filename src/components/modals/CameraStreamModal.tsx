@@ -13,7 +13,7 @@ import {
 } from '../../constants';
 import { attachVideoAudioBoost, VideoAudioBoost } from '../../utils/videoAudioBoost';
 import { debugLog, debugWarn } from '../../utils/debugLog';
-import { X, RefreshCw, Loader2, Video, AlertCircle, Eye, EyeOff, Maximize2, Settings2, PictureInPicture2 } from 'lucide-react';
+import { X, RefreshCw, Loader2, Video, AlertCircle, Eye, EyeOff, Maximize2, Settings2, PictureInPicture2, Expand } from 'lucide-react';
 import { useI18n } from '../../i18n/I18nContext';
 import { describeCameraError } from '../../utils/cameraErrors';
 
@@ -50,6 +50,10 @@ interface CameraStreamModalProps {
   onGetStream: (deviceId: string) => Promise<CameraStreamResult>;
   onSetPrivacy: (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => Promise<void>;
   onPrivacyChanged?: () => void;
+  /** tile: живое изображение в карточке на странице камер, без затемнения и закрытия, без звука. */
+  variant?: 'modal' | 'tile';
+  /** Для tile: открыть камеру крупно. */
+  onExpand?: () => void;
 }
 
 export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
@@ -59,7 +63,10 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
   onGetStream,
   onSetPrivacy,
   onPrivacyChanged,
+  variant = 'modal',
+  onExpand,
 }) => {
+  const tile = variant === 'tile';
   const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const stagingVideoRef = useRef<HTMLVideoElement>(null);
@@ -856,9 +863,8 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
     return null;
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl">
+  const card = (
+      <div className={tile ? 'camera-tile' : 'bg-white dark:bg-surface border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl w-full max-w-4xl'}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-white/10 rounded-t-2xl">
           <div className="flex items-center gap-3 min-w-0">
             <div className="p-2 rounded-full bg-[color:color-mix(in_oklab,var(--accent)_10%,transparent)] dark:bg-primary/20">
@@ -878,7 +884,7 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {showPrivacyButton && (
+            {showPrivacyButton && !tile && (
               <button
                 onClick={handleTogglePrivacy}
                 disabled={isLoading || isTogglingPrivacy}
@@ -913,14 +919,14 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
                 <PictureInPicture2 className="w-5 h-5" />
               </button>
             )}
-            <button
+            {!tile && <button
               onClick={() => videoRef.current?.requestFullscreen?.()}
               disabled={isLoading || !streamProtocol}
               className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
               title={t('camera.fullscreen')}
             >
               <Maximize2 className="w-5 h-5" />
-            </button>
+            </button>}
             <button
               onClick={loadStream}
               disabled={isLoading || isTogglingPrivacy}
@@ -929,13 +935,25 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
             >
               <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
-            <button
-              onClick={onClose}
-              className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-              title={t('common.close')}
-            >
-              <X className="w-5 h-5" />
-            </button>
+            {tile ? (
+              onExpand && (
+                <button
+                  onClick={onExpand}
+                  className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                  title={t('camera.open')}
+                >
+                  <Expand className="w-5 h-5" />
+                </button>
+              )
+            ) : (
+              <button
+                onClick={onClose}
+                className="p-2 rounded-lg text-gray-500 dark:text-slate-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
+                title={t('common.close')}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -950,7 +968,8 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
           <video
             ref={videoRef}
             className="block h-full w-full object-contain"
-            controls
+            controls={!tile}
+            muted={tile}
             playsInline
             autoPlay
           />
@@ -1044,6 +1063,12 @@ export const CameraStreamModal: React.FC<CameraStreamModalProps> = ({
         </div>
 
       </div>
+  );
+
+  if (tile) return card;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      {card}
     </div>
   );
 };

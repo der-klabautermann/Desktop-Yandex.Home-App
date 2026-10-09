@@ -6,6 +6,7 @@ import { DashboardZoneView } from './DashboardZoneView';
 import { findNode } from '../../core/zones';
 import { DashboardGroupView } from './DashboardGroupView';
 import { DashboardDeviceView } from './DashboardDeviceView';
+import { DashboardCamerasView } from './DashboardCamerasView';
 import { ThermostatSettingsModal } from './modals/ThermostatSettingsModal';
 import { BrightnessSettingsModal } from './modals/BrightnessSettingsModal';
 import { GroupLightSettingsModal } from './modals/GroupLightSettingsModal';
@@ -161,8 +162,9 @@ export const Dashboard: React.FC = () => {
             const device = ctx.data.devices.find(d => d.id === ctx.activeDeviceId);
             if (device) return device.name;
         }
+        if (ctx.activeSidebarView === 'cameras') return t('camera.title');
         return homeName;
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, ctx.zones.tree, groupsForHome, homeName]);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, ctx.zones.tree, groupsForHome, homeName, t]);
 
     const contentSubtitle = useMemo(() => {
         if (ctx.activeSidebarView === 'room' && ctx.activeRoomId) {
@@ -189,6 +191,7 @@ export const Dashboard: React.FC = () => {
             const device = ctx.data.devices.find(d => d.id === ctx.activeDeviceId);
             return device ? deviceTypeLabel(device.type, t) : '';
         }
+        if (ctx.activeSidebarView === 'cameras') return tp('camera.count', devicesForHome.filter(isCameraDevice).length);
         return tp('dashboard.devicesInHome', devicesForHome.length);
     }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, devicesForHome, groupsForHome, ctx.zones.tree, t, tp]);
 
@@ -228,6 +231,8 @@ export const Dashboard: React.FC = () => {
                 );
             case 'device':
                 return <DashboardDeviceView deviceId={ctx.activeDeviceId} />;
+            case 'cameras':
+                return <DashboardCamerasView state={state} cameras={devicesForHome.filter(isCameraDevice)} />;
             case 'group':
                 return (
                     <DashboardGroupView

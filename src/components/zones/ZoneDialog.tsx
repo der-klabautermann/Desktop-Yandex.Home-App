@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Trash2 } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
 import { useI18n } from '../../i18n/I18nContext';
-import { findNode, flattenTree, isCustomZoneId } from '../../../core/zones';
+import { findNode, flattenTree, guessRoomIcon, isCustomZoneId } from '../../../core/zones';
 import { ZONE_ICONS, ZoneIcon } from './zoneIcons';
 
 interface ZoneDialogProps {
@@ -11,10 +11,12 @@ interface ZoneDialogProps {
   /** Комната или зона, которую редактируем (для mode='edit'). */
   nodeId?: string;
   onClose: () => void;
+  /** Новая зона создана: вместо перехода в неё отдать ID вызывающему. */
+  onCreated?: (id: string) => void;
 }
 
 /** Создание и правка зоны: название, значок, куда входит, удаление. */
-export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose }) => {
+export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose, onCreated }) => {
   const ctx = useDashboardContext();
   const { t } = useI18n();
   const { zones } = ctx;
@@ -22,7 +24,13 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
   const isCustom = mode === 'create' || (nodeId ? isCustomZoneId(nodeId) : false);
 
   const [name, setName] = useState(node?.name ?? '');
-  const [icon, setIcon] = useState(node?.icon ?? (mode === 'create' ? 'layers' : 'room'));
+  const [icon, setIcon] = useState(node?.icon ?? 'room');
+  // Пока значок не выбран вручную, он подбирается по названию («Garten» → сад)
+  const [iconChosen, setIconChosen] = useState(mode === 'edit');
+  const changeName = (value: string) => {
+    setName(value);
+    if (!iconChosen) setIcon(guessRoomIcon(value) ?? 'room');
+  };
   const [parentId, setParentId] = useState<string>(nodeId ? zones.config.parents[nodeId] ?? '' : '');
 
   // Куда можно перенести: только собственные зоны, не сама зона и не её потомки
@@ -34,7 +42,10 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
   const save = () => {
     if (mode === 'create') {
       const id = zones.createZone(name, icon, parentId || null);
-      if (id) ctx.onSelectRoom(id);
+      if (id) {
+        if (onCreated) onCreated(id);
+        else ctx.onSelectRoom(id);
+      }
     } else if (nodeId) {
       zones.updateZone(nodeId, isCustom ? { name, icon, parentId: parentId || null } : { icon, parentId: parentId || null });
     }
@@ -60,7 +71,7 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
         {isCustom ? (
           <>
             <label htmlFor="zone-name">{t('zones.name')}</label>
-            <input id="zone-name" value={name} onChange={e => setName(e.target.value)} placeholder={t('zones.namePlaceholder')} autoFocus />
+            <input id="zone-name" value={name} onChange={e => changeName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && name.trim()) save(); }} autoFocus />
           </>
         ) : (
           <p className="zone-dialog-hint">{t('zones.roomHint')}</p>
@@ -69,7 +80,7 @@ export const ZoneDialog: React.FC<ZoneDialogProps> = ({ mode, nodeId, onClose })
         <label>{t('zones.icon')}</label>
         <div className="zone-icon-grid">
           {Object.keys(ZONE_ICONS).map(key => (
-            <button key={key} className={`zone-icon-choice ${icon === key ? 'is-active' : ''}`} onClick={() => setIcon(key)} title={t(`zones.icons.${key}`)}>
+            <button key={key} className={`zone-icon-choice ${icon === key ? 'is-active' : ''}`} onClick={() => { setIcon(key); setIconChosen(true); }} title={t(`zones.icons.${key}`)}>
               <ZoneIcon icon={key} kind="zone" className="w-4 h-4" />
             </button>
           ))}

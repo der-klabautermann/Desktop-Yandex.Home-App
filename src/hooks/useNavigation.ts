@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 
-export type SidebarView = 'home' | 'room' | 'group' | 'device';
+export type SidebarView = 'home' | 'room' | 'group' | 'device' | 'cameras';
 
 interface UseNavigationReturn {
     activeSidebarView: SidebarView;
@@ -13,6 +13,7 @@ interface UseNavigationReturn {
     /** Страница устройства; «назад» вернёт на ту страницу, откуда пришли. */
     onSelectDevice: (deviceId: string) => void;
     onBack: () => void;
+    onSelectCameras: () => void;
 }
 
 interface Place { view: SidebarView; roomId: string | null; groupId: string | null; deviceId: string | null }
@@ -28,6 +29,7 @@ export function useNavigation(): UseNavigationReturn {
         if (current.view !== 'device') previous.current = current;
         return { view: 'device', roomId: null, groupId: null, deviceId };
     }), []);
+    const onSelectCameras = useCallback(() => setPlace({ view: 'cameras', roomId: null, groupId: null, deviceId: null }), []);
     const onBack = useCallback(() => {
         setPlace(previous.current ?? { view: 'home', roomId: null, groupId: null, deviceId: null });
         previous.current = null;
@@ -38,6 +40,6 @@ export function useNavigation(): UseNavigationReturn {
         activeRoomId: place.roomId,
         activeGroupId: place.groupId,
         activeDeviceId: place.deviceId,
-        onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack,
+        onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack, onSelectCameras,
     };
 }

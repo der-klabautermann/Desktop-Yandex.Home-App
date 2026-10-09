@@ -19,6 +19,14 @@ export interface ZoneConfig {
   icons?: Record<string, string>;
   /** Собственные группы устройств поверх всех сервисов (см. groups.ts). */
   groups?: CustomGroup[];
+  /** Своё название и своя комната (или собственная зона) для устройства; сервис об этом не знает. */
+  devices?: Record<string, DeviceOverride>;
+}
+
+export interface DeviceOverride {
+  name?: string;
+  /** ID комнаты сервиса или собственной зоны. */
+  room?: string;
 }
 
 export interface CustomGroup {
@@ -36,7 +44,7 @@ export interface ZoneNode {
   name: string;
   icon?: string;
   children: ZoneNode[];
-  /** Устройства самой комнаты (у собственной зоны пусто). */
+  /** Устройства прямо в этой комнате или зоне (без вложенных). */
   deviceIds: string[];
   /** Устройства вместе со всеми вложенными комнатами и зонами. */
   allDeviceIds: string[];
@@ -68,7 +76,8 @@ export const buildZoneTree = (home: HomeData, config: ZoneConfig, householdId: s
 
   const nodes = new Map<string, ZoneNode>();
   for (const zone of zones) {
-    nodes.set(zone.id, { id: zone.id, kind: 'zone', name: zone.name, icon: zone.icon, children: [], deviceIds: [], allDeviceIds: [] });
+    const deviceIds = home.devices.filter(d => d.room === zone.id).map(d => d.id);
+    nodes.set(zone.id, { id: zone.id, kind: 'zone', name: zone.name, icon: zone.icon, children: [], deviceIds, allDeviceIds: [] });
   }
   for (const room of rooms) {
     const deviceIds = room.devices.filter(id => knownDevices.has(id));
@@ -129,6 +138,64 @@ export const findNode = (nodes: ZoneNode[], id: string): ZoneNode | undefined =>
   return undefined;
 };
 
+// --- Свои названия и комнаты устройств ---
+
+/** Дом с учётом своих названий и комнат: устройство переезжает из комнаты сервиса в выбранную. */
+export const applyDeviceOverrides = (home: HomeData, config: ZoneConfig): HomeData => {
+  const overrides = config.devices ?? {};
+  if (Object.keys(overrides).length === 0) return home;
+  const roomIds = new Set(home.rooms.map(r => r.id));
+  const zoneHouse = new Map(config.zones.map(z => [z.id, z.householdId]));
+  const moved = new Map<string, string>();
+  const devices = home.devices.map(device => {
+    const override = overrides[device.id];
+    if (!override) return device;
+    const target = override.room && (roomIds.has(override.room) || zoneHouse.has(override.room)) ? override.room : undefined;
+    if (target && target !== device.room) moved.set(device.id, target);
+    // В собственной зоне дом берём у зоны, чтобы устройство не потерялось при фильтре по дому
+    const household = target && zoneHouse.get(target);
+    return {
+      ...device,
+      name: override.name?.trim() || device.name,
+      room: target ?? device.room,
+      ...(household ? { household_id: household } : {}),
+    };
+  });
+  const rooms = home.rooms.map(room => {
+    const kept = room.devices.filter(id => !moved.has(id));
+    const added = [...moved].filter(([, target]) => target === room.id).map(([id]) => id);
+    return kept.length === room.devices.length && added.length === 0 ? room : { ...room, devices: [...kept, ...added] };
+  });
+  return { ...home, devices, rooms };
+};
+
+const setOverride = (config: ZoneConfig, deviceId: string, patch: DeviceOverride): ZoneConfig => {
+  const next = { ...(config.devices?.[deviceId] ?? {}), ...patch };
+  if (!next.name) delete next.name;
+  if (!next.room) delete next.room;
+  const devices = { ...config.devices };
+  if (Object.keys(next).length) devices[deviceId] = next;
+  else delete devices[deviceId];
+  return { ...config, devices };
+};
+
+/** Пустое название: снова название из сервиса. */
+export const setDeviceName = (config: ZoneConfig, deviceId: string, name: string) =>
+  setOverride(config, deviceId, { name: name.trim() || undefined });
+
+/** null: снова комната из сервиса. */
+export const setDeviceRoom = (config: ZoneConfig, deviceId: string, room: string | null) =>
+  setOverride(config, deviceId, { room: room ?? undefined });
+
+/** При удалении зоны её устройства возвращаются в комнаты сервисов. */
+const releaseZoneDevices = (config: ZoneConfig, zoneId: string): ZoneConfig => {
+  let next = config;
+  for (const [deviceId, override] of Object.entries(config.devices ?? {})) {
+    if (override.room === zoneId) next = setDeviceRoom(next, deviceId, null);
+  }
+  return next;
+};
+
 // --- Изменения конфигурации (возвращают новую копию) ---
 
 export const addZone = (
@@ -180,7 +247,14 @@ const ROOM_KEYWORDS: Array<[string, string[]]> = [
 /** Подбирает значок по названию комнаты; undefined, если ничего не подошло. */
 export const guessRoomIcon = (name: string): string | undefined => {
   const lower = name.toLowerCase();
-  return ROOM_KEYWORDS.find(([, words]) => words.some(word => lower.includes(word)))?.[0];
+  // Самое длинное совпадение точнее: «Waschküche» — прачечная, а не кухня
+  let best: { icon: string; length: number } | undefined;
+  for (const [icon, words] of ROOM_KEYWORDS) {
+    for (const word of words) {
+      if (lower.includes(word) && word.length > (best?.length ?? 0)) best = { icon, length: word.length };
+    }
+  }
+  return best?.icon;
 };
 
 /** Переносит комнату или зону в другую зону (null: прямо в дом). Кольца не допускаются. */
@@ -200,6 +274,7 @@ export const moveNode = (config: ZoneConfig, id: string, parentId: string | null
 
 /** Удаляет собственную зону; её содержимое поднимается на уровень выше. */
 export const removeZone = (config: ZoneConfig, id: string): ZoneConfig => {
+  config = releaseZoneDevices(config, id);
   const up = config.parents[id];
   const parents: Record<string, string> = {};
   for (const [child, parent] of Object.entries(config.parents)) {

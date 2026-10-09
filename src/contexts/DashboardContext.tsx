@@ -35,7 +35,7 @@ export interface DashboardContextValue {
     onSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 
     // Навигация
-    activeSidebarView: 'home' | 'room' | 'group' | 'device';
+    activeSidebarView: 'home' | 'room' | 'group' | 'device' | 'cameras';
     activeRoomId: string | null;
     activeGroupId: string | null;
     onSelectHome: () => void;
@@ -44,6 +44,7 @@ export interface DashboardContextValue {
     activeDeviceId: string | null;
     onSelectDevice: (deviceId: string) => void;
     onBack: () => void;
+    onSelectCameras: () => void;
     /** Удаление устройства в его сервисе; список сервисов, где это возможно. */
     onDeleteDevice: (deviceId: string) => Promise<boolean>;
     deletableProviders: string[];

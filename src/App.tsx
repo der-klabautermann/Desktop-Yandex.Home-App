@@ -28,7 +28,7 @@ function App() {
     const { notification, showNotification, clearNotification } = useNotification();
     const { accounts, setAccounts, appState, setAppState, errorMsg, setErrorMsg, retryInfo } = useAuth();
     const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite } = useFavorites();
-    const { activeSidebarView, activeRoomId, activeGroupId, activeDeviceId, onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack } = useNavigation();
+    const { activeSidebarView, activeRoomId, activeGroupId, activeDeviceId, onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack, onSelectCameras } = useNavigation();
     const { showUpdateNotification, setShowUpdateNotification, updateInfo } = useUpdateNotification();
     // Что показано вместо панели: настройки, список сервисов или выбор нового сервиса
     const [screen, setScreen] = useState<'dashboard' | 'settings' | 'services' | 'add'>('dashboard');
@@ -57,8 +57,8 @@ function App() {
 
     // Собственные группы показываем рядом с группами сервисов
     const viewData = useMemo(
-        () => (userData && zones.customGroups.length ? { ...userData, groups: [...userData.groups, ...zones.customGroups] } : userData),
-        [userData, zones.customGroups],
+        () => (zones.home && zones.customGroups.length ? { ...zones.home, groups: [...zones.home.groups, ...zones.customGroups] } : zones.home),
+        [zones.home, zones.customGroups],
     );
     const toggleAnyGroup = useCallback(async (groupId: string, currentState: boolean) => {
         if (!isCustomGroupId(groupId)) return handleToggleGroup(groupId, currentState);
@@ -347,6 +347,7 @@ function App() {
                     activeDeviceId,
                     onSelectDevice,
                     onBack,
+                    onSelectCameras,
                     onDeleteDevice: handleDeleteDevice,
                     deletableProviders,
                     isRefreshing,

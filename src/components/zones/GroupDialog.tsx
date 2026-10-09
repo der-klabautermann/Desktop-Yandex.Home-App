@@ -31,7 +31,6 @@ export const GroupDialog: React.FC<GroupDialogProps> = ({ mode, groupId, onClose
     const placed = new Set<string>();
     const result: Array<{ id: string; name: string; devices: YandexDevice[] }> = [];
     for (const node of flattenTree(ctx.zones.tree)) {
-      if (node.kind !== 'room') continue;
       const devices = node.deviceIds.map(id => byId.get(id)).filter((d): d is YandexDevice => !!d && isGroupable(d));
       devices.forEach(d => placed.add(d.id));
       if (devices.length) result.push({ id: node.id, name: node.name, devices });

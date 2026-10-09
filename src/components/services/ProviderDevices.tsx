@@ -34,7 +34,7 @@ export const ProviderDevices: React.FC<ProviderDevicesProps> = ({ providerId, on
         return [...byRoom.entries()]
             .map(([roomId, devices]) => ({
                 roomId,
-                name: ctx.data.rooms.find(r => r.id === roomId)?.name ?? t('dashboard.noRoom'),
+                name: findNode(ctx.zones.tree, roomId)?.name ?? ctx.data.rooms.find(r => r.id === roomId)?.name ?? t('dashboard.noRoom'),
                 icon: roomId ? findNode(ctx.zones.tree, roomId)?.icon : undefined,
                 devices: devices.sort((a, b) => a.name.localeCompare(b.name)),
             }))

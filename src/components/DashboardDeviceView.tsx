@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Loader2, Power, Trash2, Zap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, ChevronDown, Loader2, Power, Trash2, Zap } from 'lucide-react';
 import { ConfirmDialog } from './ConfirmDialog';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useI18n } from '../i18n/I18nContext';
-import { findNode } from '../../core/zones';
+import { findNode, flattenTree } from '../../core/zones';
+import { ZoneDialog } from './zones/ZoneDialog';
 import { Pinned } from './Pinned';
 import { ZoneIcon } from './zones/zoneIcons';
 import { DeviceControlsSection, DeviceReadingsSection } from './device/DeviceSections';
@@ -15,6 +16,9 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
     const { t, lang } = useI18n();
     const [busy, setBusy] = useState(false);
     const [confirming, setConfirming] = useState(false);
+    const [creatingRoom, setCreatingRoom] = useState(false);
+    const [draftName, setDraftName] = useState<string | null>(null);
+    useEffect(() => setDraftName(null), [deviceId]);
 
     const device = deviceId ? ctx.data.devices.find(d => d.id === deviceId) : undefined;
     if (!device) return <div className="empty-state"><p>{t('devicePage.notFound')}</p></div>;
@@ -42,13 +46,53 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
         if (deleted) ctx.onBack();
     };
 
+    const original = ctx.zones.originalDevice(device.id);
+    const saveName = () => {
+        if (draftName === null) return;
+        const value = draftName.trim();
+        ctx.zones.renameDevice(device.id, value === original?.name ? '' : value);
+        setDraftName(null);
+    };
+    const places = flattenTree(ctx.zones.tree);
+
     const rows: Array<[string, React.ReactNode]> = [
+        [t('devicePage.name'), (
+            <input
+                className="dp-input"
+                value={draftName ?? device.name}
+                placeholder={original?.name}
+                aria-label={t('devicePage.name')}
+                onChange={e => setDraftName(e.target.value)}
+                onBlur={saveName}
+                onKeyDown={e => {
+                    if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+                    if (e.key === 'Escape') setDraftName(null);
+                }}
+            />
+        )],
+        [t('devicePage.room'), (
+            <label className="dp-room dp-room-picker">
+                <ZoneIcon icon={roomNode?.icon} kind={roomNode?.kind ?? 'room'} className="w-3.5 h-3.5" />
+                <span>{roomNode?.name ?? t('dashboard.noRoom')}</span>
+                <ChevronDown className="w-3.5 h-3.5 dp-room-caret" />
+                <select
+                    className="dp-select-overlay"
+                    value={device.room ?? ''}
+                    aria-label={t('devicePage.room')}
+                    onChange={e => {
+                        if (e.target.value === '__new') setCreatingRoom(true);
+                        else ctx.zones.moveDevice(device.id, e.target.value || null);
+                    }}
+                >
+                    {!device.room && <option value="">{t('dashboard.noRoom')}</option>}
+                    {places.map(place => (
+                        <option key={place.id} value={place.id}>{'\u2003'.repeat(place.depth)}{place.name}</option>
+                    ))}
+                    <option value="__new">{t('devicePage.newRoom')}</option>
+                </select>
+            </label>
+        )],
         [t('devicePage.type'), deviceTypeLabel(device.type, t)],
-        [t('devicePage.room'), room ? (
-            <span className="dp-room">
-                <ZoneIcon icon={roomNode?.icon} kind="room" className="w-3.5 h-3.5" />{room.name}
-            </span>
-        ) : t('dashboard.noRoom')],
         ...(household ? [[t('devicePage.home'), household.name] as [string, React.ReactNode]] : []),
         [t('devicePage.service'), unreachable ? `${service} (${t('services.status.offline')})` : service],
         ...(info?.manufacturer ? [[t('devicePage.manufacturer'), info.manufacturer] as [string, React.ReactNode]] : []),
@@ -108,6 +152,14 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
                     </section>
                 </div>
             </div>
+
+            {creatingRoom && (
+                <ZoneDialog
+                    mode="create"
+                    onClose={() => setCreatingRoom(false)}
+                    onCreated={id => ctx.zones.moveDevice(device.id, id)}
+                />
+            )}
 
             {confirming && (
                 <ConfirmDialog

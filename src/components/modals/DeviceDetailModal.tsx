@@ -35,8 +35,8 @@ export const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ device, on
     const onOff = device.capabilities.find(c => c.type === 'devices.capabilities.on_off');
     const isOn = onOff?.state?.value === true;
     const unreachable = Boolean(device.unreachable);
-    const room = ctx.data.rooms.find(r => r.id === device.room)?.name;
     const roomNode = device.room ? findNode(ctx.zones.tree, device.room) : undefined;
+    const room = roomNode?.name ?? ctx.data.rooms.find(r => r.id === device.room)?.name;
     const isFavorite = ctx.favoriteDeviceIds.includes(device.id);
     const properties = listProperties(device, t, lang);
     const camera = isCameraDevice(device);

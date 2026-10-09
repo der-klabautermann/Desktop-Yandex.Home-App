@@ -2819,3 +2819,51 @@ button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offse
 .add-device footer { flex-wrap: wrap; justify-content: flex-end; }
 .add-device footer .zone-save, .add-device footer .service-action { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .add-radar { animation: none; } }
+.zone-direct-grid { margin: 10px 0 18px; }
+
+/* Name und Raum auf der Geräteseite */
+.dp-info dd:has(.dp-input), .dp-info dd:has(.dp-room) { flex: 1; display: flex; justify-content: flex-end; }
+.dp-input, .dp-select {
+  width: 100%; max-width: 240px; padding: 6px 0 6px 10px; border-radius: 10px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--fg); font: inherit; font-size: 14px; text-align: right;
+  transition: border-color var(--motion-fast) var(--ease-standard), background var(--motion-fast) var(--ease-standard);
+}
+.dp-input:hover, .dp-select:hover { border-color: var(--glass-line-strong); }
+.dp-input:hover, .dp-input:focus { padding-right: 10px; }
+.dp-input:focus, .dp-select:focus { outline: none; border-color: var(--accent); background: color-mix(in oklab, var(--surface) 70%, transparent); }
+.dp-input:focus { text-align: left; }
+.dp-room .dp-select { width: auto; }
+.dp-select {
+  -webkit-appearance: none; appearance: none; cursor: pointer; text-align: right; text-align-last: right;
+  padding-right: 26px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 55%, calc(100% - 9px) 55%;
+  background-size: 4px 4px, 4px 4px; background-repeat: no-repeat;
+}
+.dp-select option { background: var(--surface); color: var(--fg); }
+
+/* Knopf-Texte nicht markieren */
+.zone-control, .zone-edit, .stat-chip, .dd-chip, .dd-action, .service-action, .sidebar-item { -webkit-user-select: none; user-select: none; }
+
+/* Kamera-Seite */
+.camera-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 380px), 1fr)); }
+.camera-tile {
+  border-radius: 20px; overflow: hidden;
+  background: var(--card-bg); border: 1px solid var(--glass-line);
+  box-shadow: var(--elev-raised, none);
+}
+.camera-tile > div:first-child { padding: 10px 12px; border-bottom-color: var(--glass-line); }
+.camera-tile h2 { font-size: 15px; }
+.camera-tile-idle { aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
+.camera-tile-idle-body { display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+
+.dp-room-picker {
+  position: relative; display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 10px; margin-right: -10px; border-radius: 10px; border: 1px solid transparent; cursor: pointer;
+  transition: border-color var(--motion-fast) var(--ease-standard);
+}
+.dp-room-picker:hover { border-color: var(--glass-line-strong); }
+.dp-room-picker:focus-within { border-color: var(--accent); }
+.dp-room-caret { color: var(--muted); }
+.dp-select-overlay { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font: inherit; }

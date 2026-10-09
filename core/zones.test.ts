@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   ACTIVITY_HOLD_MS, EMPTY_ZONE_CONFIG, addZone, buildZoneTree, categoryOf, flattenTree, isZoneActive, moveNode, removeZone, renameZone,
-  searchDevices, summarizeDevices, zoneCategories,
+  guessRoomIcon, searchDevices, summarizeDevices, zoneCategories, applyDeviceOverrides, setDeviceName, setDeviceRoom,
   type ZoneConfig,
 } from './zones';
 import type { HomeData } from './model';
@@ -214,5 +214,51 @@ describe('Suche nach Gerät, Raum oder Zone', () => {
   it('ignoriert Groß- und Kleinschreibung und findet sonst nichts', () => {
     expect(searchDevices(home.devices, tree, 'ГОСТИН').has('sensor')).toBe(true);
     expect(searchDevices(home.devices, tree, 'garage').size).toBe(0);
+  });
+});
+
+describe('Eigene Namen und Räume für Geräte', () => {
+  it('benennt um und verschiebt in einen anderen Raum', () => {
+    let config = setDeviceName(EMPTY_ZONE_CONFIG, 'lamp', ' Deckenlicht ');
+    config = setDeviceRoom(config, 'lamp', 'living');
+    const result = applyDeviceOverrides(home, config);
+    const lamp = result.devices.find(d => d.id === 'lamp')!;
+    expect(lamp.name).toBe('Deckenlicht');
+    expect(lamp.room).toBe('living');
+    expect(result.rooms.find(r => r.id === 'kitchen')!.devices).toEqual(['plug']);
+    expect(result.rooms.find(r => r.id === 'living')!.devices).toEqual(['sensor', 'lamp']);
+    // Original bleibt unverändert
+    expect(home.devices.find(d => d.id === 'lamp')!.name).toBe('Лампа');
+  });
+
+  it('ein Gerät kann direkt in einer eigenen Zone liegen', () => {
+    const { config: withZone, id } = addZone(EMPTY_ZONE_CONFIG, { name: 'Garten', householdId: 'h1' }, () => 'zone:garten');
+    const config = setDeviceRoom(withZone, 'plug', id);
+    const tree = buildZoneTree(applyDeviceOverrides(home, config), config, 'h1');
+    const garden = tree.find(n => n.id === 'zone:garten')!;
+    expect(garden.deviceIds).toEqual(['plug']);
+    expect(tree.find(n => n.id === 'kitchen')!.deviceIds).toEqual(['lamp']);
+  });
+
+  it('leerer Name und null-Raum stellen den Stand des Dienstes wieder her', () => {
+    let config = setDeviceRoom(setDeviceName(EMPTY_ZONE_CONFIG, 'lamp', 'X'), 'lamp', 'living');
+    config = setDeviceRoom(setDeviceName(config, 'lamp', ''), 'lamp', null);
+    expect(config.devices).toEqual({});
+    expect(applyDeviceOverrides(home, config)).toBe(home);
+  });
+
+  it('Zone löschen gibt ihre Geräte an die Räume des Dienstes zurück', () => {
+    const { config: withZone, id } = addZone(EMPTY_ZONE_CONFIG, { name: 'Garten', householdId: 'h1' }, () => 'zone:garten');
+    const config = removeZone(setDeviceRoom(withZone, 'plug', id), id);
+    expect(config.devices).toEqual({});
+  });
+});
+
+describe('Symbol aus dem Raumnamen', () => {
+  it('nimmt den genauesten Begriff', () => {
+    expect(guessRoomIcon('Waschküche')).toBe('laundry');
+    expect(guessRoomIcon('Küche')).toBe('kitchen');
+    expect(guessRoomIcon('Garten hinten')).toBe('garden');
+    expect(guessRoomIcon('Abstellkammer')).toBeUndefined();
   });
 });

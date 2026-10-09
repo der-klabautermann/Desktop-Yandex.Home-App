@@ -5,10 +5,10 @@ import { GroupCard } from './cards/GroupCard';
 import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
-import { isLightGroup, isSensorDevice } from '../constants';
+import { isCameraDevice, isLightGroup, isSensorDevice } from '../constants';
 import { findNode, flattenTree, searchDevices } from '../../core/zones';
 import { ZoneIcon } from './zones/zoneIcons';
-import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown, Search, X, Check } from 'lucide-react';
+import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown, Search, X, Check, Cctv } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
 import { Pinned } from './Pinned';
 
@@ -65,6 +65,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
     const visible = (id: string) => !matches || matches.has(id);
     const toggleFilter = (next: typeof filter) => setFilter(current => (current === next ? 'all' : next));
     const multipleHomes = ctx.households.length > 1;
+    const cameraCount = devicesForHome.filter(isCameraDevice).length;
     const shownScenarios = searching
         ? activeScenarios.filter(sc => sc.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
         : activeScenarios;
@@ -104,6 +105,11 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             <button className={`stat-chip ${filter === 'devices' ? 'is-active' : ''}`} onClick={() => toggleFilter('devices')} aria-pressed={filter === 'devices'}>
                 <Lightbulb /> {t('dashboard.stats.devices', { count: devicesForHome.length })}
             </button>
+            {cameraCount > 0 && (
+                <button className="stat-chip" onClick={ctx.onSelectCameras}>
+                    <Cctv /> {t('dashboard.stats.cameras', { count: cameraCount })}
+                </button>
+            )}
             <label className="home-search">
                 <Search className="w-4 h-4" />
                 <input
@@ -315,11 +321,22 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                 }
                 // Собственная зона (этаж): заголовок, если внутри есть (найденные) устройства
                 if (!node.allDeviceIds.some(id => visible(id) && devicesForHome.some(d => d.id === id))) return null;
+                // Устройства, которые лежат прямо в зоне (переложены туда в приложении)
+                const direct = devicesForHome.filter(d => node.deviceIds.includes(d.id) && visible(d.id));
                 return (
-                    <button key={node.id} className="zone-floor-heading" style={{ marginLeft: node.depth * 12 }} onClick={() => ctx.onSelectRoom(node.id)}>
-                        <ZoneIcon icon={node.icon} kind="zone" className="w-4 h-4" />
-                        <span>{node.name}</span>
-                    </button>
+                    <React.Fragment key={node.id}>
+                        <button className="zone-floor-heading" style={{ marginLeft: node.depth * 12 }} onClick={() => ctx.onSelectRoom(node.id)}>
+                            <ZoneIcon icon={node.icon} kind="zone" className="w-4 h-4" />
+                            <span>{node.name}</span>
+                        </button>
+                        {direct.length > 0 && (
+                            <div className="device-grid zone-direct-grid">
+                                {direct.map(dev => (
+                                    <DeviceCardAdapter key={dev.id} device={dev} onToggle={ctx.onToggleDevice} isFavorite={ctx.favoriteDeviceIds.includes(dev.id)} onToggleFavorite={ctx.onToggleDeviceFavorite} onOpenSettings={state.handleOpenDeviceSettings} onOpenCameraStream={state.openCameraStream} sensorDisplayConfig={state.sensorDisplayConfig} />
+                                ))}
+                            </div>
+                        )}
+                    </React.Fragment>
                 );
             })}
 
