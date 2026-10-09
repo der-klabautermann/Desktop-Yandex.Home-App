@@ -29,8 +29,10 @@ Quelle: homey.app/de-de/homey-cloud und die Funktionsseiten unter homey.app/de-d
   (Temperatur, Licht an, Bewegung, offene Fenster)
 - [x] Zonen-Steuerung: Kategorien oben (Licht, Steckdosen, Klima, Vorhänge, Medien, dazu
   Energie in Watt und Aktivität); eine ganze Zone auf einmal schalten oder dimmen, zum Beispiel
-  alle Lichter im Erdgeschoss. Lautsprecher entfallen vorerst: Yandex-Stationen haben über die
-  Smart-Home-Schnittstelle keinen Schalter (Musiksteuerung läuft über Vorssaint/Glagol)
+  alle Lichter im Erdgeschoss
+- [ ] Zonen-Kategorie Lautsprecher: Wiedergabe und Lautstärke aller Lautsprecher einer Zone, für
+  jeden Dienst, der das anbietet (Yandex-Stationen nur über die Glagol-Schnittstelle, weil die
+  Smart-Home-Schnittstelle dort keine Steuerung hat)
 - [x] Zonenaktivität: Bewegungs- oder Türsensor meldet etwas, die Zone wird „aktiv“;
   nach Ruhe wieder „inaktiv“ (Nachlauf 5 Minuten, Zeitstempel `last_updated` der Dienste)
 - [x] Eigene Gerätegruppen über Anbieter hinweg (Lampen, Stecker, Jalousien, Vorhänge)
