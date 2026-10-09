@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, useState } from 'react';
 import { YandexScenario } from '../types/index';
 import { Sidebar } from './Sidebar';
 import { DashboardHomeView } from './DashboardHomeView';
@@ -13,17 +13,20 @@ import { FanSettingsModal } from './modals/FanSettingsModal';
 import { GroupFanSettingsModal } from './modals/GroupFanSettingsModal';
 import { CameraStreamModal } from './modals/CameraStreamModal';
 import { SensorSettingsModal } from './modals/SensorSettingsModal';
+import { DeviceDetailModal } from './modals/DeviceDetailModal';
 import { Check, CloudOff, Plug, Settings } from 'lucide-react';
 import { ActivityButton } from './activity/ActivityButton';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
 import { useI18n } from '../i18n/I18nContext';
+import { PinnedContext } from './Pinned';
 
 export const Dashboard: React.FC = () => {
     const ctx = useDashboardContext();
     const { t, tp } = useI18n();
 
+    const [pinnedEl, setPinnedEl] = useState<HTMLDivElement | null>(null);
     const state = useDashboardState(
         ctx.activeHouseholdId,
         ctx.activeSidebarView,
@@ -252,6 +255,7 @@ export const Dashboard: React.FC = () => {
             <div className="body">
                 <Sidebar onOpenCameraStream={state.openCameraStream} />
                 <main className="content">
+                    <div className="content-head">
                     <div className="content-header">
                         <div>
                             <h1>{contentTitle}</h1>
@@ -278,11 +282,27 @@ export const Dashboard: React.FC = () => {
                             <span>{t('services.alert', { name: t(`services.names.${a.providerId}`), status: t(`services.status.${a.status}`) })}</span>
                         </button>
                     ))}
-                    {renderContent()}
+                    <div ref={setPinnedEl} className="content-pinned" />
+                    </div>
+                    <div className="content-scroll">
+                        <PinnedContext.Provider value={pinnedEl}>
+                            {renderContent()}
+                        </PinnedContext.Provider>
+                    </div>
                 </main>
             </div>
 
             {/* Modals */}
+            {(() => {
+                const detail = state.detailDeviceId ? ctx.data.devices.find(d => d.id === state.detailDeviceId) : undefined;
+                return detail && (
+                    <DeviceDetailModal
+                        device={detail}
+                        onClose={state.closeDeviceDetail}
+                        onOpenControls={device => { state.closeDeviceDetail(); state.openDeviceControls(device); }}
+                    />
+                );
+            })()}
             {state.modal.selectedThermostatDevice && (
                 <ThermostatSettingsModal
                     device={state.modal.selectedThermostatDevice}

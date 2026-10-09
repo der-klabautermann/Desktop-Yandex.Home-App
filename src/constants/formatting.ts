@@ -21,6 +21,7 @@ const UNIT_KEYS: Record<string, string> = {
     'unit.volt': 'units.volt',
     'unit.ampere': 'units.ampere',
     'unit.density.mcg_m3': 'units.mcgPerM3',
+    'unit.gigacalorie': 'units.gigacalorie',
 };
 
 /** Текст из словаря или запасной вариант, если ключа нет. */

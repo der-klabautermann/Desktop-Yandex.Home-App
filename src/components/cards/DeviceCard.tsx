@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { YandexDevice } from '../../types/index';
-import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, isAlwaysOnDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
-import { Loader2, Star, Settings, Eye, EyeOff, Video, Mic, MicOff, Thermometer, Droplets } from 'lucide-react';
-import { SensorDisplayConfig } from '../modals/SensorSettingsModal';
+import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
+import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets } from 'lucide-react';
+import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
 import { useI18n } from '../../i18n/I18nContext';
 import { ProviderBadge } from '../services/ProviderBadge';
@@ -22,19 +22,15 @@ export interface DeviceCardProps {
   sensorDisplayConfig?: Record<string, SensorDisplayConfig>;
 }
 
-export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavorite, onToggleFavorite, onOpenSettings, onOpenCameraStream, isEditMode = false, iconHiddenState = false, onToggleVisibility }) => {
+export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavorite, onToggleFavorite, onOpenSettings, isEditMode = false, iconHiddenState = false, onToggleVisibility }) => {
   const [loading, setLoading] = useState(false);
   const { t } = useI18n();
 
-  const isThermostat = device.type === 'devices.types.thermostat.ac' || device.type === 'devices.types.thermostat';
-  const isLight = device.type.startsWith('devices.types.light');
-  const isFan = device.type === 'devices.types.ventilation.fan';
   const isCamera = isCameraDevice(device);
 
   const onOffCapability = device.capabilities.find(c => c.type === 'devices.capabilities.on_off');
   const isToggleable = !!onOffCapability;
   const isOn = onOffCapability?.state?.value === true;
-  const isAlwaysOn = !isToggleable && isAlwaysOnDevice(device);
 
   const sensorProperty = (device.properties ?? []).find(prop => {
     const anyProp = prop as any;
@@ -161,9 +157,15 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
   const isUnreachable = Boolean(device.unreachable);
   const reportUnreachable = () => { void onToggle(device.id, isOn).catch(() => {}); };
 
-  const handleClick = async () => {
+  // Клик по карточке открывает окно устройства, значок слева вверху включает и выключает
+  const openDetail = () => {
     if (isUnreachable) { reportUnreachable(); return; }
-    if (isCamera && onOpenCameraStream) { onOpenCameraStream(device); return; }
+    onOpenSettings?.(device);
+  };
+
+  const handlePower = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isUnreachable) { reportUnreachable(); return; }
     if (!isToggleable || loading) return;
     setLoading(true);
     try { await onToggle(device.id, isOn); }
@@ -172,24 +174,36 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (isUnreachable) { e.preventDefault(); reportUnreachable(); return; }
-    if (isCamera && onOpenCameraStream) { e.preventDefault(); e.stopPropagation(); onOpenCameraStream(device); return; }
-    if ((isThermostat || isLight || isFan) && onOpenSettings) { e.preventDefault(); e.stopPropagation(); onOpenSettings(device); }
+    e.preventDefault();
+    e.stopPropagation();
+    openDetail();
   };
 
   const icon = getIconForDevice(device.type);
 
   return (
     <div
-      onClick={handleClick}
+      onClick={openDetail}
       onContextMenu={handleContextMenu}
-      className={`device-card ${!isUnreachable && ((isToggleable && isOn) || isCamera || isAlwaysOn) ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`device-card ${!isUnreachable && isToggleable && isOn ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className={`device-icon ${!isUnreachable && ((isOn && isToggleable) || isCamera || isAlwaysOn) ? 'is-on' : ''}`}>
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
-          </div>
+          {isToggleable ? (
+            <button
+              className={`device-icon device-power ${!isUnreachable && isOn ? 'is-on' : ''}`}
+              onClick={handlePower}
+              disabled={loading}
+              title={isOn ? t('cards.turnOff') : t('cards.turnOn')}
+              aria-pressed={isOn}
+            >
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
+            </button>
+          ) : (
+            <div className="device-icon">
+              {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
+            </div>
+          )}
           {showMicStatus && (
             <span
               className="flex-shrink-0"
@@ -210,16 +224,6 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
               className="edit-vis-btn"
             >
               {iconHiddenState ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </div>
-          )}
-          {(isThermostat || isLight || isFan) && onOpenSettings && (
-            <div
-              onClick={(e) => { e.stopPropagation(); if (isUnreachable) reportUnreachable(); else onOpenSettings(device); }}
-              style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              className="settings-btn"
-              title={isThermostat ? t('cards.climateSettings') : isFan ? t('cards.fanSettings') : t('cards.lightSettings')}
-            >
-              <Settings className="w-3.5 h-3.5" />
             </div>
           )}
           <button
@@ -250,7 +254,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
                 </span>
               )}
             </span>
-          ) : isCamera ? t('cards.tapToView') : isToggleable ? (isOn ? t('cards.on') : t('cards.off')) : ''
+          ) : isToggleable ? (isOn ? t('cards.on') : t('cards.off')) : isCamera ? t('cards.tapToView') : ''
         )}
       </div>
 

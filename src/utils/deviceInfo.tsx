@@ -1,0 +1,131 @@
+// Показания и состояние устройства в читаемом виде: для карточек, окна устройства и настроек датчика.
+import React from 'react';
+import {
+  AirVent, AlarmSmoke, BatteryFull, CircleDot, Coffee, Droplet, Droplets, DoorOpen, Fan, Flame, Footprints, Gauge,
+  Lightbulb, Lock, MousePointerClick, MoveHorizontal, Package, Palette, Pause, Sparkles, Sun,
+  Thermometer, Tv, Vibrate, Volume2, VolumeX, Waves, Wind, Zap,
+} from 'lucide-react';
+import type { YandexDevice } from '../types/index';
+import type { Translate } from '../i18n/core';
+import { localizeEvent, localizeMode, localizeUnit } from '../constants/formatting';
+
+const INSTANCE_ICONS: Record<string, React.ElementType> = {
+  // Показания
+  temperature: Thermometer, humidity: Droplets, illumination: Sun, pressure: Gauge,
+  co2_level: Wind, pm1_density: Wind, 'pm2.5_density': Wind, pm2_5_density: Wind, pm10_density: Wind, tvoc: Wind,
+  battery_level: BatteryFull, water_level: Waves, food_level: Package,
+  motion: Footprints, open: DoorOpen, smoke: AlarmSmoke, gas: Flame, vibration: Vibrate, water_leak: Droplet,
+  button: MousePointerClick,
+  power: Zap, voltage: Zap, amperage: Zap,
+  electricity_meter: Zap, gas_meter: Flame, water_meter: Waves, heat_meter: Thermometer, meter: Gauge,
+  // Умения
+  brightness: Sun, temperature_k: Lightbulb, hsv: Palette, rgb: Palette, scene: Palette,
+  volume: Volume2, channel: Tv, mute: VolumeX, pause: Pause,
+  keep_warm: Flame, backlight: Lightbulb, ionization: Sparkles, oscillation: MoveHorizontal, controls_locked: Lock,
+  thermostat: AirVent, fan_speed: Fan, swing: MoveHorizontal, coffee_mode: Coffee, tea_mode: Coffee,
+  heat: Flame,
+};
+
+export const InstanceIcon: React.FC<{ instance: string; className?: string }> = ({ instance, className = 'w-4 h-4' }) => {
+  const Icon = INSTANCE_ICONS[instance] ?? CircleDot;
+  return <Icon className={className} />;
+};
+
+const lookup = (t: Translate, key: string, fallback: string) => {
+  const text = t(key);
+  return text === key ? fallback : text;
+};
+
+/** Название показания (температура, мощность …); точка в pm2.5 недопустима в ключах словаря. */
+export const propertyLabel = (instance: string, t: Translate) =>
+  lookup(t, `sensors.${instance.replace(/\./g, '_')}`, instance);
+
+/** Название умения устройства (яркость, громкость, программа …). */
+export const capabilityLabel = (instance: string, t: Translate) => lookup(t, `capabilityNames.${instance}`, instance);
+
+const formatNumber = (value: number, lang: string) => value.toLocaleString(lang, { maximumFractionDigits: 2 });
+
+const UNIT_FALLBACK: Record<string, string> = { humidity: ' %', temperature: ' °C' };
+
+export interface PropertyRow {
+  /** Индекс в device.properties: по нему сохраняется выбор для карточки датчика. */
+  index: number;
+  instance: string;
+  type: string;
+  value: string;
+  /** Время последнего обновления (мс), null: сервис не сообщил. */
+  at: number | null;
+}
+
+export const formatPropertyValue = (property: any, t: Translate, lang: string): string => {
+  const instance: string = property?.parameters?.instance ?? property?.state?.instance ?? '';
+  const raw = property?.state?.value;
+  if (property?.type === 'devices.properties.event' && typeof raw === 'string') {
+    return localizeEvent(raw, property?.parameters?.events, t);
+  }
+  if (typeof raw === 'number') {
+    const unit = localizeUnit(property?.parameters?.unit ?? property?.state?.unit, t) || UNIT_FALLBACK[instance] || '';
+    return `${formatNumber(raw, lang)}${unit}`;
+  }
+  if (typeof raw === 'boolean') return raw ? t('cards.on') : t('cards.off');
+  return String(raw ?? '–');
+};
+
+export const listProperties = (device: YandexDevice, t: Translate, lang: string): PropertyRow[] =>
+  (device.properties ?? []).flatMap((property: any, index) => {
+    const instance: string | undefined = property?.parameters?.instance ?? property?.state?.instance;
+    if (typeof property?.type !== 'string' || !instance || property?.state?.value === undefined) return [];
+    const at = typeof property.last_updated === 'number' && property.last_updated > 0 ? property.last_updated * 1000 : null;
+    return [{ index, instance, type: property.type, value: formatPropertyValue(property, t, lang), at }];
+  });
+
+export interface StateRow {
+  instance: string;
+  value: string;
+  /** Цвет для кружка рядом со значением (только для цвета света). */
+  swatch?: string;
+}
+
+const hsvToCss = (hsv: { h: number; s: number; v: number }) =>
+  `hsl(${hsv.h} ${Math.round(hsv.s)}% ${Math.max(25, Math.round(hsv.v / 2 + 25))}%)`;
+
+/** Текущее состояние умений кроме включения: яркость, режимы, громкость и т. п. */
+export const listStates = (device: YandexDevice, t: Translate, lang: string): StateRow[] =>
+  device.capabilities.flatMap((capability: any): StateRow[] => {
+    const state = capability.state;
+    if (!state || capability.type === 'devices.capabilities.on_off' || capability.type === 'devices.capabilities.video_stream') return [];
+    const instance: string = state.instance ?? capability.parameters?.instance;
+    const value = state.value;
+    switch (capability.type) {
+      case 'devices.capabilities.range': {
+        const unit = localizeUnit(capability.parameters?.unit, t);
+        return [{ instance, value: `${formatNumber(Number(value), lang)}${unit}` }];
+      }
+      case 'devices.capabilities.mode':
+        return [{ instance, value: localizeMode(String(value), capability.parameters?.modes?.find((m: any) => m.value === value)?.name, t) }];
+      case 'devices.capabilities.toggle':
+        return [{ instance, value: value ? t('cards.on') : t('cards.off') }];
+      case 'devices.capabilities.color_setting':
+        if (instance === 'temperature_k') return [{ instance, value: `${formatNumber(Number(value), lang)} K` }];
+        if (instance === 'hsv' && value && typeof value === 'object') {
+          return [{ instance: 'hsv', value: '', swatch: hsvToCss(value as any) }];
+        }
+        if (instance === 'rgb' && typeof value === 'number') {
+          return [{ instance: 'rgb', value: '', swatch: `#${value.toString(16).padStart(6, '0')}` }];
+        }
+        return [];
+      default:
+        return [];
+    }
+  });
+
+/** Время показания: сегодня только часы, иначе дата и время. */
+export const formatAt = (at: number, lang: string) => {
+  const date = new Date(at);
+  const today = new Date();
+  const sameDay = date.toDateString() === today.toDateString();
+  return new Intl.DateTimeFormat(lang, sameDay
+    ? { hour: '2-digit', minute: '2-digit' }
+    : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
+};
+

@@ -80,7 +80,12 @@ export interface UseDashboardStateReturn {
     handleApplyGroupThermostatSettings: (modeActions: Array<{ instance: string; value: string }>) => Promise<void>;
     handleApplyFanSettings: (modeActions: Array<{ instance: string; value: any; type?: string }>, turnOn: boolean) => Promise<void>;
     handleApplyGroupFanSettings: (modeActions: Array<{ instance: string; value: any; type?: string }>, turnOn: boolean) => Promise<void>;
+    /** Клик по карточке: окно устройства. */
     handleOpenDeviceSettings: (device: YandexDevice) => void;
+    /** Окно настройки умений (свет, климат, вентилятор, камера, вид датчика). */
+    openDeviceControls: (device: YandexDevice) => void;
+    detailDeviceId: string | null;
+    closeDeviceDetail: () => void;
 }
 
 // ---- Helpers (localStorage) ----
@@ -386,7 +391,11 @@ export function useDashboardState(
         setSelectedSensorDevice(null);
     }, []);
 
-    const handleOpenDeviceSettings = useCallback((device: YandexDevice) => {
+    const [detailDeviceId, setDetailDeviceId] = useState<string | null>(null);
+    const handleOpenDeviceSettings = useCallback((device: YandexDevice) => setDetailDeviceId(device.id), []);
+    const closeDeviceDetail = useCallback(() => setDetailDeviceId(null), []);
+
+    const openDeviceControls = useCallback((device: YandexDevice) => {
         if (isCameraDevice(device)) {
             openCameraStream(device);
             return;
@@ -528,5 +537,8 @@ export function useDashboardState(
         handleApplyFanSettings,
         handleApplyGroupFanSettings,
         handleOpenDeviceSettings,
+        openDeviceControls,
+        detailDeviceId,
+        closeDeviceDetail,
     };
 }

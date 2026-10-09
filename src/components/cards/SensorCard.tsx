@@ -1,41 +1,14 @@
 import React from 'react';
 import { YandexDevice } from '../../types/index';
-import { getIconForDevice, localizeBoolean, localizeEvent, localizeUnit } from '../../constants';
-import type { Translate } from '../../i18n/core';
-import { SensorDisplayConfig } from '../modals/SensorSettingsModal';
-import {
-  Star, Eye, EyeOff, Settings, Thermometer, Droplets, Sun, Gauge, Wind, BatteryFull,
-  Waves, Footprints, DoorOpen, AlarmSmoke, Flame, Vibrate, Droplet,
-  MousePointerClick, CircleDot
-} from 'lucide-react';
+import { getIconForDevice } from '../../constants';
+import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
+import { Star, Eye, EyeOff } from 'lucide-react';
+import { InstanceIcon, formatPropertyValue } from '../../utils/deviceInfo';
 import { useI18n } from '../../i18n/I18nContext';
 import { ProviderBadge } from '../services/ProviderBadge';
 
-const INSTANCE_ICON_COMPONENTS: Record<string, React.ElementType> = {
-  temperature: Thermometer,
-  humidity: Droplets,
-  illumination: Sun,
-  pressure: Gauge,
-  co2_level: Wind,
-  pm1_density: Wind,
-  pm2_5_density: Wind,
-  pm10_density: Wind,
-  tvoc: Wind,
-  battery_level: BatteryFull,
-  water_level: Waves,
-  motion: Footprints,
-  open: DoorOpen,
-  smoke: AlarmSmoke,
-  gas: Flame,
-  vibration: Vibrate,
-  water_leak: Droplet,
-  button: MousePointerClick,
-};
-
-const getIconForInstance = (instance: string, className: string = 'w-5 h-5'): React.ReactNode => {
-  const IconComponent = INSTANCE_ICON_COMPONENTS[instance] ?? CircleDot;
-  return <IconComponent className={className} />;
-};
+const getIconForInstance = (instance: string, className: string = 'w-5 h-5'): React.ReactNode =>
+  <InstanceIcon instance={instance} className={className} />;
 
 interface SensorCardProps {
   device: YandexDevice;
@@ -93,32 +66,6 @@ const extractProperties = (device: YandexDevice): PropertyData[] => {
   return result;
 };
 
-const LOCALIZED_UNIT_FALLBACK: Record<string, string> = {
-  humidity: ' %',
-  temperature: ' °C',
-};
-
-const resolveUnit = (instance: string, unit: string | undefined, t: Translate): string => {
-  return localizeUnit(unit, t) || LOCALIZED_UNIT_FALLBACK[instance] || '';
-};
-
-const formatMainValue = (prop: PropertyData, t: Translate): string => {
-  if (prop.type === 'devices.properties.event' && typeof prop.rawValue === 'string') {
-    return localizeEvent(prop.rawValue, prop.events, t);
-  }
-  
-  if (typeof prop.rawValue === 'number') {
-    const unit = resolveUnit(prop.instance, prop.unit, t);
-    return `${Number(prop.rawValue).toFixed(2)}${unit}`;
-  }
-  
-  if (typeof prop.rawValue === 'boolean') {
-    return localizeBoolean(prop.rawValue, t);
-  }
-  
-  return String(prop.rawValue ?? '-');
-};
-
 export const SensorCard: React.FC<SensorCardProps> = ({
   device,
   onToggle,
@@ -131,8 +78,9 @@ export const SensorCard: React.FC<SensorCardProps> = ({
   onToggleVisibility,
   sensorDisplayConfig,
 }) => {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const allProps = extractProperties(device);
+  const formatMainValue = (prop: PropertyData) => formatPropertyValue((device.properties ?? [])[prop.originalIndex], t, lang);
 
   // Determine which properties to show based on saved config, with fallback
   const config = sensorDisplayConfig?.[device.id];
@@ -188,11 +136,11 @@ export const SensorCard: React.FC<SensorCardProps> = ({
     <div
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      className={`device-card sensor-card ${isUnreachable ? 'is-unreachable' : 'is-on'} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
+      className={`device-card sensor-card ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <div className={`device-icon ${isUnreachable ? '' : 'is-on'}`}>
+          <div className="device-icon">
             {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })}
           </div>
         </div>
@@ -204,16 +152,6 @@ export const SensorCard: React.FC<SensorCardProps> = ({
               className="edit-vis-btn"
             >
               {iconHiddenState ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-            </div>
-          )}
-          {onOpenSettings && (
-            <div
-              onClick={(e) => { e.stopPropagation(); onOpenSettings(device); }}
-              style={{ width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
-              className="settings-btn"
-              title={t('cards.displaySettings')}
-            >
-              <Settings className="w-3.5 h-3.5" />
             </div>
           )}
           <button
@@ -232,7 +170,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
           {secondaryProps.map((prop, idx) => (
             <span key={prop.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, marginLeft: idx > 0 ? 6 : 0 }}>
               {getIconForInstance(prop.instance, 'w-3.5 h-3.5')}
-              {formatMainValue(prop, t)}
+              {formatMainValue(prop)}
             </span>
           ))}
         </div>
@@ -246,7 +184,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
             {getIconForInstance(primaryProp.instance, 'w-4 h-4')}
           </span>
           <span className="sensor-main-text">
-            {formatMainValue(primaryProp, t)}
+            {formatMainValue(primaryProp)}
           </span>
         </div>
       )}

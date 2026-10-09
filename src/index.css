@@ -237,10 +237,22 @@ body {
 
 .content {
   flex: 1;
-  overflow-y: auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: transparent;
-  padding: 24px 28px;
 }
+/* Kopf mit Titel, Hinweisen und Kennzahlen bleibt stehen, darunter scrollt nur der Inhalt */
+.content-head { flex-shrink: 0; padding: 24px 28px 0; }
+.content-scroll {
+  flex: 1; min-height: 0;
+  overflow-y: auto;
+  padding: 14px 28px 24px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+}
+.content-pinned:empty { display: none; }
 
 /* Content actions (header buttons) */
 .content-actions {
@@ -1179,7 +1191,8 @@ body::after {
 }
 
 /* Header: large display title */
-.content { padding: 30px 34px; }
+.content-head { padding: 30px 34px 0; }
+.content-scroll { padding: 14px 34px 30px; }
 
 .content-header h1 {
   font-family: var(--font-display);
@@ -2429,3 +2442,169 @@ button, a, input, select, textarea, label, [role="button"], [role="radio"], [rol
 html.is-mac .sidebar-header { padding-top: 44px; }
 html.is-mac .settings-screen,
 html.is-mac .services-screen { padding-top: 52px; }
+
+/* ==========================================================================
+   Kachel: Symbol ist der An/Aus-Knopf, Gerätefenster wie in der Yandex-App
+   ========================================================================== */
+
+.content-pinned .stats-row { margin-bottom: 4px; }
+.content-pinned .zone-overview { margin-bottom: 4px; }
+
+button.device-power {
+  border: none; padding: 0; cursor: pointer; font: inherit;
+  transition: background var(--motion-fast) var(--ease-standard), color var(--motion-fast) var(--ease-standard),
+    transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+button.device-power:not(.is-on) {
+  color: var(--muted);
+  background: color-mix(in oklab, var(--card-fg) 7%, transparent);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+}
+button.device-power:hover:not(:disabled) { transform: scale(1.08); }
+button.device-power:not(.is-on):hover:not(:disabled) { color: var(--accent); box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent); }
+button.device-power:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button.device-power:disabled { cursor: progress; }
+
+/* Gerätefenster */
+.device-detail {
+  width: min(420px, calc(100vw - 32px));
+  max-height: min(760px, calc(100vh - 48px));
+  display: flex; flex-direction: column;
+  border-radius: 28px;
+  background: var(--surface);
+  border: 1px solid var(--glass-line-strong);
+  box-shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.6);
+  color: var(--fg);
+  overflow: hidden;
+  animation: popIn 220ms var(--ease-standard);
+}
+.dd-top { display: flex; align-items: center; gap: 6px; padding: 14px 14px 0; }
+.dd-fav.is-fav { color: var(--fav-star); }
+.dd-hero { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 6px 24px 20px; }
+.dd-icon {
+  width: 84px; height: 84px; border-radius: 28px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted);
+  background: color-mix(in oklab, var(--fg) 6%, transparent);
+  box-shadow: inset 0 0 0 1px var(--glass-line);
+  transition: all var(--motion-base) var(--ease-standard);
+}
+.dd-icon.is-on {
+  color: var(--lamp-icon-fg);
+  background: var(--lamp-icon-bg);
+  box-shadow: 0 18px 40px -16px var(--lamp-glow, var(--accent));
+}
+.dd-hero h2 {
+  margin: 14px 0 2px;
+  font-family: var(--font-display); font-weight: var(--display-weight, 500);
+  font-size: calc(24px * var(--display-scale, 1));
+  letter-spacing: calc(-0.01em + var(--display-tracking, 0em));
+}
+.dd-room { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); }
+.dd-actions { display: flex; gap: 12px; margin-top: 18px; }
+.dd-action {
+  width: 58px; height: 58px; border-radius: 20px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--glass-line-strong);
+  background: color-mix(in oklab, var(--card-bg) 80%, transparent);
+  color: var(--fg); cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+.dd-action:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--accent); color: var(--accent); }
+.dd-action:disabled { opacity: 0.5; cursor: not-allowed; }
+.dd-power.is-on {
+  background: var(--accent); color: var(--accent-on); border-color: transparent;
+  box-shadow: 0 14px 30px -14px var(--accent);
+}
+.dd-power.is-on:hover:not(:disabled) { color: var(--accent-on); background: var(--accent-hover); }
+
+.dd-body {
+  overflow-y: auto;
+  padding: 0 18px 18px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+.dd-body section {
+  padding: 6px 14px 8px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--card-bg) 70%, transparent);
+  border: 1px solid var(--glass-line);
+}
+.dd-body h3 {
+  margin: 10px 0 4px;
+  font-family: var(--font-display); font-weight: var(--display-weight, 500);
+  font-size: calc(15px * var(--display-scale, 1));
+}
+.dd-row { padding: 10px 0; border-top: 1px solid var(--glass-line); display: flex; flex-direction: column; gap: 10px; }
+.dd-row:first-of-type { border-top: none; }
+.dd-row-head { display: flex; align-items: center; gap: 10px; min-height: 26px; }
+.dd-row-icon { display: inline-flex; color: var(--accent); }
+.dd-row-label { flex: 1; font-size: 14px; }
+.dd-row-value { font-size: 14px; color: var(--fg-2, var(--fg)); font-variant-numeric: tabular-nums; }
+.dd-swatch { width: 18px; height: 18px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15); }
+
+.dd-slider {
+  -webkit-appearance: none; appearance: none;
+  width: 100%; height: 6px; border-radius: 999px; margin: 2px 0 4px;
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), color-mix(in oklab, var(--fg) 12%, transparent) var(--fill, 50%));
+  cursor: pointer;
+}
+.dd-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--surface); border: 2px solid var(--accent);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.35);
+}
+.dd-slider:disabled { opacity: 0.5; cursor: not-allowed; }
+.dd-slider:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.dd-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dd-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--glass-line-strong);
+  background: transparent; color: var(--fg-2, var(--fg));
+  font: inherit; font-size: 13px; cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+.dd-chip:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.dd-chip.is-active { background: var(--accent); border-color: var(--accent); color: var(--accent-on); }
+.dd-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.dd-switch {
+  position: relative; flex-shrink: 0;
+  width: 44px; height: 26px; border-radius: 999px; border: none; padding: 0; cursor: pointer;
+  background: color-mix(in oklab, var(--fg) 18%, transparent);
+  transition: background var(--motion-fast) var(--ease-standard);
+}
+.dd-switch span {
+  position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform var(--motion-fast) var(--ease-standard);
+}
+.dd-switch.is-on { background: var(--accent); }
+.dd-switch.is-on span { transform: translateX(18px); }
+.dd-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.dd-reading { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--glass-line); }
+.dd-reading:first-of-type { border-top: none; }
+.dd-reading-icon {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 14%, transparent);
+}
+.dd-reading-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.dd-reading-text b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.dd-reading-text span { font-size: 12.5px; color: var(--muted); display: inline-flex; gap: 8px; }
+.dd-reading-text time { opacity: 0.7; font-variant-numeric: tabular-nums; }
+
+/* Kachel-Anzeige des Sensors: Live-Vorschau */
+.sensor-display-preview {
+  display: flex; justify-content: center;
+  padding: 14px; margin: 2px 0 6px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--fg) 4%, transparent);
+  pointer-events: none;
+}
+.sensor-display-preview .device-card { width: 220px; }
+.sensor-display .dd-chips { margin-bottom: 4px; }

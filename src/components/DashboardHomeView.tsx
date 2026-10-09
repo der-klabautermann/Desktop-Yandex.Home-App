@@ -10,6 +10,7 @@ import { flattenTree } from '../../core/zones';
 import { ZoneIcon } from './zones/zoneIcons';
 import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
+import { Pinned } from './Pinned';
 
 interface DashboardHomeViewProps {
     state: UseDashboardStateReturn;
@@ -55,6 +56,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
 
     // ---- Render helpers ----
     const renderStatsRow = () => (
+        <Pinned>
         <div className="stats-row">
             <div className="stat-chip">
                 <Building2 /> {t('dashboard.stats.homes', { count: ctx.households.length })}
@@ -69,6 +71,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
                 <Lightbulb /> {t('dashboard.stats.devices', { count: devicesForHome.length })}
             </div>
         </div>
+        </Pinned>
     );
 
     const renderFavoritesSection = () => {

@@ -15,15 +15,34 @@ import {
   Unlock,
   Power,
   Fan,
-  ToggleLeft,
   Plug,
   AlarmSmoke,
   AirVent,
   Sunset,
   Speaker,
-  ReceiptText,
-  GamepadDirectional,
-  Video
+  LampCeiling,
+  Lamp,
+  ToggleRight,
+  Heater,
+  Wind,
+  Droplets,
+  Droplet,
+  Disc,
+  CookingPot,
+  WashingMachine,
+  Utensils,
+  Shirt,
+  Bot,
+  Waves,
+  Blinds,
+  PawPrint,
+  Footprints,
+  DoorOpen,
+  Flame,
+  MousePointerClick,
+  Vibrate,
+  Cctv,
+  Router,
 } from 'lucide-react';
 
 // Mapping Yandex icon strings to Lucide React Components
@@ -66,22 +85,28 @@ export const getIconForScenario = (iconName?: string, scenarioName?: string): Re
   return SCENARIO_ICON_MAP['default'];
 };
 
+// Значок по типу устройства: сначала точные подтипы, потом общие классы
+const DEVICE_ICONS: Array<[string, React.ElementType]> = [
+    ['light.ceiling', LampCeiling], ['light.lamp', Lamp], ['light', Lightbulb],
+    ['socket', Plug], ['switch', ToggleRight],
+    ['thermostat.ac', AirVent], ['thermostat', Heater],
+    ['ventilation.fan', Fan], ['ventilation', Wind], ['humidifier', Droplets], ['purifier', Wind],
+    ['media_device.receiver', Speaker], ['media_device.tv_box', Disc], ['media_device', Tv],
+    ['smart_speaker', Speaker],
+    ['cooking.coffee_maker', Coffee], ['cooking.kettle', Coffee], ['cooking', CookingPot],
+    ['washing_machine', WashingMachine], ['dishwasher', Utensils], ['iron', Shirt], ['vacuum_cleaner', Bot],
+    ['openable.valve', Waves], ['openable', Blinds],
+    ['pet_', PawPrint],
+    ['sensor.motion', Footprints], ['sensor.open', DoorOpen], ['sensor.water_leak', Droplet],
+    ['sensor.smoke', AlarmSmoke], ['sensor.gas', Flame], ['sensor.button', MousePointerClick],
+    ['sensor.vibration', Vibrate], ['sensor.illumination', Sun], ['sensor', Thermometer],
+    ['smart_meter.electricity', Zap], ['smart_meter.gas', Flame], ['smart_meter.heat', Thermometer],
+    ['smart_meter', Waves],
+    ['camera', Cctv], ['hub', Router], ['other', Router],
+];
+
 export const getIconForDevice = (type: string): React.ReactNode => {
-    const t = type.toLowerCase();
-    const className = "w-8 h-8";
-    
-    if (t.includes('light')) return <Lightbulb className={className} />;
-    if (t.includes('socket')) return <Plug className={className} />;
-    if (t.includes('switch')) return <ToggleLeft className={className} />;
-    if (t.includes('fan') || t.includes('air')) return <Fan className={className} />;
-    if (t.includes('tv') || t.includes('media')) return <Tv className={className} />;
-    if (t.includes('kettle') || t.includes('coffee')) return <Coffee className={className} />;
-    if (t.includes('sensor')) return <AlarmSmoke className={className} />;
-    if (t.includes('thermostat')) return <AirVent className={className} />;
-    if (t.includes('speaker')) return <Speaker className={className} />;
-    if (t.includes('smart_meter')) return <ReceiptText className={className} />;
-    if (t.includes('hub')) return <GamepadDirectional className={className} />;
-    if (t.includes('camera')) return <Video className={className} />;
-    
-    return <Zap className={className} />;
-}
+    const t = type.toLowerCase().replace('devices.types.', '');
+    const Icon = DEVICE_ICONS.find(([key]) => t.startsWith(key))?.[1] ?? Zap;
+    return <Icon className="w-8 h-8" />;
+};

@@ -27,13 +27,8 @@ interface PaletteSpec {
     accent: string;
     accentOn: string;
     accentHover: string;
-    /** "Горящая" карточка включённого устройства и её текст. */
-    lit: string;
-    litFg: string;
     /** RGB свечения включённого устройства. */
     glowRgb: string;
-    iconBg: string;
-    iconFg: string;
     toggle: string;
     star: string;
     auroraA: string;
@@ -53,7 +48,11 @@ const build = (spec: PaletteSpec): Record<string, string> => {
         '--card-fg': spec.fg, '--fg': spec.fg, '--fg-2': spec.fg2,
         '--muted': spec.muted, '--meta': spec.muted,
         '--border': spec.border, '--border-soft': `color-mix(in oklab, ${spec.border} 60%, ${spec.bg})`,
-        '--card-bg-active': spec.lit, '--card-fg-active': spec.litFg,
+        // Включённое устройство: лёгкий оттенок акцента вместо контрастной (почти чёрной или белой) карточки
+        '--card-bg-active': dark
+            ? `color-mix(in oklab, ${spec.accent} 20%, ${spec.surface})`
+            : `color-mix(in oklab, ${spec.accent} 13%, #FFFFFF)`,
+        '--card-fg-active': spec.fg,
         '--accent': spec.accent, '--accent-on': spec.accentOn,
         '--accent-hover': spec.accentHover, '--accent-active': spec.accentHover,
         '--toggle-on': spec.toggle, '--success': spec.toggle, '--fav-star': spec.star,
@@ -61,7 +60,8 @@ const build = (spec: PaletteSpec): Record<string, string> => {
         '--glass-line': dark ? `rgba(${spec.glassRgb}, 0.09)` : 'rgba(20, 20, 40, 0.08)',
         '--glass-line-strong': dark ? `rgba(${spec.glassRgb}, 0.20)` : 'rgba(20, 20, 40, 0.16)',
         '--lamp-glow': `rgba(${spec.glowRgb}, ${dark ? 0.7 : 0.45})`,
-        '--lamp-icon-bg': spec.iconBg, '--lamp-icon-fg': spec.iconFg,
+        // Значок-выключатель: включено = залит акцентом
+        '--lamp-icon-bg': spec.accent, '--lamp-icon-fg': spec.accentOn,
         '--elev-raised': dark
             ? `0 0 0 1px rgba(${spec.glowRgb}, 0.32), 0 18px 50px -14px rgba(${spec.glowRgb}, 0.40)`
             : `0 16px 36px -16px rgba(${spec.glowRgb}, 0.55)`,
@@ -79,8 +79,8 @@ export const PALETTES: Palette[] = [
             base: 'dark', bg: '#09090D', surface: '#16161E', fg: '#F2F1F7', fg2: '#C2C0D0', muted: '#8E8BA0',
             border: '#26252F', glassRgb: '255, 255, 255',
             accent: '#FF5CB4', accentOn: '#2A0418', accentHover: '#FF7DC4',
-            lit: '#F7F3FF', litFg: '#120E1C', glowRgb: '255, 120, 200',
-            iconBg: '#15101F', iconFg: '#FF9AD2', toggle: '#FF5CB4', star: '#FFD84D',
+            glowRgb: '255, 120, 200',
+            toggle: '#FF5CB4', star: '#FFD84D',
             auroraA: 'rgba(255, 61, 165, 0.30)', auroraB: 'rgba(61, 123, 255, 0.30)', auroraC: 'rgba(120, 255, 210, 0.10)',
         }),
     },
@@ -92,8 +92,8 @@ export const PALETTES: Palette[] = [
             base: 'dark', bg: '#0D0A22', surface: '#1A1636', fg: '#EEEBFF', fg2: '#BEB8E0', muted: '#8C86B0',
             border: '#2A2550', glassRgb: '200, 190, 255',
             accent: '#9C7BFF', accentOn: '#140A33', accentHover: '#B39BFF',
-            lit: '#EEE8FF', litFg: '#150F33', glowRgb: '170, 140, 255',
-            iconBg: '#1A1240', iconFg: '#C9B6FF', toggle: '#8B5CFF', star: '#FFD84D',
+            glowRgb: '170, 140, 255',
+            toggle: '#8B5CFF', star: '#FFD84D',
             auroraA: 'rgba(139, 92, 255, 0.34)', auroraB: 'rgba(62, 139, 255, 0.26)', auroraC: 'rgba(255, 110, 220, 0.10)',
         }),
     },
@@ -105,8 +105,8 @@ export const PALETTES: Palette[] = [
             base: 'dark', bg: '#111111', surface: '#1D1D1D', fg: '#F5F5F5', fg2: '#C4C4C4', muted: '#8F8F8F',
             border: '#2A2A2A', glassRgb: '255, 255, 255',
             accent: '#FFDB4D', accentOn: '#1A1600', accentHover: '#FFE57A',
-            lit: '#FFF7D1', litFg: '#171300', glowRgb: '255, 222, 90',
-            iconBg: '#1A1700', iconFg: '#FFE16A', toggle: '#FFDB4D', star: '#FFDB4D',
+            glowRgb: '255, 222, 90',
+            toggle: '#FFDB4D', star: '#FFDB4D',
             auroraA: 'rgba(255, 219, 77, 0.16)', auroraB: 'rgba(255, 255, 255, 0.05)', auroraC: 'rgba(255, 219, 77, 0.06)',
         }),
     },
@@ -118,8 +118,8 @@ export const PALETTES: Palette[] = [
             base: 'light', bg: '#F3F1FB', surface: '#E8E4F7', fg: '#1C1640', fg2: '#3D3566', muted: '#6F6894',
             border: '#DCD6F0', glassRgb: '255, 255, 255',
             accent: '#6E4BFF', accentOn: '#FFFFFF', accentHover: '#5A38EB',
-            lit: '#22184A', litFg: '#F3EFFF', glowRgb: '110, 75, 255',
-            iconBg: '#30235F', iconFg: '#D4C7FF', toggle: '#6E4BFF', star: '#E0A800',
+            glowRgb: '110, 75, 255',
+            toggle: '#6E4BFF', star: '#E0A800',
             auroraA: 'rgba(150, 120, 255, 0.28)', auroraB: 'rgba(110, 190, 255, 0.24)', auroraC: 'rgba(255, 170, 230, 0.16)',
         }),
     },
@@ -131,8 +131,8 @@ export const PALETTES: Palette[] = [
             base: 'dark', bg: '#121A2B', surface: '#1C2740', fg: '#E8EEFA', fg2: '#B4C0D8', muted: '#8391AD',
             border: '#26324D', glassRgb: '190, 210, 255',
             accent: '#4D8DFF', accentOn: '#FFFFFF', accentHover: '#6FA3FF',
-            lit: '#E8F0FF', litFg: '#0E1626', glowRgb: '120, 170, 255',
-            iconBg: '#0F1D38', iconFg: '#9EC2FF', toggle: '#2EC28B', star: '#FFD84D',
+            glowRgb: '120, 170, 255',
+            toggle: '#2EC28B', star: '#FFD84D',
             auroraA: 'rgba(77, 141, 255, 0.24)', auroraB: 'rgba(46, 194, 139, 0.14)', auroraC: 'rgba(255, 255, 255, 0.04)',
         }),
     },
@@ -144,8 +144,8 @@ export const PALETTES: Palette[] = [
             base: 'light', bg: '#FBF2F8', surface: '#F3E3EF', fg: '#2A1238', fg2: '#4D2E5C', muted: '#86688F',
             border: '#EDD8E8', glassRgb: '255, 255, 255',
             accent: '#C8378C', accentOn: '#FFFFFF', accentHover: '#AE2C78',
-            lit: '#2A1238', litFg: '#FFEAF6', glowRgb: '235, 70, 159',
-            iconBg: '#3F1A52', iconFg: '#FFB3DE', toggle: '#C8378C', star: '#E0A800',
+            glowRgb: '235, 70, 159',
+            toggle: '#C8378C', star: '#E0A800',
             auroraA: 'rgba(235, 70, 159, 0.26)', auroraB: 'rgba(131, 65, 239, 0.24)', auroraC: 'rgba(255, 200, 230, 0.30)',
         }),
     },
@@ -157,8 +157,8 @@ export const PALETTES: Palette[] = [
             base: 'light', bg: '#EEF8F7', surface: '#DDEFEE', fg: '#0D2B2E', fg2: '#2C4B4E', muted: '#5F7D80',
             border: '#D0E6E4', glassRgb: '255, 255, 255',
             accent: '#008F8F', accentOn: '#FFFFFF', accentHover: '#007A7A',
-            lit: '#0D2B2E', litFg: '#E6FBFA', glowRgb: '0, 170, 170',
-            iconBg: '#123E42', iconFg: '#9FF0EC', toggle: '#008F8F', star: '#E0A800',
+            glowRgb: '0, 170, 170',
+            toggle: '#008F8F', star: '#E0A800',
             auroraA: 'rgba(0, 190, 190, 0.24)', auroraB: 'rgba(92, 200, 255, 0.24)', auroraC: 'rgba(255, 255, 255, 0.45)',
         }),
     },

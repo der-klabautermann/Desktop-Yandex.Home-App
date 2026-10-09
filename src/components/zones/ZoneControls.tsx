@@ -6,6 +6,7 @@ import type { YandexDevice, YandexGroup } from '../../types/index';
 import { useDashboardContext } from '../../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../../hooks/useDashboardState';
 import { useI18n } from '../../i18n/I18nContext';
+import { Pinned } from '../Pinned';
 import { isZoneActive, summarizeDevices, zoneCategories, type ZoneCategory, type ZoneCategoryKey } from '../../../core/zones';
 
 const CATEGORY_ICONS: Record<ZoneCategoryKey, React.FC<{ className?: string }>> = {
@@ -86,6 +87,7 @@ export const ZoneControls: React.FC<ZoneControlsProps> = ({ devices, scopeId, sc
     })();
 
     return (
+        <Pinned>
         <div className="zone-overview">
             {categories.map(category => {
                 const Icon = CATEGORY_ICONS[category.key];
@@ -141,5 +143,6 @@ export const ZoneControls: React.FC<ZoneControlsProps> = ({ devices, scopeId, sc
             )}
             {trailing && <><span style={{ flex: 1 }} />{trailing}</>}
         </div>
+        </Pinned>
     );
 };

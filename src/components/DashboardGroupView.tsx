@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { isCustomGroupId } from '../../core/groups';
 import { ZoneControls } from './zones/ZoneControls';
 import { GroupDialog } from './zones/GroupDialog';
+import { Pinned } from './Pinned';
 
 interface DashboardGroupViewProps {
     state: UseDashboardStateReturn;
@@ -42,7 +43,7 @@ export const DashboardGroupView: React.FC<DashboardGroupViewProps> = ({
     if (groupDevices.length === 0) {
         return (
             <>
-                {editButton && <div className="zone-overview">{editButton}</div>}
+                {editButton && <Pinned><div className="zone-overview">{editButton}</div></Pinned>}
                 <div className="empty-state"><p>{t('dashboard.groupEmpty')}</p></div>
                 {dialog}
             </>
