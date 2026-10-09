@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { toggleDevice, toggleGroup, runScenario, setDeviceMode } from '../services/hub';
+import { toggleDevice, toggleGroup, runScenario, setDeviceMode, deleteDevice } from '../services/hub';
 import { getCameraStream, setCameraPrivacyMode } from '../services/camera';
 import { YandexUserInfoResponse, YandexModeAction, CameraStreamResult } from '../types/index';
 import { cleanErrorMessage } from '../utils/errors';
@@ -13,6 +13,7 @@ interface UseDeviceActionsReturn {
     handleGetCameraStream: (deviceId: string) => Promise<CameraStreamResult>;
     handleSetCameraPrivacy: (deviceId: string, enabled: boolean, instance?: string) => Promise<void>;
     handleSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
+    handleDeleteDevice: (deviceId: string) => Promise<boolean>;
 }
 
 type Item = { unreachable?: boolean; provider_id?: string } | undefined;
@@ -120,12 +121,26 @@ export function useDeviceActions(
         await refreshDashboardData(true);
     }, [userData, refreshDashboardData, fail]);
 
+    /** true, если устройство удалено. */
+    const handleDeleteDevice = useCallback(async (deviceId: string) => {
+        if (blockedByOutage(userData?.devices.find(d => d.id === deviceId))) return false;
+        try {
+            await deleteDevice(deviceId);
+            showNotification(t('actions.deviceDeleted'), 'success');
+            await refreshDashboardData(true);
+            return true;
+        } catch (err) {
+            fail(err);
+            return false;
+        }
+    }, [userData, refreshDashboardData, showNotification, blockedByOutage, fail, t]);
+
     const handleSetCameraPrivacy = useCallback(async (deviceId: string, privacyEnabled: boolean, toggleInstance?: string) => {
         await setCameraPrivacyMode(deviceId, privacyEnabled, toggleInstance);
     }, []);
 
     return {
         handleToggleDevice, handleToggleGroup, handleExecuteScenario,
-        handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower,
+        handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower, handleDeleteDevice,
     };
 }

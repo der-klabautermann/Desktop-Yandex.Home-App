@@ -34,4 +34,6 @@ export interface Provider {
   setDeviceMode(deviceId: string, actions: ModeAction[], turnOn: boolean): Promise<void>;
   toggleGroup(groupId: string, deviceIds: string[], newState: boolean): Promise<void>;
   runScenario(scenarioId: string): Promise<void>;
+  /** Удаляет устройство в самом сервисе. Нет метода: сервис удаление не поддерживает. */
+  deleteDevice?(deviceId: string): Promise<void>;
 }

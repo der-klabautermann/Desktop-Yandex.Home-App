@@ -24,6 +24,8 @@ contextBridge.exposeInMainWorld('api', {
         setDeviceMode: (deviceId, actions, turnOn) => ipcRenderer.invoke('hub:setDeviceMode', deviceId, actions, turnOn),
         toggleGroup: (groupId, deviceIds, newState) => ipcRenderer.invoke('hub:toggleGroup', groupId, deviceIds, newState),
         runScenario: (scenarioId) => ipcRenderer.invoke('hub:runScenario', scenarioId),
+        deleteDevice: (deviceId) => ipcRenderer.invoke('hub:deleteDevice', deviceId),
+        deletableProviders: () => ipcRenderer.invoke('hub:deletableProviders'),
     },
 
     zones: {

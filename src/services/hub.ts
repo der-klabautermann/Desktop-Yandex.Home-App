@@ -14,3 +14,5 @@ export const setDeviceMode = (deviceId: string, actions: YandexModeAction[], tur
 export const toggleGroup = (groupId: string, deviceIds: string[], newState: boolean) =>
     hub().toggleGroup(groupId, deviceIds, newState);
 export const runScenario = (scenarioId: string) => hub().runScenario(scenarioId);
+export const deleteDevice = (deviceId: string) => hub().deleteDevice(deviceId);
+export const deletableProviders = () => hub().deletableProviders();

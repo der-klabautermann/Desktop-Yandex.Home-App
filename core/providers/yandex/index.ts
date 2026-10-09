@@ -57,6 +57,10 @@ export const createYandexProvider = (store: CredentialStore, hooks: ProviderHook
       await api.toggleGroup(await token(), groupId, deviceIds, newState, retry('toggleGroup', false));
     },
 
+    async deleteDevice(deviceId) {
+      await api.deleteDevice(await token(), deviceId);
+    },
+
     async runScenario(scenarioId) {
       await api.executeScenario(await token(), scenarioId, retry('executeScenario', false));
     },

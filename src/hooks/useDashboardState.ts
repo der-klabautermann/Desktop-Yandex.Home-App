@@ -129,7 +129,7 @@ function saveCollapsedRooms(householdId: string | null, rooms: Set<string>): voi
 
 export function useDashboardState(
     activeHouseholdId: string | null,
-    activeSidebarView: 'home' | 'room' | 'group',
+    activeSidebarView: 'home' | 'room' | 'group' | 'device',
     onSetDeviceMode: (deviceId: string, modeActions: YandexModeAction[], turnOn?: boolean) => Promise<void>,
     data: { devices: YandexDevice[] },
     isCameraDevice: (device: YandexDevice) => boolean,

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { YandexDevice } from '../../types/index';
 import { getIconForDevice } from '../../constants';
 import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
-import { Star, Eye, EyeOff } from 'lucide-react';
+import { Star, Eye, EyeOff, Settings } from 'lucide-react';
+import DashboardContext from '../../contexts/DashboardContext';
 import { InstanceIcon, formatPropertyValue } from '../../utils/deviceInfo';
 import { useI18n } from '../../i18n/I18nContext';
 import { ProviderBadge } from '../services/ProviderBadge';
@@ -79,6 +80,7 @@ export const SensorCard: React.FC<SensorCardProps> = ({
   sensorDisplayConfig,
 }) => {
   const { t, lang } = useI18n();
+  const ctx = useContext(DashboardContext);
   const allProps = extractProperties(device);
   const formatMainValue = (prop: PropertyData) => formatPropertyValue((device.properties ?? [])[prop.originalIndex], t, lang);
 
@@ -153,6 +155,15 @@ export const SensorCard: React.FC<SensorCardProps> = ({
             >
               {iconHiddenState ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </div>
+          )}
+          {ctx && onOpenSettings && (
+            <button
+              onClick={(e) => { e.stopPropagation(); ctx.onSelectDevice(device.id); }}
+              className="device-fav device-gear"
+              title={t('devicePage.open')}
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
           )}
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(device.id); }}

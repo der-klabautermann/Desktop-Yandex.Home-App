@@ -519,6 +519,8 @@ if (!gotTheLock) {
         ipcMain.handle('hub:setDeviceMode', (_e, id, actions, turnOn) => hub.setDeviceMode(id, actions, turnOn).catch(rethrow));
         ipcMain.handle('hub:toggleGroup', (_e, id, deviceIds, state) => hub.toggleGroup(id, deviceIds, state).catch(rethrow));
         ipcMain.handle('hub:runScenario', (_e, id) => hub.runScenario(id).catch(rethrow));
+        ipcMain.handle('hub:deleteDevice', (_e, id) => hub.deleteDevice(id).catch(rethrow));
+        ipcMain.handle('hub:deletableProviders', () => hub.deletableProviders());
 
         // Зоны (этажи и т. п.) хранит само приложение, сервисы о них не знают
         const zonesFile = path.join(app.getPath('userData'), 'zones.json');

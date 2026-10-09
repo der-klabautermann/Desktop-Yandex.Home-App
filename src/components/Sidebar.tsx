@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { YandexDevice, YandexScenario } from '../types/index';
 import { Home } from 'lucide-react';
 import { useDashboardContext } from '../contexts/DashboardContext';
@@ -10,6 +10,21 @@ import { SidebarGroups } from './sidebar/SidebarGroups';
 import { SidebarScenarios } from './sidebar/SidebarScenarios';
 import { useI18n } from '../i18n/I18nContext';
 
+type SectionKey = 'rooms' | 'favorites' | 'sensors' | 'groups' | 'scenarios';
+const DEFAULT_ORDER: SectionKey[] = ['rooms', 'favorites', 'sensors', 'groups', 'scenarios'];
+const ORDER_KEY = 'sidebar:sectionOrder';
+
+/** Сохранённый порядок разделов; новые разделы добавляются в конец. */
+const loadOrder = (): SectionKey[] => {
+    try {
+        const saved = JSON.parse(localStorage.getItem(ORDER_KEY) ?? '[]') as SectionKey[];
+        const known = saved.filter(key => DEFAULT_ORDER.includes(key));
+        return [...known, ...DEFAULT_ORDER.filter(key => !known.includes(key))];
+    } catch {
+        return DEFAULT_ORDER;
+    }
+};
+
 interface SidebarProps {
     onOpenCameraStream?: (device: YandexDevice) => void;
 }
@@ -19,6 +34,57 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
     const { t } = useI18n();
     const [loadingItems, setLoadingItems] = useState<Record<string, boolean>>({});
     const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+    // Разделы перетаскиваются за заголовок (мышью, без HTML-drag: надёжнее в Electron)
+    const [order, setOrder] = useState<SectionKey[]>(loadOrder);
+    const [dragging, setDragging] = useState<SectionKey | null>(null);
+    const [dropAt, setDropAt] = useState<{ key: SectionKey; after: boolean } | null>(null);
+    const dropRef = useRef<{ key: SectionKey; after: boolean } | null>(null);
+
+    const moveSection = (from: SectionKey, to: SectionKey, after: boolean) => {
+        if (from === to) return;
+        setOrder(prev => {
+            const without = prev.filter(key => key !== from);
+            const index = without.indexOf(to) + (after ? 1 : 0);
+            const next = [...without.slice(0, index), from, ...without.slice(index)];
+            try { localStorage.setItem(ORDER_KEY, JSON.stringify(next)); } catch { /* не сохранится */ }
+            return next;
+        });
+    };
+
+    const startDrag = (key: SectionKey, down: React.PointerEvent) => {
+        const title = (down.target as HTMLElement).closest('.sidebar-section-title');
+        if (!title || (down.target as HTMLElement).closest('button') || down.button !== 0) return;
+        const startY = down.clientY;
+        let active = false;
+
+        const onMove = (e: PointerEvent) => {
+            if (!active && Math.abs(e.clientY - startY) < 6) return;
+            active = true;
+            setDragging(key);
+            const section = (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.closest<HTMLElement>('.sidebar-section');
+            const target = section?.dataset.section as SectionKey | undefined;
+            if (!section || !target) return;
+            const box = section.getBoundingClientRect();
+            dropRef.current = { key: target, after: e.clientY > box.top + box.height / 2 };
+            setDropAt(dropRef.current);
+        };
+        const onUp = () => {
+            window.removeEventListener('pointermove', onMove);
+            window.removeEventListener('pointerup', onUp);
+            if (active) {
+                if (dropRef.current) moveSection(key, dropRef.current.key, dropRef.current.after);
+                // Отпускание после перетаскивания не должно сворачивать раздел
+                const swallow = (e: MouseEvent) => e.stopPropagation();
+                window.addEventListener('click', swallow, true);
+                setTimeout(() => window.removeEventListener('click', swallow, true), 0);
+            }
+            dropRef.current = null;
+            setDragging(null);
+            setDropAt(null);
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+    };
 
     const getStorageKey = (baseKey: string): string => {
         if (!ctx.activeHouseholdId) return baseKey;
@@ -116,6 +182,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
         s => s.is_active && isScenarioInCurrentHome(s)
     );
 
+    const renderSection = (key: SectionKey): React.ReactNode => {
+        switch (key) {
+            case 'favorites':
+                return (
+                    <SidebarFavorites
+                        collapsed={!!collapsedSections['favorites']}
+                        onToggle={() => toggleSection('favorites')}
+                        loadingItems={loadingItems}
+                        withLoading={withLoading}
+                        onOpenCameraStream={onOpenCameraStream}
+                    />
+                );
+            case 'sensors':
+                return <SidebarSensors collapsed={!!collapsedSections['sensors']} onToggle={() => toggleSection('sensors')} />;
+            case 'rooms':
+                return <SidebarZones collapsed={!!collapsedSections['rooms']} onToggle={() => toggleSection('rooms')} />;
+            case 'groups':
+                return <SidebarGroups collapsed={!!collapsedSections['groups']} onToggle={() => toggleSection('groups')} />;
+            case 'scenarios':
+                return activeScenarios.length > 0 ? (
+                    <SidebarScenarios
+                        collapsed={!!collapsedSections['scenarios']}
+                        onToggle={() => toggleSection('scenarios')}
+                        loadingItems={loadingItems}
+                        withLoading={withLoading}
+                        scenarios={activeScenarios}
+                    />
+                ) : null;
+        }
+    };
+
     return (
         <aside className="sidebar">
             <SidebarHeader />
@@ -128,38 +225,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ onOpenCameraStream }) => {
                     {t('sidebar.allDevices')}
                 </button>
 
-                <SidebarFavorites
-                    collapsed={!!collapsedSections['favorites']}
-                    onToggle={() => toggleSection('favorites')}
-                    loadingItems={loadingItems}
-                    withLoading={withLoading}
-                    onOpenCameraStream={onOpenCameraStream}
-                />
-
-                <SidebarSensors
-                    collapsed={!!collapsedSections['sensors']}
-                    onToggle={() => toggleSection('sensors')}
-                />
-
-                <SidebarZones
-                    collapsed={!!collapsedSections['rooms']}
-                    onToggle={() => toggleSection('rooms')}
-                />
-
-                <SidebarGroups
-                    collapsed={!!collapsedSections['groups']}
-                    onToggle={() => toggleSection('groups')}
-                />
-
-                {activeScenarios.length > 0 && (
-                    <SidebarScenarios
-                        collapsed={!!collapsedSections['scenarios']}
-                        onToggle={() => toggleSection('scenarios')}
-                        loadingItems={loadingItems}
-                        withLoading={withLoading}
-                        scenarios={activeScenarios}
-                    />
-                )}
+                {order.map(key => (
+                    <div
+                        key={key}
+                        data-section={key}
+                        className={`sidebar-section ${dragging === key ? 'is-dragging' : ''} ${dropAt?.key === key && dragging !== key ? (dropAt.after ? 'drop-after' : 'drop-before') : ''}`}
+                        onPointerDown={e => startDrag(key, e)}
+                    >
+                        {renderSection(key)}
+                    </div>
+                ))}
             </nav>
         </aside>
     );

@@ -100,6 +100,21 @@ export class Hub {
     return this.provider(providerOf(groupId)).toggleGroup(stripPrefix(groupId), deviceIds.map(stripPrefix), newState);
   }
 
+  /** Можно ли удалить устройство этого сервиса из приложения. */
+  canDelete(providerId: ProviderId): boolean {
+    return typeof this.providers.find(p => p.id === providerId)?.deleteDevice === 'function';
+  }
+
+  deletableProviders(): ProviderId[] {
+    return this.providers.filter(p => this.canDelete(p.id)).map(p => p.id);
+  }
+
+  async deleteDevice(deviceId: string) {
+    const provider = this.provider(providerOf(deviceId));
+    if (!provider.deleteDevice) throw new Error('ERR_UNSUPPORTED');
+    await provider.deleteDevice(stripPrefix(deviceId));
+  }
+
   runScenario(scenarioId: string) {
     return this.provider(providerOf(scenarioId)).runScenario(stripPrefix(scenarioId));
   }

@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { YandexDevice } from '../../types/index';
 import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
-import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets } from 'lucide-react';
+import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets, Settings, Zap } from 'lucide-react';
+import DashboardContext from '../../contexts/DashboardContext';
+import { formatPropertyValue } from '../../utils/deviceInfo';
 import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
 import { useI18n } from '../../i18n/I18nContext';
@@ -24,7 +26,11 @@ export interface DeviceCardProps {
 
 export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavorite, onToggleFavorite, onOpenSettings, isEditMode = false, iconHiddenState = false, onToggleVisibility }) => {
   const [loading, setLoading] = useState(false);
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const ctx = useContext(DashboardContext);
+  // Потребление показываем на карточке, если устройство его измеряет
+  const powerProperty = (device.properties ?? []).find((p: any) =>
+    p?.type === 'devices.properties.float' && (p.parameters?.instance ?? p.state?.instance) === 'power');
 
   const isCamera = isCameraDevice(device);
 
@@ -226,6 +232,15 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
               {iconHiddenState ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             </div>
           )}
+          {ctx && (
+            <button
+              onClick={(e) => { e.stopPropagation(); ctx.onSelectDevice(device.id); }}
+              className="device-fav device-gear"
+              title={t('devicePage.open')}
+            >
+              <Settings className="w-3.5 h-3.5" />
+            </button>
+          )}
           <button
             onClick={(e) => { e.stopPropagation(); onToggleFavorite(device.id); }}
             className={`device-fav ${isFavorite ? 'is-fav' : ''}`}
@@ -257,6 +272,12 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
           ) : isToggleable ? (isOn ? t('cards.on') : t('cards.off')) : isCamera ? t('cards.tapToView') : ''
         )}
       </div>
+
+      {powerProperty && !isUnreachable && (
+        <div className="device-draw" title={t('sensors.power')}>
+          <Zap className="w-3.5 h-3.5" />{formatPropertyValue(powerProperty, t, lang)}
+        </div>
+      )}
 
       {isSensor && formattedSensorValue && !showMicStatus && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: 'auto' }}>

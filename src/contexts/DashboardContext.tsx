@@ -34,12 +34,18 @@ export interface DashboardContextValue {
     onSetPower: (deviceIds: string[], on: boolean) => Promise<void>;
 
     // Навигация
-    activeSidebarView: 'home' | 'room' | 'group';
+    activeSidebarView: 'home' | 'room' | 'group' | 'device';
     activeRoomId: string | null;
     activeGroupId: string | null;
     onSelectHome: () => void;
     onSelectRoom: (roomId: string) => void;
     onSelectGroup: (groupId: string) => void;
+    activeDeviceId: string | null;
+    onSelectDevice: (deviceId: string) => void;
+    onBack: () => void;
+    /** Удаление устройства в его сервисе; список сервисов, где это возможно. */
+    onDeleteDevice: (deviceId: string) => Promise<boolean>;
+    deletableProviders: string[];
 
     // UI-состояния
     isRefreshing: boolean;

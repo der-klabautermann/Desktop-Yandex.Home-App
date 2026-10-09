@@ -27,6 +27,8 @@ export interface IHubApi {
     setDeviceMode: (deviceId: string, actions: YandexModeAction[], turnOn?: boolean) => Promise<void>;
     toggleGroup: (groupId: string, deviceIds: string[], newState: boolean) => Promise<void>;
     runScenario: (scenarioId: string) => Promise<void>;
+    deleteDevice: (deviceId: string) => Promise<void>;
+    deletableProviders: () => Promise<string[]>;
 }
 
 export interface IZonesApi {

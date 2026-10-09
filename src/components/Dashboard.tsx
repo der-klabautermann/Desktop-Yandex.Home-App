@@ -5,6 +5,7 @@ import { DashboardHomeView } from './DashboardHomeView';
 import { DashboardZoneView } from './DashboardZoneView';
 import { findNode } from '../../core/zones';
 import { DashboardGroupView } from './DashboardGroupView';
+import { DashboardDeviceView } from './DashboardDeviceView';
 import { ThermostatSettingsModal } from './modals/ThermostatSettingsModal';
 import { BrightnessSettingsModal } from './modals/BrightnessSettingsModal';
 import { GroupLightSettingsModal } from './modals/GroupLightSettingsModal';
@@ -21,6 +22,7 @@ import { useDashboardState } from '../hooks/useDashboardState';
 import { isLightDevice, isLightGroup, isCameraDevice, isSensorDevice } from '../constants';
 import { useI18n } from '../i18n/I18nContext';
 import { PinnedContext } from './Pinned';
+import { deviceTypeLabel } from '../utils/deviceInfo';
 
 export const Dashboard: React.FC = () => {
     const ctx = useDashboardContext();
@@ -155,8 +157,12 @@ export const Dashboard: React.FC = () => {
             const group = groupsForHome.find(g => g.id === ctx.activeGroupId);
             if (group) return group.name;
         }
+        if (ctx.activeSidebarView === 'device' && ctx.activeDeviceId) {
+            const device = ctx.data.devices.find(d => d.id === ctx.activeDeviceId);
+            if (device) return device.name;
+        }
         return homeName;
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.zones.tree, groupsForHome, homeName]);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, ctx.zones.tree, groupsForHome, homeName]);
 
     const contentSubtitle = useMemo(() => {
         if (ctx.activeSidebarView === 'room' && ctx.activeRoomId) {
@@ -179,8 +185,12 @@ export const Dashboard: React.FC = () => {
                 return tp('dashboard.devicesOn', groupDevices.length, { on: onCount });
             }
         }
+        if (ctx.activeSidebarView === 'device' && ctx.activeDeviceId) {
+            const device = ctx.data.devices.find(d => d.id === ctx.activeDeviceId);
+            return device ? deviceTypeLabel(device.type, t) : '';
+        }
         return tp('dashboard.devicesInHome', devicesForHome.length);
-    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, devicesForHome, groupsForHome, ctx.zones.tree, tp]);
+    }, [ctx.activeSidebarView, ctx.activeRoomId, ctx.activeGroupId, ctx.activeDeviceId, ctx.data.devices, devicesForHome, groupsForHome, ctx.zones.tree, t, tp]);
 
     // ---- Content rendering ----
     const renderContent = () => {
@@ -216,6 +226,8 @@ export const Dashboard: React.FC = () => {
                         devicesForHome={devicesForHome}
                     />
                 );
+            case 'device':
+                return <DashboardDeviceView deviceId={ctx.activeDeviceId} />;
             case 'group':
                 return (
                     <DashboardGroupView

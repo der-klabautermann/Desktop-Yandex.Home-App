@@ -99,6 +99,14 @@ export function installMockApi() {
         await delay(); applyActions(id, actions, !!turnOn);
       },
       runScenario: async () => { await delay(); },
+      deletableProviders: async () => ['yandex'],
+      deleteDevice: async (id: string) => {
+        await delay();
+        const home = showroom ?? homes.yandex;
+        home.devices = home.devices.filter(d => d.id !== id);
+        home.rooms.forEach(r => { r.devices = r.devices.filter(d => d !== id); });
+        home.groups.forEach(g => { g.devices = g.devices.filter(d => d !== id); });
+      },
     },
     zones: {
       load: async () => {

@@ -129,3 +129,29 @@ export const formatAt = (at: number, lang: string) => {
     : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
 };
 
+
+// Название типа устройства: сначала точные подтипы, потом общие классы (ключи словаря deviceTypes)
+const TYPE_KEYS: Array<[string, string]> = [
+  ['light', 'light'], ['socket', 'socket'], ['switch', 'switch'],
+  ['thermostat.ac', 'ac'], ['thermostat', 'thermostat'],
+  ['ventilation.fan', 'fan'], ['ventilation', 'ventilation'], ['humidifier', 'humidifier'], ['purifier', 'purifier'],
+  ['media_device.tv_box', 'tvBox'], ['media_device.tv', 'tv'], ['media_device.receiver', 'receiver'], ['media_device', 'media'],
+  ['smart_speaker', 'speaker'],
+  ['cooking.kettle', 'kettle'], ['cooking.coffee_maker', 'coffeeMaker'], ['cooking.multicooker', 'multicooker'], ['cooking', 'cooking'],
+  ['washing_machine', 'washingMachine'], ['dishwasher', 'dishwasher'], ['iron', 'iron'], ['vacuum_cleaner', 'vacuum'],
+  ['openable.curtain', 'curtain'], ['openable.valve', 'valve'], ['openable', 'openable'],
+  ['pet_feeder', 'petFeeder'], ['pet_drinking_fountain', 'petFountain'],
+  ['sensor.motion', 'motionSensor'], ['sensor.open', 'openSensor'], ['sensor.water_leak', 'leakSensor'],
+  ['sensor.smoke', 'smokeSensor'], ['sensor.gas', 'gasSensor'], ['sensor.button', 'button'],
+  ['sensor.vibration', 'vibrationSensor'], ['sensor.illumination', 'lightSensor'], ['sensor.climate', 'climateSensor'],
+  ['sensor', 'sensor'],
+  ['smart_meter.electricity', 'electricityMeter'], ['smart_meter.gas', 'gasMeter'], ['smart_meter.heat', 'heatMeter'],
+  ['smart_meter.cold_water', 'waterMeter'], ['smart_meter.hot_water', 'waterMeter'], ['smart_meter', 'meter'],
+  ['camera', 'camera'], ['hub', 'hub'],
+];
+
+export const deviceTypeLabel = (type: string, t: Translate) => {
+  const short = type.replace('devices.types.', '');
+  const key = TYPE_KEYS.find(([prefix]) => short.startsWith(prefix))?.[1] ?? 'other';
+  return lookup(t, `deviceTypes.${key}`, short);
+};

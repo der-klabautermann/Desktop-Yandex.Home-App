@@ -132,6 +132,18 @@ export const fetchDevice = async (token, deviceId, onRetryAttempt = null) => {
     }, onRetryAttempt);
 };
 
+// 1.2 Удаление устройства из умного дома пользователя
+export const deleteDevice = async (token, deviceId) => {
+    const response = await fetch(`${BASE_URL}/devices/${deviceId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+    });
+    if (!response.ok) {
+        if (response.status === 401 || response.status === 403) throw new Error('ERR_AUTH');
+        throw new Error(`ERR_HTTP ${response.status}`);
+    }
+};
+
 // 2. Выполнение сценария
 export const executeScenario = async (token, scenarioId, onRetryAttempt = null) => {
     return withRetry(async () => {

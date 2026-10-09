@@ -164,11 +164,13 @@ const DEVICES: Spec[] = [
 ];
 
 const PREFIX: Record<Provider, string> = { yandex: '', aqara: 'aqara:', homeassistant: 'homeassistant:' };
+const MAKER: Record<Provider, string> = { yandex: 'Yandex', aqara: 'Aqara', homeassistant: 'Xiaomi' };
 
 export const createShowroomHome = (): YandexUserInfoResponse => {
   const devices: YandexDevice[] = DEVICES.map(([id, name, type, room, provider, capabilities, properties]) => ({
     id: PREFIX[provider] + id, name, type, room, household_id: HOUSEHOLD, provider_id: provider,
     capabilities, ...(properties ? { properties } : {}),
+    device_info: { manufacturer: MAKER[provider], model: `${MAKER[provider].slice(0, 4).toUpperCase()}-${id.toUpperCase()}`, sw_version: '1.4.2' },
   }) as YandexDevice);
 
   return {

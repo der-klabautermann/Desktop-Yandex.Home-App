@@ -127,3 +127,20 @@ describe('Hub', () => {
     expect(await hub.accounts()).toEqual([]);
   });
 });
+
+describe('Geräte löschen', () => {
+  it('leitet an den Dienst weiter, ohne Präfix', async () => {
+    const deleteDevice = vi.fn(async () => {});
+    const hub = new Hub([fakeProvider('yandex', { deleteDevice }), fakeProvider('aqara')]);
+    expect(hub.canDelete('yandex')).toBe(true);
+    expect(hub.canDelete('aqara')).toBe(false);
+    expect(hub.deletableProviders()).toEqual(['yandex']);
+    await hub.deleteDevice('d1');
+    expect(deleteDevice).toHaveBeenCalledWith('d1');
+  });
+
+  it('meldet ERR_UNSUPPORTED bei Diensten ohne Löschen', async () => {
+    const hub = new Hub([fakeProvider('aqara')]);
+    await expect(hub.deleteDevice('aqara:x')).rejects.toThrow('ERR_UNSUPPORTED');
+  });
+});

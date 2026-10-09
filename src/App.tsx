@@ -28,7 +28,7 @@ function App() {
     const { notification, showNotification, clearNotification } = useNotification();
     const { accounts, setAccounts, appState, setAppState, errorMsg, setErrorMsg, retryInfo } = useAuth();
     const { favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, toggleFavorite } = useFavorites();
-    const { activeSidebarView, activeRoomId, activeGroupId, onSelectHome, onSelectRoom, onSelectGroup } = useNavigation();
+    const { activeSidebarView, activeRoomId, activeGroupId, activeDeviceId, onSelectHome, onSelectRoom, onSelectGroup, onSelectDevice, onBack } = useNavigation();
     const { showUpdateNotification, setShowUpdateNotification, updateInfo } = useUpdateNotification();
     // Что показано вместо панели: настройки, список сервисов или выбор нового сервиса
     const [screen, setScreen] = useState<'dashboard' | 'settings' | 'services' | 'add'>('dashboard');
@@ -45,10 +45,16 @@ function App() {
     // 4. Зависит от userData, refreshDashboardData, requestXTokenAuth
     const actions = useDeviceActions(userData, showNotification, refreshDashboardData, requestXTokenAuth);
     const { handleToggleDevice, handleToggleGroup, handleExecuteScenario,
-            handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower } = actions;
+            handleSetDeviceMode, handleGetCameraStream, handleSetCameraPrivacy, handleSetPower, handleDeleteDevice } = actions;
     const household = useHousehold(userData, refreshDashboardData);
     const { activeHouseholdId, handleSwitchHousehold } = household;
     const zones = useZones(userData, activeHouseholdId);
+    // Сервисы, в которых приложение умеет удалять устройства
+    const [deletableProviders, setDeletableProviders] = useState<string[]>([]);
+    useEffect(() => {
+        window.api?.hub?.deletableProviders?.().then(setDeletableProviders).catch(() => {});
+    }, []);
+
     // Собственные группы показываем рядом с группами сервисов
     const viewData = useMemo(
         () => (userData && zones.customGroups.length ? { ...userData, groups: [...userData.groups, ...zones.customGroups] } : userData),
@@ -338,6 +344,11 @@ function App() {
                     onSelectHome,
                     onSelectRoom,
                     onSelectGroup,
+                    activeDeviceId,
+                    onSelectDevice,
+                    onBack,
+                    onDeleteDevice: handleDeleteDevice,
+                    deletableProviders,
                     isRefreshing,
                     isAutostartEnabled,
                     onToggleAutostart: handleToggleAutostart,

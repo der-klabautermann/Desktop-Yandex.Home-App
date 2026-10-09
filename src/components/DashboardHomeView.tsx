@@ -6,7 +6,7 @@ import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
 import { isLightGroup, isSensorDevice } from '../constants';
-import { flattenTree } from '../../core/zones';
+import { findNode, flattenTree } from '../../core/zones';
 import { ZoneIcon } from './zones/zoneIcons';
 import { Building2, SquareSquare, ScrollText, Lightbulb, Star, ChevronRight, ChevronDown } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
@@ -198,6 +198,7 @@ export const DashboardHomeView: React.FC<DashboardHomeViewProps> = ({
             <div key={room.id} className="room-section">
                 <div className="room-header" onClick={() => state.toggleRoom(room.id)}>
                     {isRoomCollapsed ? <ChevronRight className="w-4 h-4" style={{ color: 'var(--muted)' }} /> : <ChevronDown className="w-4 h-4" style={{ color: 'var(--muted)' }} />}
+                    <span className="room-icon"><ZoneIcon icon={findNode(ctx.zones.tree, room.id)?.icon} kind="room" className="w-4 h-4" /></span>
                     <h2>{room.name}</h2>
                     <span className="room-count">{roomDevices.length}</span>
                 </div>
