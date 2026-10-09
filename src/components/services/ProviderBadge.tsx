@@ -12,7 +12,8 @@ export const ProviderBadge: React.FC<{ providerId?: string; unreachable?: boolea
   const ctx = useContext(DashboardContext);
   const { t } = useI18n();
   const several = (ctx?.accounts.length ?? 0) > 1;
-  if (!several && !unreachable) return null;
+  // Без сервиса (собственные группы приложения) метка не нужна
+  if ((!several || !providerId) && !unreachable) return null;
   const info = providerInfo(providerId);
   const name = t(`services.names.${info.id}`);
   return (

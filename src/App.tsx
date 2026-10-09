@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useRef, useState } from 'react';
+import React, { useEffect, useCallback, useMemo, useRef, useState } from 'react';
 import { Dashboard } from './components/Dashboard';
 import { ServicesScreen } from './components/services/ServicesScreen';
 import { SettingsScreen } from './components/settings/SettingsScreen';
@@ -17,6 +17,7 @@ import { useNotification, useAuth, useFavorites, useNavigation, useUpdateNotific
 import packageJson from '../package.json';
 import { debugLog, debugWarn, refreshDebugFlags } from './utils/debugLog';
 import { useI18n } from './i18n/I18nContext';
+import { isCustomGroupId } from '../core/groups';
 
 const yandexApi = window.api;
 
@@ -48,6 +49,16 @@ function App() {
     const household = useHousehold(userData, refreshDashboardData);
     const { activeHouseholdId, handleSwitchHousehold } = household;
     const zones = useZones(userData, activeHouseholdId);
+    // Собственные группы показываем рядом с группами сервисов
+    const viewData = useMemo(
+        () => (userData && zones.customGroups.length ? { ...userData, groups: [...userData.groups, ...zones.customGroups] } : userData),
+        [userData, zones.customGroups],
+    );
+    const toggleAnyGroup = useCallback(async (groupId: string, currentState: boolean) => {
+        if (!isCustomGroupId(groupId)) return handleToggleGroup(groupId, currentState);
+        const group = zones.customGroups.find(g => g.id === groupId);
+        if (group) await handleSetPower(group.devices, !currentState);
+    }, [handleToggleGroup, handleSetPower, zones.customGroups]);
     const activity = useActivity(userData, accounts, t);
 
     // 5. Зависит от showNotification
@@ -232,11 +243,11 @@ function App() {
 
     // --- 3. Tray-эффект (отправка избранного в трей) ---
     useEffect(() => {
-        if (appState === AppState.DASHBOARD && userData) {
-            const trayItems = getTrayMenuItems(userData, favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, activeHouseholdId);
+        if (appState === AppState.DASHBOARD && viewData) {
+            const trayItems = getTrayMenuItems(viewData, favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, activeHouseholdId);
             yandexApi.sendFavoritesToTray(trayItems);
         }
-    }, [appState, userData, favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, activeHouseholdId, getTrayMenuItems]);
+    }, [appState, viewData, favoriteDeviceIds, favoriteScenarioIds, favoriteGroupIds, activeHouseholdId, getTrayMenuItems]);
 
     // --- 4. Tray-эффект (обработка команд из трея) ---
     useEffect(() => {
@@ -244,13 +255,13 @@ function App() {
             if (command === 'TOGGLE_DEVICE' && typeof currentState === 'boolean') {
                 handleToggleDevice(id, currentState).catch(() => {});
             } else if (command === 'TOGGLE_GROUP' && typeof currentState === 'boolean') {
-                handleToggleGroup(id, currentState).catch(() => {});
+                toggleAnyGroup(id, currentState).catch(() => {});
             } else if (command === 'EXECUTE_SCENARIO') {
                 handleExecuteScenario(id).catch(() => {});
             }
         });
         return () => { yandexApi.removeTrayCommandListener(); };
-    }, [handleToggleDevice, handleToggleGroup, handleExecuteScenario]);
+    }, [handleToggleDevice, toggleAnyGroup, handleExecuteScenario]);
 
     // --- 5. Polling-эффект (автосинхронизация) ---
     useEffect(() => {
@@ -298,12 +309,12 @@ function App() {
     }
 
     // Основная панель
-    if (appState === AppState.DASHBOARD && userData) {
+    if (appState === AppState.DASHBOARD && viewData) {
         return (
             <ThemeProvider>
                 <DashboardContext.Provider value={{
-                    data: userData,
-                    households: userData.households as YandexHousehold[],
+                    data: viewData,
+                    households: viewData.households as YandexHousehold[],
                     activeHouseholdId,
                     favoriteDeviceIds,
                     favoriteScenarioIds,
@@ -312,7 +323,7 @@ function App() {
                     onToggleScenarioFavorite: (id: string) => toggleFavorite('scenario', id),
                     onToggleGroupFavorite: (id: string) => toggleFavorite('group', id),
                     onToggleDevice: handleToggleDevice,
-                    onToggleGroup: handleToggleGroup,
+                    onToggleGroup: toggleAnyGroup,
                     onExecuteScenario: handleExecuteScenario,
                     onSetDeviceMode: handleSetDeviceMode,
                     onGetCameraStream: handleGetCameraStream,

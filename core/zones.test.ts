@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  EMPTY_ZONE_CONFIG, addZone, buildZoneTree, flattenTree, isZoneActive, moveNode, removeZone, renameZone, summarizeDevices,
+  ACTIVITY_HOLD_MS, EMPTY_ZONE_CONFIG, addZone, buildZoneTree, categoryOf, flattenTree, isZoneActive, moveNode, removeZone, renameZone,
+  summarizeDevices, zoneCategories,
   type ZoneConfig,
 } from './zones';
 import type { HomeData } from './model';
@@ -140,5 +141,62 @@ describe('Symbole für Räume', () => {
   it('eigene Zonen speichern das Symbol an der Zone', () => {
     const { config, id } = addZone(EMPTY_ZONE_CONFIG, { name: 'EG', householdId: 'h1' }, () => 'zone:eg');
     expect(setZoneIcon(config, id, 'garden').zones[0].icon).toBe('garden');
+  });
+});
+
+describe('Energie und Aktivität mit Nachlauf', () => {
+  const now = 1_800_000_000_000;
+  const motion = (value: string, secondsAgo: number | null) => ({
+    ...prop('devices.properties.event', 'motion', value),
+    last_updated: secondsAgo === null ? 0 : (now - secondsAgo * 1000) / 1000,
+  });
+  const sensor = (property: any) => ({ id: 's', name: 'S', type: 'devices.types.sensor.motion', capabilities: [], properties: [property] }) as any;
+
+  it('summiert die Leistung aller messenden Geräte', () => {
+    const devices = [
+      { ...home.devices[0], properties: [prop('devices.properties.float', 'power', 4.4)] },
+      { ...home.devices[1], properties: [prop('devices.properties.float', 'power', 3.9)] },
+    ] as any;
+    expect(summarizeDevices(devices).power).toBe(8.3);
+    expect(summarizeDevices([home.devices[1]]).power).toBeNull();
+  });
+
+  it('bleibt nach Ende der Bewegung noch einige Minuten aktiv', () => {
+    const recent = summarizeDevices([sensor(motion('not_detected', 120))], now);
+    expect(recent.motion).toBe(false);
+    expect(isZoneActive(recent, now)).toBe(true);
+    const old = summarizeDevices([sensor(motion('not_detected', ACTIVITY_HOLD_MS / 1000 + 60))], now);
+    expect(isZoneActive(old, now)).toBe(false);
+  });
+
+  it('altes „Bewegung erkannt“ zählt nicht mehr als aktuelle Bewegung', () => {
+    const stale = summarizeDevices([sensor(motion('detected', 3600))], now);
+    expect(stale.motion).toBe(false);
+    expect(isZoneActive(stale, now)).toBe(false);
+    expect(summarizeDevices([sensor(motion('detected', null))], now).motion).toBe(true);
+  });
+});
+
+describe('Kategorien der Zonen-Steuerung', () => {
+  const device = (id: string, type: string, on: boolean | null, extra: object = {}) =>
+    ({ id, name: id, type, capabilities: on === null ? [] : [onOff(on)], ...extra }) as any;
+
+  it('ordnet nur schaltbare Geräte einer Kategorie zu', () => {
+    expect(categoryOf(device('a', 'devices.types.light.ceiling', true))).toBe('light');
+    expect(categoryOf(device('b', 'devices.types.thermostat.ac', false))).toBe('climate');
+    expect(categoryOf(device('c', 'devices.types.openable.curtain', false))).toBe('openable');
+    expect(categoryOf(device('d', 'devices.types.smart_speaker.yandex.station_2', null))).toBeNull();
+    expect(categoryOf(device('e', 'devices.types.sensor', null))).toBeNull();
+  });
+
+  it('zählt An/Gesamt in fester Reihenfolge, nicht erreichbare gelten als aus', () => {
+    const categories = zoneCategories([
+      device('ac', 'devices.types.thermostat.ac', true),
+      device('l1', 'devices.types.light', true),
+      device('l2', 'devices.types.light', true, { unreachable: true }),
+      device('p', 'devices.types.socket', false),
+    ]);
+    expect(categories.map(c => c.key)).toEqual(['light', 'socket', 'climate']);
+    expect(categories[0]).toMatchObject({ on: 1, total: 2, deviceIds: ['l1', 'l2'] });
   });
 });

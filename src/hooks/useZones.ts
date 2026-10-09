@@ -3,7 +3,8 @@ import {
   EMPTY_ZONE_CONFIG, addZone, buildZoneTree, moveNode, removeZone, renameZone, setZoneIcon,
   type ZoneConfig, type ZoneNode,
 } from '../../core/zones';
-import type { YandexUserInfoResponse } from '../types/index';
+import { addGroup, customGroupsAsYandex, removeGroup, updateGroup } from '../../core/groups';
+import type { YandexGroup, YandexUserInfoResponse } from '../types/index';
 
 export interface UseZonesReturn {
   config: ZoneConfig;
@@ -12,6 +13,11 @@ export interface UseZonesReturn {
   createZone: (name: string, icon: string, parentId: string | null) => string | null;
   updateZone: (id: string, changes: { name?: string; icon?: string; parentId?: string | null }) => void;
   deleteZone: (id: string) => void;
+  /** Собственные группы всех домов в формате групп сервисов. */
+  customGroups: YandexGroup[];
+  createGroup: (name: string, deviceIds: string[]) => string | null;
+  editGroup: (id: string, changes: { name?: string; deviceIds?: string[] }) => void;
+  deleteGroup: (id: string) => void;
 }
 
 /** Собственные зоны (этажи и т. п.): загрузка, сохранение и дерево для активного дома. */
@@ -53,5 +59,24 @@ export function useZones(userData: YandexUserInfoResponse | null, householdId: s
 
   const deleteZone = useCallback((id: string) => commit(removeZone(config, id)), [config, commit]);
 
-  return { config, tree, createZone, updateZone, deleteZone };
+  const customGroups = useMemo(
+    () => (userData ? customGroupsAsYandex(config, userData) : []),
+    [userData, config],
+  );
+
+  const createGroup = useCallback((name: string, deviceIds: string[]) => {
+    if (!effectiveHousehold || !name.trim() || deviceIds.length === 0) return null;
+    const { config: next, id } = addGroup(config, { name, householdId: effectiveHousehold, deviceIds });
+    commit(next);
+    return id;
+  }, [config, commit, effectiveHousehold]);
+
+  const editGroup = useCallback(
+    (id: string, changes: { name?: string; deviceIds?: string[] }) => commit(updateGroup(config, id, changes)),
+    [config, commit],
+  );
+
+  const deleteGroup = useCallback((id: string) => commit(removeGroup(config, id)), [config, commit]);
+
+  return { config, tree, createZone, updateZone, deleteZone, customGroups, createGroup, editGroup, deleteGroup };
 }

@@ -32,9 +32,11 @@ const thermostatModes = {
 
 export const createMockHome = (): YandexUserInfoResponse => {
   const devices: YandexDevice[] = [
-    { id: 'lamp-living', name: 'Люстра', type: 'devices.types.light', room: 'room-living', capabilities: [onOff(true), brightness(70)] },
+    { id: 'lamp-living', name: 'Люстра', type: 'devices.types.light', room: 'room-living', capabilities: [onOff(true), brightness(70)],
+      properties: [float('power', 4.4, 'unit.watt')] as any },
     { id: 'lamp-floor', name: 'Торшер', type: 'devices.types.light', room: 'room-living', capabilities: [onOff(false), brightness(40)] },
-    { id: 'tv-plug', name: 'Розетка ТВ', type: 'devices.types.socket', room: 'room-living', capabilities: [onOff(true)] },
+    { id: 'tv-plug', name: 'Розетка ТВ', type: 'devices.types.socket', room: 'room-living', capabilities: [onOff(true)],
+      properties: [float('power', 63.5, 'unit.watt')] as any },
     { id: 'ac', name: 'Кондиционер', type: 'devices.types.thermostat.ac', room: 'room-bedroom', capabilities: [onOff(false), thermostatModes] },
     { id: 'lamp-bed', name: 'Ночник', type: 'devices.types.light', room: 'room-bedroom', capabilities: [onOff(false), brightness(20)] },
     {
@@ -45,6 +47,13 @@ export const createMockHome = (): YandexUserInfoResponse => {
       id: 'door', name: 'Входная дверь', type: 'devices.types.sensor.open', room: 'room-hall', capabilities: [],
       properties: [event('open', 'closed', [{ value: 'opened', name: 'открыто' }, { value: 'closed', name: 'закрыто' }])] as any,
     },
+    {
+      // Движение закончилось две минуты назад: зона ещё «активна»
+      id: 'motion-hall', name: 'Датчик движения', type: 'devices.types.sensor.motion', room: 'room-hall', capabilities: [],
+      properties: [{ ...event('motion', 'not_detected', [{ value: 'detected', name: 'движение' }, { value: 'not_detected', name: 'нет движения' }]),
+        last_updated: Date.now() / 1000 - 120 }] as any,
+    },
+    { id: 'curtain', name: 'Шторы', type: 'devices.types.openable.curtain', room: 'room-bedroom', capabilities: [onOff(false)] },
     { id: 'kettle', name: 'Чайник', type: 'devices.types.cooking.kettle', room: 'room-kitchen', capabilities: [onOff(false)] },
   ];
   return {
@@ -54,8 +63,8 @@ export const createMockHome = (): YandexUserInfoResponse => {
     households: [{ id: 'home-1', name: 'Дом' }],
     rooms: [
       { id: 'room-living', name: 'Гостиная', household_id: 'home-1', devices: ['lamp-living', 'lamp-floor', 'tv-plug'] },
-      { id: 'room-bedroom', name: 'Спальня', household_id: 'home-1', devices: ['ac', 'lamp-bed', 'climate'] },
-      { id: 'room-hall', name: 'Прихожая', household_id: 'home-1', devices: ['door'] },
+      { id: 'room-bedroom', name: 'Спальня', household_id: 'home-1', devices: ['ac', 'lamp-bed', 'climate', 'curtain'] },
+      { id: 'room-hall', name: 'Прихожая', household_id: 'home-1', devices: ['door', 'motion-hall'] },
       { id: 'room-kitchen', name: 'Кухня', household_id: 'home-1', devices: ['kettle'] },
     ],
     groups: [

@@ -60,3 +60,22 @@ Stand: 08.10.2026. Wunsch Maxim: räumlicher Aufbau wie bei Homey. Gesamtliste i
 - [x] Zonen-Dialog (anlegen, umbenennen, Symbol, verschieben, löschen)
 - [x] Startansicht in Baum-Reihenfolge mit Zonen-Überschriften
 - [x] Texte DE/EN/RU, Prüfung in der Vorschau
+
+## Nachtrag 09.10.2026: Rest der Stufe 1b
+
+- **Zonen-Steuerung nach Kategorien** (`zoneCategories`, `categoryOf` in `core/zones.ts`):
+  Licht, Steckdosen, Klima (Thermostat, Lüftung, Befeuchter, Reiniger), Vorhänge, Medien.
+  Nur Geräte mit An/Aus zählen. Klick schaltet alle aus, wenn eines an ist, sonst alle an.
+  Licht hat einen angesetzten Einstellknopf (Helligkeit, Farbe), Klima ebenso, wenn alle
+  Geräte Thermostate oder alle Ventilatoren sind. Die Zone gibt sich dafür als Gruppe aus,
+  die vorhandenen Gruppen-Dialoge schalten Gerät für Gerät über den Hub.
+- **Energie:** Summe aller `power`-Messwerte der Zone in Watt.
+- **Aktivität mit Nachlauf:** aktiv bei Bewegung oder Offenem; nach dem letzten
+  Bewegungsereignis noch 5 Minuten (`ACTIVITY_HOLD_MS`). Ein altes „Bewegung erkannt“ mit
+  Zeitstempel zählt nicht mehr als aktuell. Die Zonenleiste zeigt dann „vor 3 Min.“.
+- **Eigene Gerätegruppen** (`core/groups.ts`): gespeichert als `groups` in `zones.json`
+  (`{ id: "cgroup:…", name, householdId, deviceIds }`). In der Oberfläche erscheinen sie
+  wie Gruppen der Dienste (Seitenleiste, Räume, Favoriten, Tray). Schalten läuft über
+  `onSetPower` je Gerät. Anlegen über „+“ bei „Gerätegruppen“, ändern und löschen über
+  „Bearbeiten“ in der Gruppen-Ansicht. Auswahl nur Geräte mit An/Aus, nach Räumen sortiert.
+- Steuerleiste `ZoneControls` gilt für Zonen und Gruppen gleichermaßen.

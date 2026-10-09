@@ -2056,6 +2056,31 @@ body::after {
 .zone-control.is-on b { color: color-mix(in oklab, var(--card-fg-active) 65%, transparent); }
 .zone-control:hover:not(:disabled) { transform: translateY(-1px); }
 .zone-control:disabled { opacity: 0.6; cursor: progress; }
+/* Chip mit angesetztem Einstellknopf: wirkt als ein Element, Trennlinie nur angedeutet */
+.zone-control-wrap {
+  display: inline-flex; border-radius: 999px;
+  transition: transform var(--motion-fast) var(--ease-standard), box-shadow var(--motion-fast) var(--ease-standard);
+}
+.zone-control-wrap .zone-control:hover:not(:disabled) { transform: none; }
+.zone-control-wrap:hover { transform: translateY(-1px); }
+.zone-control-wrap.is-on { box-shadow: 0 10px 26px -16px var(--lamp-glow, var(--accent)); }
+.zone-control-wrap .zone-control.is-on { box-shadow: none; }
+.zone-control-wrap.has-settings > .zone-control:first-child { border-radius: 999px 0 0 999px; padding-right: 12px; }
+.zone-control-more {
+  padding: 0 13px 0 11px;
+  border-radius: 0 999px 999px 0;
+  border-left-color: transparent;
+  position: relative;
+  color: var(--muted);
+}
+.zone-control-more::before {
+  content: ''; position: absolute; left: 0; top: 9px; bottom: 9px; width: 1px;
+  background: var(--glass-line-strong);
+}
+.zone-control-more.is-on { color: color-mix(in oklab, var(--card-fg-active) 70%, transparent); }
+.zone-control-more.is-on::before { background: color-mix(in oklab, var(--card-fg-active) 22%, transparent); }
+.zone-control-more:hover:not(:disabled) { color: var(--accent); }
+.zone-control-more.is-on:hover:not(:disabled) { color: var(--card-fg-active); }
 .zone-fact { color: var(--fg-2, var(--fg)); }
 .zone-fact svg { color: var(--muted); }
 .zone-fact.is-active { color: var(--success); border-color: color-mix(in oklab, var(--success) 40%, transparent); }
@@ -2126,6 +2151,45 @@ body::after {
 }
 .zone-dialog footer { display: flex; align-items: center; gap: 8px; margin-top: 14px; }
 .zone-dialog .zone-save { margin-top: 0; padding: 9px 18px; }
+/* Geräteauswahl für eigene Gruppen */
+.zone-dialog label .group-pick-count {
+  margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, transparent); color: var(--accent);
+  font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.group-pick-list {
+  max-height: min(340px, 46vh); overflow-y: auto;
+  margin: 0 -6px; padding: 2px 6px 4px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.group-pick-section { display: flex; flex-direction: column; gap: 2px; }
+.group-pick-room {
+  padding: 4px 4px 2px; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--muted);
+}
+.group-pick-item {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 7px 10px; border-radius: 12px;
+  border: 1px solid transparent; background: transparent;
+  color: var(--fg); font: inherit; font-size: 14px; text-align: left; cursor: pointer;
+  transition: background var(--motion-fast) var(--ease-standard), border-color var(--motion-fast) var(--ease-standard);
+}
+.group-pick-item:hover { background: color-mix(in oklab, var(--fg) 5%, transparent); }
+.group-pick-item.is-selected {
+  background: color-mix(in oklab, var(--accent) 10%, transparent);
+  border-color: color-mix(in oklab, var(--accent) 30%, transparent);
+}
+.group-pick-icon { display: inline-flex; color: var(--muted); }
+.group-pick-icon svg { width: 16px; height: 16px; }
+.group-pick-item.is-selected .group-pick-icon { color: var(--accent); }
+.group-pick-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.group-pick-check {
+  width: 18px; height: 18px; flex-shrink: 0; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px solid var(--glass-line-strong); color: var(--accent-on);
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+.group-pick-item.is-selected .group-pick-check { background: var(--accent); border-color: var(--accent); }
 .zone-delete {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 12px; border-radius: 999px;

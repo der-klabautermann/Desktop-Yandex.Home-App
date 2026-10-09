@@ -1,7 +1,9 @@
-import React, { useMemo } from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { ChevronDown, Plus } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
 import { useI18n } from '../../i18n/I18nContext';
+import { isGroupable } from '../../../core/groups';
+import { GroupDialog } from '../zones/GroupDialog';
 
 interface SidebarGroupsProps {
     collapsed: boolean;
@@ -11,19 +13,31 @@ interface SidebarGroupsProps {
 export const SidebarGroups: React.FC<SidebarGroupsProps> = ({ collapsed, onToggle }) => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
+    const [creating, setCreating] = useState(false);
 
     const groupsForHome = useMemo(() => {
         if (!ctx.activeHouseholdId) return ctx.data.groups;
         return ctx.data.groups.filter(group => group.household_id === ctx.activeHouseholdId);
     }, [ctx.data.groups, ctx.activeHouseholdId]);
 
-    if (groupsForHome.length === 0) return null;
+    // Раздел нужен и без групп: отсюда создаётся первая собственная группа
+    const canCreate = ctx.data.devices.some(isGroupable);
+    if (groupsForHome.length === 0 && !canCreate) return null;
 
     return (
         <>
             <div className="sidebar-section-title" onClick={onToggle} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
                 <ChevronDown className="w-3 h-3" style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform 150ms ease' }} />
                 {t('sidebar.groups')}
+                {canCreate && (
+                    <button
+                        className="zone-add-inline"
+                        title={t('zones.groupAdd')}
+                        onClick={e => { e.stopPropagation(); setCreating(true); }}
+                    >
+                        <Plus className="w-3 h-3" />
+                    </button>
+                )}
             </div>
             {!collapsed && groupsForHome.map(group => (
                 <button
@@ -43,6 +57,7 @@ export const SidebarGroups: React.FC<SidebarGroupsProps> = ({ collapsed, onToggl
                     <span className="sidebar-item-badge">{group.devices.length}</span>
                 </button>
             ))}
+            {creating && <GroupDialog mode="create" onClose={() => setCreating(false)} />}
         </>
     );
 };

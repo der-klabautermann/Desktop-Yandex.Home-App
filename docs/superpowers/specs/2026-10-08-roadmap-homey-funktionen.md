@@ -21,17 +21,19 @@ Quelle: homey.app/de-de/homey-cloud und die Funktionsseiten unter homey.app/de-d
 
 ### Stufe 1b: Räumlicher Aufbau (Zonen), als Nächstes nach dem Grundgerüst
 
-- [ ] Zonen frei verschachtelt: Haus, Etage, Raum (beliebige Tiefe), eigene Namen und Symbole
-- [ ] Räume aller Dienste lassen sich einer Zone zuordnen; gleichnamige Räume werden wie
+- [x] Zonen frei verschachtelt: Haus, Etage, Raum (beliebige Tiefe), eigene Namen und Symbole
+- [x] Räume aller Dienste lassen sich einer Zone zuordnen; gleichnamige Räume werden wie
   bisher automatisch zusammengelegt
-- [ ] Ohne eigene Einrichtung ergibt sich die Zone automatisch aus Haus und Raum der Dienste
-- [ ] Zonen-Ansicht: Unterzonen und Geräte der Zone, oben eine Zusammenfassung
+- [x] Ohne eigene Einrichtung ergibt sich die Zone automatisch aus Haus und Raum der Dienste
+- [x] Zonen-Ansicht: Unterzonen und Geräte der Zone, oben eine Zusammenfassung
   (Temperatur, Licht an, Bewegung, offene Fenster)
-- [ ] Zonen-Steuerung: Kategorien oben (Licht, Aktivität, Lautsprecher, Energie, Klima);
-  eine ganze Zone auf einmal schalten oder dimmen, zum Beispiel alle Lichter im Erdgeschoss
-- [ ] Zonenaktivität: Bewegungs- oder Türsensor meldet etwas, die Zone wird „aktiv“;
-  nach Ruhe wieder „inaktiv“
-- [ ] Eigene Gerätegruppen über Anbieter hinweg (Lampen, Stecker, Jalousien, Vorhänge)
+- [x] Zonen-Steuerung: Kategorien oben (Licht, Steckdosen, Klima, Vorhänge, Medien, dazu
+  Energie in Watt und Aktivität); eine ganze Zone auf einmal schalten oder dimmen, zum Beispiel
+  alle Lichter im Erdgeschoss. Lautsprecher entfallen vorerst: Yandex-Stationen haben über die
+  Smart-Home-Schnittstelle keinen Schalter (Musiksteuerung läuft über Vorssaint/Glagol)
+- [x] Zonenaktivität: Bewegungs- oder Türsensor meldet etwas, die Zone wird „aktiv“;
+  nach Ruhe wieder „inaktiv“ (Nachlauf 5 Minuten, Zeitstempel `last_updated` der Dienste)
+- [x] Eigene Gerätegruppen über Anbieter hinweg (Lampen, Stecker, Jalousien, Vorhänge)
 
 ### Stufe 5: Moods (Lichtstimmungen)
 

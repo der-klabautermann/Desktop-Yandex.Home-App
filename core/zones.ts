@@ -17,6 +17,15 @@ export interface ZoneConfig {
   parents: Record<string, string>;
   /** Значки, выбранные для комнат из сервисов (у собственных зон значок хранится в самой зоне). */
   icons?: Record<string, string>;
+  /** Собственные группы устройств поверх всех сервисов (см. groups.ts). */
+  groups?: CustomGroup[];
+}
+
+export interface CustomGroup {
+  id: string;
+  name: string;
+  householdId: string;
+  deviceIds: string[];
 }
 
 export const EMPTY_ZONE_CONFIG: ZoneConfig = { version: 1, zones: [], parents: {} };
@@ -187,12 +196,20 @@ export const removeZone = (config: ZoneConfig, id: string): ZoneConfig => {
 
 // --- Сводка по устройствам зоны ---
 
+/** Сколько зона остаётся «активной» после последнего движения. */
+export const ACTIVITY_HOLD_MS = 5 * 60_000;
+
 export interface ZoneSummary {
   lights: { total: number; on: number };
   sockets: { total: number; on: number };
   temperature: number | null;
   humidity: number | null;
+  /** Сумма мощности устройств с измерением (Вт), null: никто не измеряет. */
+  power: number | null;
+  /** Движение сейчас. */
   motion: boolean;
+  /** Время последнего события датчика движения (мс), null: неизвестно. */
+  lastMotion: number | null;
   openCount: number;
   unreachable: number;
 }
@@ -200,16 +217,21 @@ export interface ZoneSummary {
 const instanceOf = (item: any): string | undefined => item?.parameters?.instance ?? item?.state?.instance;
 const isOn = (device: YandexDevice) =>
   device.capabilities.some(c => c.type === 'devices.capabilities.on_off' && c.state?.value === true);
+const hasOnOff = (device: YandexDevice) => device.capabilities.some(c => c.type === 'devices.capabilities.on_off');
 const average = (values: number[]) =>
   values.length ? Math.round((values.reduce((a, b) => a + b, 0) / values.length) * 10) / 10 : null;
+/** last_updated у Яндекса в секундах; 0 или нет поля: время неизвестно. */
+const updatedAt = (property: any): number | null =>
+  typeof property?.last_updated === 'number' && property.last_updated > 0 ? property.last_updated * 1000 : null;
 
-export const summarizeDevices = (devices: YandexDevice[]): ZoneSummary => {
+export const summarizeDevices = (devices: YandexDevice[], now = Date.now()): ZoneSummary => {
   const summary: ZoneSummary = {
     lights: { total: 0, on: 0 }, sockets: { total: 0, on: 0 },
-    temperature: null, humidity: null, motion: false, openCount: 0, unreachable: 0,
+    temperature: null, humidity: null, power: null, motion: false, lastMotion: null, openCount: 0, unreachable: 0,
   };
   const temperatures: number[] = [];
   const humidities: number[] = [];
+  const powers: number[] = [];
 
   for (const device of devices) {
     if (device.unreachable) summary.unreachable += 1;
@@ -228,17 +250,74 @@ export const summarizeDevices = (devices: YandexDevice[]): ZoneSummary => {
       if (property.type === 'devices.properties.float' && typeof value === 'number') {
         if (instance === 'temperature') temperatures.push(value);
         if (instance === 'humidity') humidities.push(value);
+        if (instance === 'power') powers.push(value);
       }
       if (property.type === 'devices.properties.event') {
-        if (instance === 'motion' && value === 'detected') summary.motion = true;
+        if (instance === 'motion') {
+          const at = updatedAt(property);
+          if (at !== null && (value === 'detected' || value === 'not_detected')) {
+            summary.lastMotion = Math.max(summary.lastMotion ?? 0, at);
+          }
+          // «Движение» без времени считаем текущим; со временем только если оно свежее
+          if (value === 'detected' && (at === null || now - at < ACTIVITY_HOLD_MS)) summary.motion = true;
+        }
         if (instance === 'open' && value === 'opened') summary.openCount += 1;
       }
     }
   }
   summary.temperature = average(temperatures);
   summary.humidity = average(humidities);
+  summary.power = powers.length ? Math.round(powers.reduce((a, b) => a + b, 0) * 10) / 10 : null;
   return summary;
 };
 
-/** Зона «активна», если в ней замечено движение или что-то открыто. */
-export const isZoneActive = (summary: ZoneSummary) => summary.motion || summary.openCount > 0;
+/** Зона «активна»: движение сейчас или недавно, либо что-то открыто. */
+export const isZoneActive = (summary: ZoneSummary, now = Date.now()) =>
+  summary.motion
+  || summary.openCount > 0
+  || (summary.lastMotion !== null && now - summary.lastMotion < ACTIVITY_HOLD_MS);
+
+// --- Категории для общего управления зоной ---
+
+export type ZoneCategoryKey = 'light' | 'socket' | 'climate' | 'openable' | 'media';
+
+export interface ZoneCategory {
+  key: ZoneCategoryKey;
+  deviceIds: string[];
+  /** Включено (недоступные не считаются). */
+  on: number;
+  total: number;
+}
+
+const CATEGORY_ORDER: ZoneCategoryKey[] = ['light', 'socket', 'climate', 'openable', 'media'];
+
+/** Категория устройства с выключателем; null: не участвует в общем управлении. */
+export const categoryOf = (device: YandexDevice): ZoneCategoryKey | null => {
+  if (!hasOnOff(device)) return null;
+  const type = device.type;
+  if (type.startsWith('devices.types.light')) return 'light';
+  if (type === 'devices.types.socket') return 'socket';
+  if (
+    type.startsWith('devices.types.thermostat')
+    || type.startsWith('devices.types.ventilation')
+    || type.startsWith('devices.types.humidifier')
+    || type.startsWith('devices.types.purifier')
+  ) return 'climate';
+  if (type.startsWith('devices.types.openable')) return 'openable';
+  if (type.startsWith('devices.types.media_device')) return 'media';
+  return null;
+};
+
+export const zoneCategories = (devices: YandexDevice[]): ZoneCategory[] => {
+  const byKey = new Map<ZoneCategoryKey, ZoneCategory>();
+  for (const device of devices) {
+    const key = categoryOf(device);
+    if (!key) continue;
+    const category = byKey.get(key) ?? { key, deviceIds: [], on: 0, total: 0 };
+    category.deviceIds.push(device.id);
+    category.total += 1;
+    if (!device.unreachable && isOn(device)) category.on += 1;
+    byKey.set(key, category);
+  }
+  return CATEGORY_ORDER.filter(key => byKey.has(key)).map(key => byKey.get(key)!);
+};
