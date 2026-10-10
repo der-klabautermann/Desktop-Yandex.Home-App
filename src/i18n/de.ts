@@ -65,6 +65,21 @@ export const de = {
     clear: 'Klar', partly: 'Heiter', cloudy: 'Bewölkt', fog: 'Nebel', drizzle: 'Nieselregen',
     rain: 'Regen', snow: 'Schnee', storm: 'Gewitter',
   },
+  scene: {
+    title: 'Hintergrund',
+    none: 'Aus',
+    cabin: 'Hütte',
+    village: 'Bergdorf',
+    motion: 'Bewegung',
+  },
+  season: {
+    title: 'Jahreszeit',
+    auto: 'Automatisch',
+    spring: 'Frühling',
+    summer: 'Sommer',
+    autumn: 'Herbst',
+    winter: 'Winter',
+  },
   daylight: {
     day: 'Tagansicht',
     night: 'Nachtansicht',

@@ -65,6 +65,21 @@ export const en = {
     clear: 'Clear', partly: 'Partly cloudy', cloudy: 'Cloudy', fog: 'Fog', drizzle: 'Drizzle',
     rain: 'Rain', snow: 'Snow', storm: 'Thunderstorm',
   },
+  scene: {
+    title: 'Background',
+    none: 'Off',
+    cabin: 'Cabin',
+    village: 'Mountain village',
+    motion: 'Motion',
+  },
+  season: {
+    title: 'Season',
+    auto: 'Automatic',
+    spring: 'Spring',
+    summer: 'Summer',
+    autumn: 'Autumn',
+    winter: 'Winter',
+  },
   daylight: {
     day: 'Day view',
     night: 'Night view',

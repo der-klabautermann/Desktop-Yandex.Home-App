@@ -2,9 +2,11 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useI18n } from '../../i18n/I18nContext';
-import { Daylight, INTERVAL_OPTIONS, PALETTES, PaletteId, ThemeMode, nextChange } from '../../themes/palettes';
+import { Daylight, INTERVAL_OPTIONS, PALETTES, PaletteId, SceneId, SeasonChoice, ThemeMode, nextChange } from '../../themes/palettes';
 
 const DAYLIGHT: Daylight[] = ['auto', 'day', 'night'];
+const SCENES: SceneId[] = ['none', 'cabin', 'village'];
+const SEASONS: SeasonChoice[] = ['auto', 'spring', 'summer', 'autumn', 'winter'];
 
 const MODES: ThemeMode[] = ['cycle', 'fixed'];
 
@@ -77,6 +79,35 @@ export const ThemeSettings: React.FC = () => {
                     </button>
                 ))}
             </div>
+
+            <div className="theme-interval">
+                <span>{t('scene.title')}</span>
+                {SCENES.map(option => (
+                    <button key={option} className={`theme-interval-chip ${settings.scene === option ? 'is-active' : ''}`} onClick={() => updateSettings({ scene: option })}>
+                        {t(`scene.${option}`)}
+                    </button>
+                ))}
+            </div>
+            {settings.scene !== 'none' && (
+                <>
+                    <div className="theme-interval">
+                        <span>{t('season.title')}</span>
+                        {SEASONS.map(option => (
+                            <button key={option} className={`theme-interval-chip ${settings.season === option ? 'is-active' : ''}`} onClick={() => updateSettings({ season: option })}>
+                                {t(`season.${option}`)}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="theme-interval">
+                        <span>{t('scene.motion')}</span>
+                        {[true, false].map(option => (
+                            <button key={String(option)} className={`theme-interval-chip ${settings.motion === option ? 'is-active' : ''}`} onClick={() => updateSettings({ motion: option })}>
+                                {option ? t('cards.on') : t('cards.off')}
+                            </button>
+                        ))}
+                    </div>
+                </>
+            )}
 
             <div className="theme-grid settings-theme-grid">
                 {PALETTES.map(p => {

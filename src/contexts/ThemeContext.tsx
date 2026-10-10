@@ -40,6 +40,9 @@ const loadSettings = (): ThemeSettings => {
       })(),
       font: migrateFont(parsed as { font?: unknown; headingFont?: unknown }),
       daylight: parsed.daylight === 'day' || parsed.daylight === 'night' ? parsed.daylight : 'auto',
+      scene: parsed.scene === 'cabin' || parsed.scene === 'village' ? parsed.scene : 'none',
+      season: ['winter', 'spring', 'summer', 'autumn'].includes(parsed.season as string) ? parsed.season! : 'auto',
+      motion: parsed.motion !== false,
     };
   } catch {
     return DEFAULT_SETTINGS;

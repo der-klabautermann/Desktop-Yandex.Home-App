@@ -250,3 +250,39 @@ export const deviceArtUrl = (type: string, night: boolean): string | null => {
   const key = deviceArtKey(type);
   return AVAILABLE_ART.has(key) ? `./device-art/${key}-${night ? 'night' : 'day'}.webp` : null;
 };
+
+/**
+ * Где на картинке стоит устройство (в процентах) и насколько приблизить, чтобы на карточке
+ * оно было хорошо видно. Значения подобраны по каждой картинке; без записи: справа по центру.
+ */
+const ART_FOCUS: Record<string, [x: number, y: number, zoom: number]> = {
+  'air-conditioner': [80, 40, 1.05],
+  'blinds': [80, 45, 1.1],
+  'bulb': [78, 35, 1.7],
+  'button': [70, 66, 1.9],
+  'camera': [82, 45, 1.25],
+  'ceiling-light': [78, 45, 1.15],
+  'climate-sensor': [70, 55, 1.35],
+  'dishwasher': [90, 55, 1.2],
+  'door-sensor': [72, 45, 1.7],
+  'gas-detector': [82, 45, 1.25],
+  'hub': [80, 70, 1.7],
+  'leak-sensor': [72, 70, 1.8],
+  'light-sensor': [74, 60, 1.8],
+  'light-strip': [80, 55, 1.2],
+  'motion-sensor': [93, 30, 2.1],
+  'pet-feeder': [82, 60, 1.25],
+  'pet-fountain': [82, 72, 1.7],
+  'robot-vacuum': [70, 82, 1.6],
+  'socket': [86, 52, 1.35],
+  'speaker': [72, 72, 1.3],
+  'switch': [82, 52, 1.35],
+  'tv-box': [75, 72, 1.6],
+  'vibration-sensor': [71, 50, 1.8],
+  'water-valve': [72, 45, 1.25],
+};
+
+export const deviceArtStyle = (type: string): React.CSSProperties => {
+  const [x, y, zoom] = ART_FOCUS[deviceArtKey(type)] ?? [75, 50, 1];
+  return { ['--art-x' as any]: `${x}%`, ['--art-y' as any]: `${y}%`, ['--art-zoom' as any]: zoom };
+};

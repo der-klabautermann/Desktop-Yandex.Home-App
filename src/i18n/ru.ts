@@ -65,6 +65,21 @@ export const ru = {
     clear: 'Ясно', partly: 'Малооблачно', cloudy: 'Облачно', fog: 'Туман', drizzle: 'Морось',
     rain: 'Дождь', snow: 'Снег', storm: 'Гроза',
   },
+  scene: {
+    title: 'Фон',
+    none: 'Нет',
+    cabin: 'Домик',
+    village: 'Горная деревня',
+    motion: 'Движение',
+  },
+  season: {
+    title: 'Время года',
+    auto: 'Автоматически',
+    spring: 'Весна',
+    summer: 'Лето',
+    autumn: 'Осень',
+    winter: 'Зима',
+  },
   daylight: {
     day: 'Дневной вид',
     night: 'Ночной вид',

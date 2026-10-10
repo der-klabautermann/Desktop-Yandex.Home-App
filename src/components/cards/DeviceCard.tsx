@@ -3,7 +3,7 @@ import { YandexDevice } from '../../types/index';
 import { getIconForDevice, localizeUnit, localizeEvent, isCameraDevice, formatFloatValue, isCameraPrivacyModeEnabled } from '../../constants';
 import { Loader2, Star, Eye, EyeOff, Mic, MicOff, Thermometer, Droplets, Settings, Zap, Power } from 'lucide-react';
 import DashboardContext from '../../contexts/DashboardContext';
-import { deviceArtUrl, deviceCategory, formatPropertyValue } from '../../utils/deviceInfo';
+import { deviceArtStyle, deviceArtUrl, deviceCategory, formatPropertyValue } from '../../utils/deviceInfo';
 import { WeatherContext } from '../../contexts/WeatherContext';
 import type { SensorDisplayConfig } from '../modals/SensorSettingsModal';
 import { debugLog } from '../../utils/debugLog';
@@ -199,7 +199,7 @@ export const DeviceCard: React.FC<DeviceCardProps> = ({ device, onToggle, isFavo
       className={`device-card tile ${art ? 'has-art' : ''} ${!isUnreachable && isToggleable && isOn ? 'is-on' : ''} ${isUnreachable ? 'is-unreachable' : ''} ${isEditMode && iconHiddenState ? 'opacity-50 grayscale' : ''}`}
       data-cat={deviceCategory(device.type)}
     >
-      {art && <div className="tile-art" style={{ backgroundImage: `url(${art})` }} aria-hidden />}
+      {art && <div className="tile-art" style={{ backgroundImage: `url(${art})`, ...deviceArtStyle(device.type) }} aria-hidden />}
       <div className="device-card-top">
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           {isToggleable ? (

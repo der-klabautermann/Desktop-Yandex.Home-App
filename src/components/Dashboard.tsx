@@ -20,6 +20,7 @@ import { DeviceDetailModal } from './modals/DeviceDetailModal';
 import { Check, CloudOff, Search, Settings, X } from 'lucide-react';
 import { DaylightButton } from './DaylightButton';
 import { WeatherProvider } from '../contexts/WeatherContext';
+import { SceneBackground } from './SceneBackground';
 import { ActivityButton } from './activity/ActivityButton';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { useDashboardState } from '../hooks/useDashboardState';
@@ -288,6 +289,7 @@ export const Dashboard: React.FC = () => {
 
     return (
         <WeatherProvider>
+        <SceneBackground />
         <div className="window">
             <div className="body">
                 <Sidebar onOpenCameraStream={state.openCameraStream} />

@@ -196,9 +196,24 @@ export interface ThemeSettings {
     font: FontId;
     /** День или ночь для картинок устройств и пейзажа: по времени или вручную. */
     daylight: Daylight;
+    /** Фоновая сцена во всё окно; при ней панели становятся «стеклом». */
+    scene: SceneId;
+    season: SeasonChoice;
+    /** Движение фона (снег, огни, медленный проезд камеры). */
+    motion: boolean;
 }
 
 export type Daylight = 'auto' | 'day' | 'night';
+export type SceneId = 'none' | 'cabin' | 'village';
+export type Season = 'winter' | 'spring' | 'summer' | 'autumn';
+export type SeasonChoice = 'auto' | Season;
+
+/** Время года по дате; в южном полушарии наоборот. */
+export const seasonFor = (date: Date, southern = false): Season => {
+    const order: Season[] = ['winter', 'spring', 'summer', 'autumn'];
+    const index = Math.floor(((date.getMonth() + 1) % 12) / 3);
+    return order[southern ? (index + 2) % 4 : index];
+};
 
 export const INTERVAL_OPTIONS = [1, 2, 3, 4, 6, 8, 12];
 
@@ -209,6 +224,9 @@ export const DEFAULT_SETTINGS: ThemeSettings = {
     cycle: PALETTES.map(p => p.id),
     font: DEFAULT_FONT,
     daylight: 'auto',
+    scene: 'none',
+    season: 'auto',
+    motion: true,
 };
 
 /** Номер текущего "слота" смены: считается от полуночи местного времени, смена всегда в ровный час. */
