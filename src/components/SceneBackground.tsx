@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWeather } from '../contexts/WeatherContext';
 import { seasonFor, type Season } from '../themes/palettes';
+import { VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
 
 /**
  * Фоновая сцена во всё окно: фото (public/scenes/<сцена>-<сезон>-day|night.webp) с медленным
@@ -27,9 +28,18 @@ export const SceneBackground: React.FC = () => {
     if (scene === 'none') return null;
     const url = `./scenes/${scene}-${season}-${isNight ? 'night' : 'day'}.webp`;
 
+    const daylight = isNight ? 'night' : 'day';
     return (
         <div className={`scene-bg is-${scene} ${isNight ? 'is-night' : 'is-day'}`} aria-hidden>
-            <div key={url} className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
+            {/* Сцена всегда 16:9 и накрывает окно: так проценты картинки совпадают с наложениями */}
+            <div key={url} className="scene-stage">
+                <div className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
+                {scene === 'village' && moving && VILLAGE_RIVER[season].map((polygon, i) => (
+                    <River key={i} url={url} polygon={polygon} />
+                ))}
+                {scene === 'village' && <TowerClock spot={VILLAGE_CLOCKS[season][daylight]} />}
+            </div>
+            {moving && scene === 'village' && <WaterFilter />}
             {isNight && <div className="scene-glow" />}
             {moving && <Particles season={season} night={isNight} />}
             <div className="scene-veil" />
@@ -127,4 +137,67 @@ const Particles: React.FC<{ season: Season; night: boolean }> = ({ season, night
     }, [season, night]);
 
     return <canvas ref={canvasRef} className="scene-particles" />;
+};
+
+/** Рябь для воды: шум медленно «плывёт» и слегка смещает пиксели картинки. */
+const WaterFilter: React.FC = () => (
+    <svg className="scene-svg-defs" width="0" height="0" aria-hidden>
+        <filter id="scene-water" x="-5%" y="-5%" width="110%" height="110%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.010 0.045" numOctaves="2" seed="3" result="noise">
+                <animate attributeName="baseFrequency" dur="9s" values="0.010 0.045;0.012 0.055;0.010 0.045" repeatCount="indefinite" />
+            </feTurbulence>
+            <feOffset in="noise" dx="0" dy="0" result="moving">
+                <animate attributeName="dx" dur="6s" values="0;24;0" repeatCount="indefinite" />
+            </feOffset>
+            <feDisplacementMap in="SourceGraphic" in2="moving" scale="7" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
+);
+
+/** Участок реки: та же картинка, обрезанная по воде, с рябью и бегущим бликом. */
+const River: React.FC<{ url: string; polygon: Polygon }> = ({ url, polygon }) => {
+    const xs = polygon.map(([x]) => x);
+    const ys = polygon.map(([, y]) => y);
+    const left = Math.min(...xs);
+    const top = Math.min(...ys);
+    const width = Math.max(...xs) - left || 1;
+    const height = Math.max(...ys) - top || 1;
+    // Картинка внутри участка лежит так же, как во всей сцене
+    const style: React.CSSProperties = {
+        left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
+        backgroundImage: `url(${url})`,
+        backgroundSize: `${(100 / width) * 100}% ${(100 / height) * 100}%`,
+        backgroundPosition: `${width >= 100 ? 0 : (left / (100 - width)) * 100}% ${height >= 100 ? 0 : (top / (100 - height)) * 100}%`,
+        clipPath: `polygon(${polygon.map(([x, y]) => `${((x - left) / width) * 100}% ${((y - top) / height) * 100}%`).join(', ')})`,
+    };
+    return <div className="scene-river" style={style}><span className="scene-river-shine" /></div>;
+};
+
+/** Часы на башне с настоящим временем поверх нарисованного циферблата. */
+const TowerClock: React.FC<{ spot: ClockSpot }> = ({ spot }) => {
+    const [now, setNow] = React.useState(() => new Date());
+    useEffect(() => {
+        const timer = window.setInterval(() => setNow(new Date()), 20_000);
+        return () => window.clearInterval(timer);
+    }, []);
+    const minutes = now.getMinutes() + now.getSeconds() / 60;
+    const hours = (now.getHours() % 12) + minutes / 60;
+    // Высота в процентах сцены: у сцены 16:9, поэтому диаметр по высоте в 16/9 раза больше
+    const style: React.CSSProperties = {
+        left: `${spot.x - spot.size / 2}%`,
+        top: `${spot.y - (spot.size * 16 / 9) / 2}%`,
+        width: `${spot.size}%`,
+    };
+    return (
+        <svg className="scene-clock" viewBox="0 0 100 100" style={style}>
+            <circle cx="50" cy="50" r="47" fill={spot.face} />
+            {Array.from({ length: 12 }, (_, i) => (
+                <line key={i} x1="50" y1="7" x2="50" y2={i % 3 === 0 ? 17 : 13} stroke={spot.hands} strokeWidth={i % 3 === 0 ? 5 : 3}
+                    transform={`rotate(${i * 30} 50 50)`} opacity="0.85" />
+            ))}
+            <line x1="50" y1="50" x2="50" y2="24" stroke={spot.hands} strokeWidth="7" strokeLinecap="round" transform={`rotate(${hours * 30} 50 50)`} />
+            <line x1="50" y1="50" x2="50" y2="12" stroke={spot.hands} strokeWidth="4.5" strokeLinecap="round" transform={`rotate(${minutes * 6} 50 50)`} />
+            <circle cx="50" cy="50" r="5" fill={spot.hands} />
+        </svg>
+    );
 };

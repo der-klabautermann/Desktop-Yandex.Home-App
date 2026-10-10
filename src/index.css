@@ -3124,18 +3124,32 @@ button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offse
    ========================================================================== */
 
 .scene-bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: #0B0A10; }
-.scene-photo {
-  position: absolute; inset: -4%;
-  background-size: cover; background-position: center;
+/* Bühne immer 16:9 und fensterfüllend: Prozentangaben passen so genau zum Bild */
+.scene-stage {
+  position: absolute; left: 50%; top: 50%;
+  width: max(100vw, 177.78vh); height: max(100vh, 56.25vw);
+  transform: translate(-50%, -50%) scale(1.04);
   animation: sceneFade 1.4s ease both;
   will-change: transform;
 }
-:root[data-scene-motion] .scene-photo { animation: sceneFade 1.4s ease both, sceneDrift 80s ease-in-out infinite alternate; }
+:root[data-scene-motion] .scene-stage { animation: sceneFade 1.4s ease both, sceneDrift 80s ease-in-out infinite alternate; }
+.scene-photo { position: absolute; inset: 0; background-size: 100% 100%; }
 @keyframes sceneFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes sceneDrift {
-  0% { transform: scale(1.02) translate3d(-1.2%, 0.4%, 0); }
-  100% { transform: scale(1.09) translate3d(1.2%, -0.8%, 0); }
+  0% { transform: translate(-50%, -50%) scale(1.04) translate3d(-1.2%, 0.4%, 0); }
+  100% { transform: translate(-50%, -50%) scale(1.10) translate3d(1.2%, -0.8%, 0); }
 }
+.scene-svg-defs { position: absolute; }
+.scene-river { position: absolute; filter: url(#scene-water); overflow: hidden; }
+.scene-river-shine {
+  position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.35;
+  background: repeating-linear-gradient(115deg, transparent 0 22px, rgba(255, 236, 200, 0.10) 26px, transparent 34px);
+  background-size: 200% 100%;
+  animation: riverShine 7s linear infinite;
+}
+.scene-bg.is-day .scene-river-shine { opacity: 0.25; }
+@keyframes riverShine { from { background-position: 0 0; } to { background-position: -200% 0; } }
+.scene-clock { position: absolute; aspect-ratio: 1; overflow: visible; }
 /* Warmes Flackern von Kamin bzw. Laterne */
 .scene-glow {
   position: absolute; width: 46vw; height: 60vh; left: -4vw; bottom: 4vh;
