@@ -197,7 +197,7 @@ const ART_RULES: Array<[string, string]> = [
 ];
 
 /** Картинки, которые уже лежат в public/device-art (обе версии: день и ночь). */
-export const AVAILABLE_ART = new Set<string>([]);
+export const AVAILABLE_ART = new Set<string>(['bath-fan', 'desk-lamp', 'washing-machine']);
 
 export const deviceArtKey = (type: string): string => {
   const short = type.replace('devices.types.', '');
