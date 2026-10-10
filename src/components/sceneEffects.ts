@@ -55,4 +55,4 @@ export const VILLAGE_RIVER: Record<Season, Polygon[]> = {
 };
 
 /** Сцены, для которых есть видео (public/scenes/<ключ>.mp4): огонь, свечи и река живые. */
-export const SCENE_VIDEOS = new Set<string>([]);
+export const SCENE_VIDEOS = new Set<string>(['cabin-winter-night']);
