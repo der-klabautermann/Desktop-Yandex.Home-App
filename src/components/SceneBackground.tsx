@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWeather } from '../contexts/WeatherContext';
 import { seasonFor, type Season } from '../themes/palettes';
-import { SCENE_VIDEOS, VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
+import { SCENE_VIDEOS, VIDEO_RATE, VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
 
 /**
  * Фоновая сцена во всё окно: фото (public/scenes/<сцена>-<сезон>-day|night.webp) с медленным
@@ -37,7 +37,11 @@ export const SceneBackground: React.FC = () => {
             {/* Сцена всегда 16:9 и накрывает окно: так проценты картинки совпадают с наложениями */}
             <div key={url} className="scene-stage">
                 {video ? (
-                    <video className="scene-photo scene-video" src={`./scenes/${key}.mp4`} poster={url} autoPlay muted loop playsInline />
+                    <video
+                        className="scene-photo scene-video" src={`./scenes/${key}.mp4`} poster={url} autoPlay muted loop playsInline
+                        // Langsamer abspielen: ruhiger Kamin statt hektischer Flammen
+                        onLoadedMetadata={e => { e.currentTarget.playbackRate = VIDEO_RATE; }}
+                    />
                 ) : (
                     <div className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
                 )}
