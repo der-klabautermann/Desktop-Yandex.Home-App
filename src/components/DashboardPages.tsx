@@ -52,7 +52,7 @@ export const RoomsPage: React.FC<{ devicesForHome: YandexDevice[] }> = ({ device
                 <span className="room-card-text">
                     <strong>{node.name}</strong>
                     <small>{tp('dashboard.devicesOn', devices.length, { on })}</small>
-                    <ClimateChip devices={devices} />
+                    <span className="room-card-climate"><ClimateChip devices={devices} /></span>
                 </span>
                 {isZoneActive(summarizeDevices(devices)) && <span className="zone-active-dot" title={t('zones.active')} />}
                 <ChevronRight className="w-4 h-4 room-card-chevron" />

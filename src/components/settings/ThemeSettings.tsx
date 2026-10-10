@@ -1,8 +1,9 @@
 import React from 'react';
-import { Check } from 'lucide-react';
+import { Check, Moon, Sun, SunMoon } from 'lucide-react';
+import { Segmented, SettingLine } from './Segmented';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useI18n } from '../../i18n/I18nContext';
-import { Daylight, INTERVAL_OPTIONS, PALETTES, PaletteId, SceneId, SeasonChoice, ThemeMode, nextChange } from '../../themes/palettes';
+import { Daylight, INTERVAL_OPTIONS, PALETTES, PaletteId, SceneId, SeasonChoice, ThemeMode, nextChange, seasonFor } from '../../themes/palettes';
 
 const DAYLIGHT: Daylight[] = ['auto', 'day', 'night'];
 const SCENES: SceneId[] = ['none', 'cabin', 'village'];
@@ -14,6 +15,10 @@ const MODES: ThemeMode[] = ['cycle', 'fixed'];
 export const ThemeSettings: React.FC = () => {
     const { palette, settings, updateSettings } = useTheme();
     const { t } = useI18n();
+    // Вне панели (без погоды) день и ночь считаем по часам
+    const hour = new Date().getHours();
+    const isNight = settings.daylight === 'night' || (settings.daylight === 'auto' && (hour >= 19 || hour < 7));
+    const previewSeason = settings.season === 'auto' ? seasonFor(new Date()) : settings.season;
     const paletteName = (id: PaletteId) => t(`theme.palettes.${id}.name`);
 
     const toggleCycleMember = (id: PaletteId) => {
@@ -53,59 +58,71 @@ export const ThemeSettings: React.FC = () => {
             <div className="theme-mode-hint">{t(`theme.modes.${settings.mode}.hint`)}</div>
 
             {settings.mode === 'cycle' && (
-                <div className="theme-interval">
-                    <span>{t('theme.interval')}</span>
-                    {INTERVAL_OPTIONS.map(hours => (
+                <SettingLine label={t('theme.interval')}>
+                    <Segmented
+                        label={t('theme.interval')}
+                        value={settings.intervalHours}
+                        onChange={hours => updateSettings({ intervalHours: hours })}
+                        options={INTERVAL_OPTIONS.map(hours => ({ value: hours, label: t('theme.hours', { hours }) }))}
+                    />
+                </SettingLine>
+            )}
+
+            <SettingLine label={t('daylight.title')}>
+                <Segmented
+                    label={t('daylight.title')}
+                    value={settings.daylight}
+                    onChange={option => updateSettings({ daylight: option })}
+                    options={DAYLIGHT.map(option => ({
+                        value: option,
+                        label: t(`daylight.short.${option}`),
+                        icon: option === 'auto' ? <SunMoon className="w-3.5 h-3.5" /> : option === 'day' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />,
+                    }))}
+                />
+            </SettingLine>
+
+            <div className="scene-picker" role="radiogroup" aria-label={t('scene.title')}>
+                <span className="setting-line-label">{t('scene.title')}</span>
+                <div className="scene-cards">
+                    {SCENES.map(option => (
                         <button
-                            key={hours}
-                            className={`theme-interval-chip ${settings.intervalHours === hours ? 'is-active' : ''}`}
-                            onClick={() => updateSettings({ intervalHours: hours })}
+                            key={option}
+                            role="radio"
+                            aria-checked={settings.scene === option}
+                            className={`scene-card ${settings.scene === option ? 'is-active' : ''}`}
+                            onClick={() => updateSettings({ scene: option })}
                         >
-                            {t('theme.hours', { hours })}
+                            <span
+                                className="scene-card-preview"
+                                style={option === 'none'
+                                    ? { background: `linear-gradient(135deg, ${palette.swatch[0]}, ${palette.swatch[1]})` }
+                                    : { backgroundImage: `url(./scenes/${option}-${previewSeason}-${isNight ? 'night' : 'day'}.webp)` }}
+                            />
+                            <span className="scene-card-name">{t(`scene.${option}`)}</span>
                         </button>
                     ))}
                 </div>
-            )}
-
-            <div className="theme-interval">
-                <span>{t('daylight.title')}</span>
-                {DAYLIGHT.map(option => (
-                    <button
-                        key={option}
-                        className={`theme-interval-chip ${settings.daylight === option ? 'is-active' : ''}`}
-                        onClick={() => updateSettings({ daylight: option })}
-                    >
-                        {t(`daylight.${option}`)}
-                    </button>
-                ))}
             </div>
 
-            <div className="theme-interval">
-                <span>{t('scene.title')}</span>
-                {SCENES.map(option => (
-                    <button key={option} className={`theme-interval-chip ${settings.scene === option ? 'is-active' : ''}`} onClick={() => updateSettings({ scene: option })}>
-                        {t(`scene.${option}`)}
-                    </button>
-                ))}
-            </div>
             {settings.scene !== 'none' && (
                 <>
-                    <div className="theme-interval">
-                        <span>{t('season.title')}</span>
-                        {SEASONS.map(option => (
-                            <button key={option} className={`theme-interval-chip ${settings.season === option ? 'is-active' : ''}`} onClick={() => updateSettings({ season: option })}>
-                                {t(`season.${option}`)}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="theme-interval">
-                        <span>{t('scene.motion')}</span>
-                        {[true, false].map(option => (
-                            <button key={String(option)} className={`theme-interval-chip ${settings.motion === option ? 'is-active' : ''}`} onClick={() => updateSettings({ motion: option })}>
-                                {option ? t('cards.on') : t('cards.off')}
-                            </button>
-                        ))}
-                    </div>
+                    <SettingLine label={t('season.title')}>
+                        <Segmented
+                            label={t('season.title')}
+                            value={settings.season}
+                            onChange={option => updateSettings({ season: option })}
+                            options={SEASONS.map(option => ({ value: option, label: t(`season.${option}`) }))}
+                        />
+                    </SettingLine>
+                    <SettingLine label={t('scene.motion')}>
+                        <button
+                            role="switch"
+                            aria-checked={settings.motion}
+                            aria-label={t('scene.motion')}
+                            className={`dd-switch ${settings.motion ? 'is-on' : ''}`}
+                            onClick={() => updateSettings({ motion: !settings.motion })}
+                        ><span /></button>
+                    </SettingLine>
                 </>
             )}
 

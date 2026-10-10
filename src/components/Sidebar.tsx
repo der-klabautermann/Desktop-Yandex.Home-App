@@ -1,5 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { Gauge, Home, LayoutGrid, Play, Server, Settings, SquareStack } from 'lucide-react';
+import { ChevronRight, Gauge, Home, LayoutGrid, Play, Server, Settings, SquareStack } from 'lucide-react';
+import { SidebarSubList } from './sidebar/SidebarSubList';
 import { YandexDevice } from '../types/index';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { SidebarHeader } from './sidebar/SidebarHeader';
@@ -12,6 +13,11 @@ import type { PageView } from '../hooks/useNavigation';
 type NavKey = 'rooms' | 'sensors' | 'groups' | 'scenarios';
 const DEFAULT_ORDER: NavKey[] = ['rooms', 'sensors', 'groups', 'scenarios'];
 const ORDER_KEY = 'sidebar:navOrder';
+const OPEN_KEY = 'sidebar:navOpen';
+
+const loadOpen = (): NavKey[] => {
+    try { return JSON.parse(localStorage.getItem(OPEN_KEY) ?? '["rooms"]'); } catch { return ['rooms']; }
+};
 
 const NAV: Record<NavKey, { icon: React.ElementType; label: string; views: string[] }> = {
     rooms: { icon: LayoutGrid, label: 'sidebar.rooms', views: ['rooms', 'room'] },
@@ -40,6 +46,13 @@ export const Sidebar: React.FC<SidebarProps> = () => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
     const [order, setOrder] = useState<NavKey[]>(loadOrder);
+    // Раскрытые списки под пунктами меню
+    const [open, setOpen] = useState<NavKey[]>(loadOpen);
+    const toggleOpen = (key: NavKey) => setOpen(prev => {
+        const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key];
+        try { localStorage.setItem(OPEN_KEY, JSON.stringify(next)); } catch { /* не сохранится */ }
+        return next;
+    });
     const [dragging, setDragging] = useState<NavKey | null>(null);
     const [dropAt, setDropAt] = useState<{ key: NavKey; after: boolean } | null>(null);
     const dropRef = useRef<{ key: NavKey; after: boolean } | null>(null);
@@ -63,6 +76,9 @@ export const Sidebar: React.FC<SidebarProps> = () => {
     // Перетаскивание мышью: короткий клик открывает раздел, движение больше 6 px переставляет
     const startDrag = (key: NavKey, down: React.PointerEvent) => {
         if (down.button !== 0) return;
+        // Ziehen nur am Menüpunkt selbst, nicht an der aufgeklappten Liste oder am Pfeil
+        const target = down.target as HTMLElement;
+        if (!target.closest('.nav-row') || target.closest('.nav-expand')) return;
         const startY = down.clientY;
         let active = false;
         const onMove = (e: PointerEvent) => {
@@ -115,8 +131,19 @@ export const Sidebar: React.FC<SidebarProps> = () => {
                             className={`nav-slot ${dragging === key ? 'is-dragging' : ''} ${dropAt?.key === key && dragging !== key ? (dropAt.after ? 'drop-after' : 'drop-before') : ''}`}
                             onPointerDown={e => startDrag(key, e)}
                         >
-                            {item(key, nav.icon, t(nav.label), nav.views.includes(ctx.activeSidebarView),
-                                () => ctx.onSelectPage(key as PageView), key === 'sensors' ? sensorCount : undefined)}
+                            <div className="nav-row">
+                                {item(key, nav.icon, t(nav.label), nav.views.includes(ctx.activeSidebarView),
+                                    () => ctx.onSelectPage(key as PageView), key === 'sensors' ? sensorCount : undefined)}
+                                <button
+                                    className={`nav-expand ${open.includes(key) ? 'is-open' : ''}`}
+                                    onClick={() => toggleOpen(key)}
+                                    aria-expanded={open.includes(key)}
+                                    title={open.includes(key) ? t('sidebar.collapse') : t('sidebar.expand')}
+                                >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                </button>
+                            </div>
+                            {open.includes(key) && <SidebarSubList list={key} />}
                         </div>
                     );
                 })}

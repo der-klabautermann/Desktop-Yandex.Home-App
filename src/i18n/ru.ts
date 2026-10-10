@@ -55,6 +55,8 @@ export const ru = {
     rooms: 'Комнаты и зоны',
     sensors: 'Датчики',
     scenarios: 'Сценарии',
+    expand: 'Развернуть',
+    collapse: 'Свернуть',
     system: 'Система',
   },
   weather: {
@@ -81,12 +83,14 @@ export const ru = {
     winter: 'Зима',
   },
   daylight: {
+    short: { auto: 'Авто', day: 'День', night: 'Ночь' },
     day: 'Дневной вид',
     night: 'Ночной вид',
     auto: 'Автоматически',
     title: 'День и ночь',
   },
   cards: {
+    run: 'Запустить',
     on: 'Включено',
     off: 'Выключено',
     updating: 'Обновление...',

@@ -55,6 +55,8 @@ export const de = {
     rooms: 'Räume und Zonen',
     sensors: 'Sensoren',
     scenarios: 'Szenarien',
+    expand: 'Aufklappen',
+    collapse: 'Zuklappen',
     system: 'System',
   },
   weather: {
@@ -81,12 +83,14 @@ export const de = {
     winter: 'Winter',
   },
   daylight: {
+    short: { auto: 'Auto', day: 'Tag', night: 'Nacht' },
     day: 'Tagansicht',
     night: 'Nachtansicht',
     auto: 'Automatisch',
     title: 'Tag und Nacht',
   },
   cards: {
+    run: 'Ausführen',
     on: 'Eingeschaltet',
     off: 'Ausgeschaltet',
     updating: 'Wird aktualisiert …',
