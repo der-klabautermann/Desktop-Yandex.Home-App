@@ -3340,3 +3340,7 @@ button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offse
 .nav-sub-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nav-sub-meta { font-size: 11.5px; color: rgba(238, 242, 248, 0.55); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .nav-sub-done { color: var(--success) !important; }
+/* macOS: Fensterknöpfe liegen oben links; die schwebende Glasleiste beginnt darunter */
+html.is-mac[data-scene] .sidebar { margin-top: 44px; }
+html.is-mac[data-scene] .sidebar-header { padding-top: 12px; }
+.scene-video { width: 100%; height: 100%; object-fit: fill; display: block; }

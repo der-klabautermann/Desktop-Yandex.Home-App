@@ -53,3 +53,6 @@ export const VILLAGE_RIVER: Record<Season, Polygon[]> = {
         [[65, 73], [82, 72], [100, 78], [100, 100], [88, 100], [78, 88], [70, 80]],
     ],
 };
+
+/** Сцены, для которых есть видео (public/scenes/<ключ>.mp4): огонь, свечи и река живые. */
+export const SCENE_VIDEOS = new Set<string>([]);

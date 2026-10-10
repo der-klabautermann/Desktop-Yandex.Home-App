@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWeather } from '../contexts/WeatherContext';
 import { seasonFor, type Season } from '../themes/palettes';
-import { VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
+import { SCENE_VIDEOS, VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
 
 /**
  * Фоновая сцена во всё окно: фото (public/scenes/<сцена>-<сезон>-day|night.webp) с медленным
@@ -29,19 +29,26 @@ export const SceneBackground: React.FC = () => {
     const url = `./scenes/${scene}-${season}-${isNight ? 'night' : 'day'}.webp`;
 
     const daylight = isNight ? 'night' : 'day';
+    const key = `${scene}-${season}-${daylight}`;
+    // Видео только при включённом движении; иначе неподвижное фото
+    const video = moving && SCENE_VIDEOS.has(key);
     return (
         <div className={`scene-bg is-${scene} ${isNight ? 'is-night' : 'is-day'}`} aria-hidden>
             {/* Сцена всегда 16:9 и накрывает окно: так проценты картинки совпадают с наложениями */}
             <div key={url} className="scene-stage">
-                <div className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
-                {scene === 'village' && moving && VILLAGE_RIVER[season].map((polygon, i) => (
+                {video ? (
+                    <video className="scene-photo scene-video" src={`./scenes/${key}.mp4`} poster={url} autoPlay muted loop playsInline />
+                ) : (
+                    <div className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
+                )}
+                {scene === 'village' && moving && !video && VILLAGE_RIVER[season].map((polygon, i) => (
                     <River key={i} url={url} polygon={polygon} />
                 ))}
                 {scene === 'village' && <TowerClock spot={VILLAGE_CLOCKS[season][daylight]} />}
             </div>
-            {moving && scene === 'village' && <WaterFilter />}
-            {isNight && <div className="scene-glow" />}
-            {moving && <Particles season={season} night={isNight} />}
+            {moving && scene === 'village' && !video && <WaterFilter />}
+            {isNight && !video && <div className="scene-glow" />}
+            {moving && scene === 'village' && <Particles season={season} night={isNight} />}
             <div className="scene-veil" />
         </div>
     );
