@@ -197,7 +197,48 @@ const ART_RULES: Array<[string, string]> = [
 ];
 
 /** Картинки, которые уже лежат в public/device-art (обе версии: день и ночь). */
-export const AVAILABLE_ART = new Set<string>(['bath-fan', 'desk-lamp', 'washing-machine']);
+export const AVAILABLE_ART = new Set<string>([
+  'air-conditioner',
+  'bath-fan',
+  'blinds',
+  'bulb',
+  'button',
+  'camera',
+  'ceiling-light',
+  'climate-sensor',
+  'coffee-maker',
+  'curtains',
+  'desk-lamp',
+  'dishwasher',
+  'door-sensor',
+  'fan',
+  'gas-detector',
+  'hub',
+  'humidifier',
+  'iron',
+  'kettle',
+  'leak-sensor',
+  'light-sensor',
+  'light-strip',
+  'meter',
+  'motion-sensor',
+  'multicooker',
+  'pet-feeder',
+  'pet-fountain',
+  'purifier',
+  'radiator',
+  'receiver',
+  'robot-vacuum',
+  'smoke-detector',
+  'socket',
+  'speaker',
+  'switch',
+  'tv',
+  'tv-box',
+  'vibration-sensor',
+  'washing-machine',
+  'water-valve',
+]);
 
 export const deviceArtKey = (type: string): string => {
   const short = type.replace('devices.types.', '');
