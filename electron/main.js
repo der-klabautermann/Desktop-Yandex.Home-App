@@ -77,7 +77,12 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 app.commandLine.appendSwitch('use-mock-keychain');
 const DEV_VITE_URL = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
 
-if (!isDev) {
+// Демо-сборка (productName «Smart Central Demo»): своя папка данных, настоящий дом не трогает
+const isDemo = app.getName() === 'Smart Central Demo';
+
+if (!isDev && isDemo) {
+    app.setPath('userData', path.join(app.getPath('appData'), 'smart-central-demo'));
+} else if (!isDev) {
     // Папка данных остаётся прежней и после переименования приложения (настройки, кэш, зоны)
     app.setPath('userData', path.join(app.getPath('appData'), 'yandex-smart-home-control'));
 }
@@ -375,7 +380,8 @@ function createWindow () {
         webPreferences: {
             nodeIntegration: false, 
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.cjs')
+            preload: path.join(__dirname, 'preload.cjs'),
+            additionalArguments: isDemo ? ['--smart-central-demo'] : []
         }
     });
     

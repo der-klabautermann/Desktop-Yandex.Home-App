@@ -2,7 +2,10 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('api', {
+// Демо-приложение: интерфейс работает на демо-данных, настоящий доступ к сервисам не нужен
+if (process.argv.includes('--smart-central-demo')) {
+    contextBridge.exposeInMainWorld('demoEnv', { platform: process.platform });
+} else contextBridge.exposeInMainWorld('api', {
     platform: process.platform,
     setLanguage: (lang) => ipcRenderer.send('app:set-language', lang),
     getCameraStream: (deviceId) => ipcRenderer.invoke('yandex-api:getCameraStream', deviceId),

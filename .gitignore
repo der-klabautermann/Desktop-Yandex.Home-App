@@ -29,3 +29,5 @@ yarn-error.log*
 
 # Сгенерированный бандл ядра
 /electron/core.js
+/release-demo
+/dist-web-demo

@@ -4,6 +4,7 @@ import { compareVersions } from '../utils/dataUtils';
 import { getCheckUpdatesOnStartup } from '../utils/updateSettings';
 import packageJson from '../../package.json';
 import { RELEASES_API_URL } from '../constants/app';
+import { IS_DEMO } from '../dev/demo';
 
 interface UpdateInfo {
     latestVersion: string;
@@ -18,6 +19,8 @@ interface UseUpdateNotificationReturn {
 }
 
 const checkForUpdates = async (): Promise<UpdateInfo | null> => {
+    // Демо не предлагает обновление до настоящего приложения
+    if (IS_DEMO) return null;
     try {
         const response = await fetch(RELEASES_API_URL);
         if (response.status === 404) return null;

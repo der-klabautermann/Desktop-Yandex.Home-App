@@ -5,6 +5,7 @@
 import { createMockHome, createMockXiaomiHome } from './mockData';
 import { createShowroomHome } from './mockShowroom';
 import { localizeShowroom } from './showroomNames';
+import { IS_DEMO } from './demo';
 import { branchesOf, runScenarioFlow } from '../../core/scenarios';
 import { firedScenarios, snapshotOf, type HomeSnapshot } from '../../core/triggers';
 import type { YandexUserInfoResponse } from '../types';
@@ -12,7 +13,8 @@ import type { YandexUserInfoResponse } from '../types';
 type MockProvider = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
 
 export function installMockApi() {
-  const mode = new URLSearchParams(location.search).get('mock') ?? 'single';
+  // В демо-сборке по умолчанию весь дом-выставка
+  const mode = new URLSearchParams(location.search).get('mock') ?? (IS_DEMO ? 'all' : 'single');
   const homes: Record<'yandex' | 'xiaomi', YandexUserInfoResponse> = { yandex: createMockHome(), xiaomi: createMockXiaomiHome() };
   // Названия выставки на языке интерфейса (для снимков экрана)
   const showroom = mode === 'all' ? localizeShowroom(createShowroomHome(), localStorage.getItem('app_language') ?? 'de') : null;
@@ -79,6 +81,8 @@ export function installMockApi() {
   };
 
   (window as any).api = {
+    // Платформу передаёт preload демо-приложения: на Mac нужен отступ под кнопки окна
+    platform: (window as any).demoEnv?.platform,
     setLanguage: () => {},
     hub: {
       accounts: async () => accounts(),

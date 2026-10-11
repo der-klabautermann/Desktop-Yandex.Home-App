@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "test": "vitest run --root .",
     "preview:web": "vite --port 5174 --strictPort",
-    "build:core": "node scripts/build-core.mjs"
+    "build:core": "node scripts/build-core.mjs",
+    "build:demo": "npm run build:core && VITE_DEMO=1 vite build",
+    "dist:demo": "npm run build:demo && electron-builder --config electron-builder.demo.cjs"
   },
   "dependencies": {
     "@fontsource/comfortaa": "^5.3.0",
