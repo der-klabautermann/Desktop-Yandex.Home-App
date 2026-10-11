@@ -3139,16 +3139,6 @@ button.stat-chip:focus-visible { outline: 2px solid var(--accent); outline-offse
   0% { transform: translate(-50%, -50%) scale(1.04) translate3d(-1.2%, 0.4%, 0); }
   100% { transform: translate(-50%, -50%) scale(1.10) translate3d(1.2%, -0.8%, 0); }
 }
-.scene-svg-defs { position: absolute; }
-.scene-river { position: absolute; filter: url(#scene-water); overflow: hidden; }
-.scene-river-shine {
-  position: absolute; inset: 0; mix-blend-mode: screen; opacity: 0.35;
-  background: repeating-linear-gradient(115deg, transparent 0 22px, rgba(255, 236, 200, 0.10) 26px, transparent 34px);
-  background-size: 200% 100%;
-  animation: riverShine 7s linear infinite;
-}
-.scene-bg.is-day .scene-river-shine { opacity: 0.25; }
-@keyframes riverShine { from { background-position: 0 0; } to { background-position: -200% 0; } }
 .scene-clock { position: absolute; aspect-ratio: 1; overflow: visible; }
 /* Warmes Flackern von Kamin bzw. Laterne */
 .scene-glow {

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useWeather } from '../contexts/WeatherContext';
 import { seasonFor, type Season } from '../themes/palettes';
-import { SCENE_VIDEOS, VIDEO_RATE, VILLAGE_CLOCKS, VILLAGE_RIVER, type ClockSpot, type Polygon } from './sceneEffects';
+import { SCENE_VIDEOS, VIDEO_RATE, VILLAGE_CLOCKS, type ClockSpot } from './sceneEffects';
 
 /**
  * Фоновая сцена во всё окно: фото (public/scenes/<сцена>-<сезон>-day|night.webp) с медленным
@@ -45,12 +45,8 @@ export const SceneBackground: React.FC = () => {
                 ) : (
                     <div className="scene-photo" style={{ backgroundImage: `url(${url})` }} />
                 )}
-                {scene === 'village' && moving && !video && VILLAGE_RIVER[season].map((polygon, i) => (
-                    <River key={i} url={url} polygon={polygon} />
-                ))}
                 {scene === 'village' && <TowerClock spot={VILLAGE_CLOCKS[season][daylight]} />}
             </div>
-            {moving && scene === 'village' && !video && <WaterFilter />}
             {isNight && !video && <div className="scene-glow" />}
             {moving && scene === 'village' && <Particles season={season} night={isNight} />}
             <div className="scene-veil" />
@@ -148,40 +144,6 @@ const Particles: React.FC<{ season: Season; night: boolean }> = ({ season, night
     }, [season, night]);
 
     return <canvas ref={canvasRef} className="scene-particles" />;
-};
-
-/** Рябь для воды: шум медленно «плывёт» и слегка смещает пиксели картинки. */
-const WaterFilter: React.FC = () => (
-    <svg className="scene-svg-defs" width="0" height="0" aria-hidden>
-        <filter id="scene-water" x="-5%" y="-5%" width="110%" height="110%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.010 0.045" numOctaves="2" seed="3" result="noise">
-                <animate attributeName="baseFrequency" dur="9s" values="0.010 0.045;0.012 0.055;0.010 0.045" repeatCount="indefinite" />
-            </feTurbulence>
-            <feOffset in="noise" dx="0" dy="0" result="moving">
-                <animate attributeName="dx" dur="6s" values="0;24;0" repeatCount="indefinite" />
-            </feOffset>
-            <feDisplacementMap in="SourceGraphic" in2="moving" scale="7" xChannelSelector="R" yChannelSelector="G" />
-        </filter>
-    </svg>
-);
-
-/** Участок реки: та же картинка, обрезанная по воде, с рябью и бегущим бликом. */
-const River: React.FC<{ url: string; polygon: Polygon }> = ({ url, polygon }) => {
-    const xs = polygon.map(([x]) => x);
-    const ys = polygon.map(([, y]) => y);
-    const left = Math.min(...xs);
-    const top = Math.min(...ys);
-    const width = Math.max(...xs) - left || 1;
-    const height = Math.max(...ys) - top || 1;
-    // Картинка внутри участка лежит так же, как во всей сцене
-    const style: React.CSSProperties = {
-        left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%`,
-        backgroundImage: `url(${url})`,
-        backgroundSize: `${(100 / width) * 100}% ${(100 / height) * 100}%`,
-        backgroundPosition: `${width >= 100 ? 0 : (left / (100 - width)) * 100}% ${height >= 100 ? 0 : (top / (100 - height)) * 100}%`,
-        clipPath: `polygon(${polygon.map(([x, y]) => `${((x - left) / width) * 100}% ${((y - top) / height) * 100}%`).join(', ')})`,
-    };
-    return <div className="scene-river" style={style}><span className="scene-river-shine" /></div>;
 };
 
 /** Часы на башне с настоящим временем поверх нарисованного циферблата. */

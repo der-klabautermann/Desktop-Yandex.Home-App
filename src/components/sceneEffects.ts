@@ -1,4 +1,4 @@
-// Где на картинках сцен стоят часы на башне и течёт река (в процентах картинки 16:9).
+// Где на картинках сцен стоят часы на башне (в процентах картинки 16:9).
 // Значения измерены по каждой картинке; день и ночь немного отличаются.
 import type { Season } from '../themes/palettes';
 
@@ -9,9 +9,6 @@ export interface ClockSpot {
     face: string;
     hands: string;
 }
-
-/** Многоугольник воды: пары [x, y] в процентах картинки. */
-export type Polygon = Array<[number, number]>;
 
 const DARK_HANDS = '#2A1E16';
 
@@ -35,17 +32,7 @@ export const VILLAGE_CLOCKS: Record<Season, Record<'day' | 'night', ClockSpot>> 
     },
 };
 
-const AUTUMN_RIVER: Polygon[] = [
-        [[52, 55], [58, 55], [58, 61], [52.5, 61]],
-        [[60, 69], [64, 67], [72, 68], [80, 71], [90, 76], [100, 82], [100, 100], [81, 100], [72, 89], [64, 79], [60, 73]],
-];
-
-/** Река везде одна и та же: все времена года сделаны из осенней картинки. */
-export const VILLAGE_RIVER: Record<Season, Polygon[]> = {
-    spring: AUTUMN_RIVER, summer: AUTUMN_RIVER, autumn: AUTUMN_RIVER, winter: AUTUMN_RIVER,
-};
-
-/** Сцены, для которых есть видео (public/scenes/<ключ>.mp4): огонь, свечи и река живые. */
+/** Сцены, для которых есть видео (public/scenes/<ключ>.mp4): огонь и свечи живые. */
 export const SCENE_VIDEOS = new Set<string>([]);
 
 /** Скорость видео сцен: медленнее выглядит спокойнее. */
