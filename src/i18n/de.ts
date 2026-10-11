@@ -411,6 +411,14 @@ export const de = {
     found: 'Neu gefunden',
     emptyService: 'Bei diesem Dienst sind noch keine Geräte.',
   },
+  schedule: {
+    title: 'Reinigungszeiten',
+    hint: 'Smart Central startet die Reinigung zur eingestellten Zeit, solange die App läuft',
+    time: 'Uhrzeit',
+    active: 'Aktiv',
+    add: 'Zeit hinzufügen',
+    remove: 'Zeit entfernen',
+  },
   devicePage: {
     name: 'Name',
     newRoom: 'Neuer Raum …',

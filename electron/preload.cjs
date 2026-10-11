@@ -38,6 +38,11 @@ contextBridge.exposeInMainWorld('api', {
         save: (config) => ipcRenderer.invoke('zones:save', config),
     },
 
+    schedules: {
+        load: () => ipcRenderer.invoke('schedules:load'),
+        save: (config) => ipcRenderer.invoke('schedules:save', config),
+    },
+
     // Auto-launch methods
     isAutostartEnabled: () => ipcRenderer.invoke('autostart:isEnabled'),
     setAutostartEnabled: (enabled) => ipcRenderer.invoke('autostart:setEnabled', enabled), 

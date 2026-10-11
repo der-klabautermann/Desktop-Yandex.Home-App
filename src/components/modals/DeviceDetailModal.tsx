@@ -10,6 +10,7 @@ import { listProperties } from '../../utils/deviceInfo';
 import { findNode } from '../../../core/zones';
 import { ZoneIcon } from '../zones/zoneIcons';
 import { DeviceControlsSection, DeviceReadingsSection } from '../device/DeviceSections';
+import { DeviceScheduleSection, hasSchedule } from '../device/DeviceScheduleSection';
 
 interface DeviceDetailModalProps {
     device: YandexDevice;
@@ -108,6 +109,7 @@ export const DeviceDetailModal: React.FC<DeviceDetailModalProps> = ({ device, on
 
                 <div className="dd-body">
                     <DeviceControlsSection device={device} />
+                    {hasSchedule(device) && <DeviceScheduleSection device={device} />}
                     <DeviceReadingsSection device={device} />
                 </div>
             </div>

@@ -411,6 +411,14 @@ export const en = {
     found: 'Newly found',
     emptyService: 'This service has no devices yet.',
   },
+  schedule: {
+    title: 'Cleaning times',
+    hint: 'Smart Central starts cleaning at the set time while the app is running',
+    time: 'Time',
+    active: 'Active',
+    add: 'Add time',
+    remove: 'Remove time',
+  },
   devicePage: {
     name: 'Name',
     newRoom: 'New room …',

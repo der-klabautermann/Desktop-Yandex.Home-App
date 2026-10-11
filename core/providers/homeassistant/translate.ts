@@ -24,7 +24,7 @@ const id = (raw: string) => withPrefix('homeassistant', raw);
 const domainOf = (entityId: string) => entityId.split('.')[0];
 
 /** Управляемые области в порядке важности: первая становится главной на карточке устройства. */
-const CONTROLLABLE = ['light', 'switch', 'fan', 'climate', 'cover', 'input_boolean', 'humidifier'];
+const CONTROLLABLE = ['vacuum', 'light', 'switch', 'fan', 'climate', 'cover', 'input_boolean', 'humidifier'];
 const SENSORS = ['sensor', 'binary_sensor'];
 const UNAVAILABLE = new Set(['unavailable', 'unknown']);
 
@@ -91,6 +91,7 @@ const propertyFor = (state: HaState): YandexProperty | null => {
 const typeFor = (main: HaState | null, properties: YandexProperty[]): string => {
   if (main) {
     const domain = domainOf(main.entity_id);
+    if (domain === 'vacuum') return 'devices.types.vacuum_cleaner';
     if (domain === 'light') return 'devices.types.light';
     if (domain === 'switch') return main.attributes.device_class === 'outlet' ? 'devices.types.socket' : 'devices.types.switch';
     if (domain === 'input_boolean') return 'devices.types.switch';
@@ -113,7 +114,10 @@ const typeFor = (main: HaState | null, properties: YandexProperty[]): string => 
 
 const capabilitiesFor = (main: HaState): YandexCapability[] => {
   const domain = domainOf(main.entity_id);
-  const isOn = domain === 'cover' ? main.state === 'open' : domain === 'climate' ? main.state !== 'off' : main.state === 'on';
+  const isOn = domain === 'cover' ? main.state === 'open'
+    : domain === 'climate' ? main.state !== 'off'
+    : domain === 'vacuum' ? main.state === 'cleaning'
+    : main.state === 'on';
   const result: YandexCapability[] = [onOff(isOn)];
   const a = main.attributes;
   if (domain === 'light' && (typeof a.brightness === 'number' || (a.supported_color_modes ?? []).some((m: string) => m !== 'onoff'))) {
@@ -128,6 +132,14 @@ const capabilitiesFor = (main: HaState): YandexCapability[] => {
       type: 'devices.capabilities.color_setting', retrievable: true, reportable: true,
       parameters: { temperature_k: { min: a.min_color_temp_kelvin ?? 2700, max: a.max_color_temp_kelvin ?? 6500, precision: 100 } },
       state: { instance: 'temperature_k', value: a.color_temp_kelvin ?? 4000 },
+    });
+  }
+  // Пылесос: «включён» значит убирает; мощность всасывания как режим
+  if (domain === 'vacuum' && Array.isArray(a.fan_speed_list) && a.fan_speed_list.length > 0) {
+    result.push({
+      type: 'devices.capabilities.mode', retrievable: true, reportable: true,
+      parameters: { instance: 'work_speed', modes: a.fan_speed_list.map((m: string) => ({ value: m, name: m })) },
+      state: { instance: 'work_speed', value: a.fan_speed ?? a.fan_speed_list[0] },
     });
   }
   if (domain === 'climate') {
@@ -148,6 +160,14 @@ const capabilitiesFor = (main: HaState): YandexCapability[] => {
     }
   }
   return result;
+};
+
+/** Заряд пылесоса HA отдаёт атрибутом, а не отдельным датчиком. */
+const withBattery = (state: HaState, properties: YandexProperty[]): YandexProperty[] => {
+  const level = state.attributes.battery_level;
+  if (domainOf(state.entity_id) !== 'vacuum' || typeof level !== 'number') return properties;
+  if (properties.some(p => p.parameters?.instance === 'battery_level')) return properties;
+  return [...properties, floatProperty('battery_level', level, 'unit.percent')];
 };
 
 export const buildHomeAssistantHome = (snapshot: HaSnapshot): HomeData => {
@@ -205,7 +225,7 @@ export const buildHomeAssistantHome = (snapshot: HaSnapshot): HomeData => {
         household_id: householdId,
         ...(UNAVAILABLE.has(state.state) ? { unreachable: true } : {}),
         capabilities: UNAVAILABLE.has(state.state) ? [onOff(false)] : capabilitiesFor(state),
-        properties: index === 0 ? properties : [],
+        properties: index === 0 ? withBattery(state, properties) : [],
       });
     });
   }
@@ -230,6 +250,7 @@ export interface HaServiceCall { domain: string; service: string; data: Record<s
 export const serviceForToggle = (entityId: string, on: boolean): HaServiceCall => {
   const domain = domainOf(entityId);
   if (domain === 'cover') return { domain, service: on ? 'open_cover' : 'close_cover', data: { entity_id: entityId } };
+  if (domain === 'vacuum') return { domain, service: on ? 'start' : 'return_to_base', data: { entity_id: entityId } };
   if (domain === 'scene' || domain === 'script') return { domain, service: 'turn_on', data: { entity_id: entityId } };
   return { domain, service: on ? 'turn_on' : 'turn_off', data: { entity_id: entityId } };
 };
@@ -245,6 +266,7 @@ export const serviceForAction = (entityId: string, action: YandexModeAction): Ha
   }
   if (domain === 'climate' && action.instance === 'thermostat') return { domain, service: 'set_hvac_mode', data: { entity_id: entityId, hvac_mode: action.value } };
   if (domain === 'climate' && action.instance === 'temperature') return { domain, service: 'set_temperature', data: { entity_id: entityId, temperature: Number(action.value) } };
+  if (domain === 'vacuum' && action.instance === 'work_speed') return { domain, service: 'set_fan_speed', data: { entity_id: entityId, fan_speed: action.value } };
   if (action.instance === 'on') return serviceForToggle(entityId, Boolean(action.value));
   return null;
 };

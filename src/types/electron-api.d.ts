@@ -41,9 +41,15 @@ export interface IZonesApi {
     save: (config: import('../../core/zones').ZoneConfig) => Promise<void>;
 }
 
+export interface ISchedulesApi {
+    load: () => Promise<import('../../core/schedules').ScheduleConfig | null>;
+    save: (config: import('../../core/schedules').ScheduleConfig) => Promise<void>;
+}
+
 export interface IYandexApi {
     hub: IHubApi;
     zones: IZonesApi;
+    schedules?: ISchedulesApi;
     platform?: string;
     setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
     getCameraStream: (deviceId: string) => Promise<CameraStreamResult>;

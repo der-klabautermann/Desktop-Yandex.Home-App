@@ -7,6 +7,8 @@ import { fileURLToPath } from 'url';
 // Ядро: сервисы умного дома и распределитель
 import {
     Hub,
+    dueSchedules,
+    EMPTY_SCHEDULES,
     createYandexProvider,
     createAqaraProvider,
     createHomeAssistantProvider,
@@ -544,6 +546,33 @@ if (!gotTheLock) {
         ipcMain.handle('zones:save', async (_e, config) => {
             await fs.writeFile(zonesFile, JSON.stringify(config, null, 2));
         });
+
+        // Расписания (например, уборка пылесоса): хранит и выполняет само приложение
+        const schedulesFile = path.join(app.getPath('userData'), 'schedules.json');
+        let schedules = EMPTY_SCHEDULES;
+        const schedulesReady = fs.readFile(schedulesFile, 'utf8')
+            .then(text => {
+                const saved = JSON.parse(text);
+                if (saved?.version === 1 && Array.isArray(saved.schedules)) schedules = saved;
+            })
+            .catch(() => { /* расписаний ещё нет */ });
+        ipcMain.handle('schedules:load', async () => { await schedulesReady; return schedules; });
+        ipcMain.handle('schedules:save', async (_e, config) => {
+            if (config?.version !== 1 || !Array.isArray(config.schedules)) throw new Error('ERR_INVALID');
+            schedules = config;
+            await fs.writeFile(schedulesFile, JSON.stringify(config, null, 2));
+        });
+        let lastScheduleCheck = new Date();
+        setInterval(() => {
+            const now = new Date();
+            const due = dueSchedules(schedules, lastScheduleCheck, now);
+            lastScheduleCheck = now;
+            for (const schedule of due) {
+                hub.toggleDevice(schedule.deviceId, true)
+                    .then(() => console.log(`Расписание ${schedule.time}: ${schedule.deviceId} запущен`))
+                    .catch(error => console.error(`Расписание ${schedule.time}: ${schedule.deviceId} не запустился`, error));
+            }
+        }, 20_000);
 
         ipcMain.handle('yandex-api:getCameraStream', async (event, deviceId) => {
             try {

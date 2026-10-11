@@ -8,6 +8,7 @@ import { ZoneDialog } from './zones/ZoneDialog';
 import { Pinned } from './Pinned';
 import { ZoneIcon } from './zones/zoneIcons';
 import { DeviceControlsSection, DeviceReadingsSection } from './device/DeviceSections';
+import { DeviceScheduleSection, hasSchedule } from './device/DeviceScheduleSection';
 import { deviceTypeLabel, formatPropertyValue } from '../utils/deviceInfo';
 
 /** Страница устройства: управление, показания, сведения об устройстве и удаление. */
@@ -126,6 +127,7 @@ export const DashboardDeviceView: React.FC<{ deviceId: string | null }> = ({ dev
             <div className="device-page">
                 <div className="dd-body dp-column">
                     <DeviceControlsSection device={device} />
+                    {hasSchedule(device) && <DeviceScheduleSection device={device} />}
                     <DeviceReadingsSection device={device} />
                 </div>
                 <div className="dd-body dp-column">

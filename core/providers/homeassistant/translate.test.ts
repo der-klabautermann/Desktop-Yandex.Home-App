@@ -101,3 +101,26 @@ describe('Befehle', () => {
     expect(serviceForAction('switch.x', { type: 'devices.capabilities.mode', instance: 'fan_speed', value: 'high' })).toBeNull();
   });
 });
+
+describe('Home Assistant: Saugroboter', () => {
+  const home = buildHomeAssistantHome({
+    locationName: 'Haus', areas: [],
+    entities: [{ e: 'vacuum.roborock', a: null, d: 'dev-vac', dn: 'Roborock S8' }],
+    states: [{ entity_id: 'vacuum.roborock', state: 'docked', attributes: { fan_speed: 'balanced', fan_speed_list: ['quiet', 'balanced', 'turbo'], battery_level: 87 } }],
+  });
+  const vacuum = home.devices[0];
+
+  it('wird als Saugroboter mit Saugstärke und Akku erkannt', () => {
+    expect(vacuum.type).toBe('devices.types.vacuum_cleaner');
+    expect(vacuum.capabilities.find(c => c.type === 'devices.capabilities.on_off')?.state?.value).toBe(false);
+    expect(vacuum.capabilities.find(c => c.type === 'devices.capabilities.mode')?.state?.value).toBe('balanced');
+    expect(vacuum.properties?.find(p => p.parameters?.instance === 'battery_level')?.state?.value).toBe(87);
+  });
+
+  it('startet, fährt zur Station und ändert die Saugstärke', () => {
+    expect(serviceForToggle('vacuum.roborock', true).service).toBe('start');
+    expect(serviceForToggle('vacuum.roborock', false).service).toBe('return_to_base');
+    expect(serviceForAction('vacuum.roborock', { instance: 'work_speed', value: 'turbo', type: 'devices.capabilities.mode' })?.data)
+      .toEqual({ entity_id: 'vacuum.roborock', fan_speed: 'turbo' });
+  });
+});
