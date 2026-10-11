@@ -92,8 +92,8 @@
 ## Установка
 
 1. Скачайте установщик из [последнего релиза](https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest):
-   - `Smart Central Setup vX.Y.Z-arm64.dmg` для Mac с чипом Apple (M1 и новее)
-   - `Smart Central Setup vX.Y.Z-x64.dmg` для Mac с процессором Intel
+   - `Smart.Central.Setup.vX.Y.Z-arm64.dmg` для Mac с чипом Apple (M1 и новее)
+   - `Smart.Central.Setup.vX.Y.Z-x64.dmg` для Mac с процессором Intel
 
    Не уверены? Меню Apple, «Об этом Mac»: «Чип» означает чип Apple, «Процессор» означает Intel.
 2. Откройте `.dmg` и перетащите Smart Central в папку «Программы».

@@ -92,8 +92,8 @@ Ein Smart Home kommt selten von einem Hersteller. Eine Yandex Station im Wohnzim
 ## Installation
 
 1. Lade den Installer aus dem [neuesten Release](https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest):
-   - `Smart Central Setup vX.Y.Z-arm64.dmg` für Macs mit Apple-Chip (M1 und neuer)
-   - `Smart Central Setup vX.Y.Z-x64.dmg` für Macs mit Intel-Prozessor
+   - `Smart.Central.Setup.vX.Y.Z-arm64.dmg` für Macs mit Apple-Chip (M1 und neuer)
+   - `Smart.Central.Setup.vX.Y.Z-x64.dmg` für Macs mit Intel-Prozessor
 
    Unsicher? Apfel-Menü, Über diesen Mac: Steht dort „Chip“, ist es ein Apple-Chip, steht dort „Prozessor“, ist es Intel.
 2. Öffne die `.dmg` und ziehe Smart Central in den Ordner Programme.

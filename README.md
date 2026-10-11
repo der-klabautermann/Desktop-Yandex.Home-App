@@ -92,8 +92,8 @@ Smart homes rarely come from one vendor. A Yandex Station in the living room, Aq
 ## Install
 
 1. Download the installer from the [latest release](https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest):
-   - `Smart Central Setup vX.Y.Z-arm64.dmg` for Macs with Apple silicon (M1 and newer)
-   - `Smart Central Setup vX.Y.Z-x64.dmg` for Macs with an Intel processor
+   - `Smart.Central.Setup.vX.Y.Z-arm64.dmg` for Macs with Apple silicon (M1 and newer)
+   - `Smart.Central.Setup.vX.Y.Z-x64.dmg` for Macs with an Intel processor
 
    Not sure which one? Apple menu, About This Mac: "Chip" means Apple silicon, "Processor" means Intel.
 2. Open the `.dmg` and drag Smart Central into Applications.
