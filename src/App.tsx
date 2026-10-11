@@ -18,6 +18,8 @@ import packageJson from '../package.json';
 import { debugLog, debugWarn, refreshDebugFlags } from './utils/debugLog';
 import { useI18n } from './i18n/I18nContext';
 import { isCustomGroupId } from '../core/groups';
+import { isCustomScenarioId, scenariosAsYandex } from '../core/scenarios';
+import { useAutomations } from './hooks/useAutomations';
 
 const yandexApi = window.api;
 
@@ -55,11 +57,32 @@ function App() {
         window.api?.hub?.deletableProviders?.().then(setDeletableProviders).catch(() => {});
     }, []);
 
-    // Собственные группы показываем рядом с группами сервисов
-    const viewData = useMemo(
-        () => (zones.home && zones.customGroups.length ? { ...zones.home, groups: [...zones.home.groups, ...zones.customGroups] } : zones.home),
-        [zones.home, zones.customGroups],
-    );
+    const automations = useAutomations();
+    const customScenarios = useMemo(() => scenariosAsYandex(automations.config?.scenarios ?? [], null), [automations.config]);
+
+    // Собственные группы и сценарии показываем рядом с группами и сценариями сервисов
+    const viewData = useMemo(() => {
+        if (!zones.home || (!zones.customGroups.length && !customScenarios.length)) return zones.home;
+        return {
+            ...zones.home,
+            groups: [...zones.home.groups, ...zones.customGroups],
+            scenarios: [...zones.home.scenarios, ...customScenarios],
+        };
+    }, [zones.home, zones.customGroups, customScenarios]);
+    // Собственный сценарий выполняет главный процесс; часть устройств могла не ответить
+    const executeAnyScenario = useCallback(async (scenarioId: string) => {
+        if (!isCustomScenarioId(scenarioId)) return handleExecuteScenario(scenarioId);
+        try {
+            const result = await window.api.scenarios!.run(scenarioId);
+            showNotification(result.failed.length
+                ? t('actions.scenarioPartly', { failed: result.failed.length, total: result.total })
+                : t('actions.scenarioStarted'), result.failed.length ? 'error' : 'success');
+            refreshDashboardData(true);
+        } catch (err) {
+            showNotification(t('errors.withDetail', { detail: cleanErrorMessage(err, t) }), 'error');
+            throw err;
+        }
+    }, [handleExecuteScenario, showNotification, refreshDashboardData, t]);
     const toggleAnyGroup = useCallback(async (groupId: string, currentState: boolean) => {
         if (!isCustomGroupId(groupId)) return handleToggleGroup(groupId, currentState);
         const group = zones.customGroups.find(g => g.id === groupId);
@@ -263,22 +286,37 @@ function App() {
             } else if (command === 'TOGGLE_GROUP' && typeof currentState === 'boolean') {
                 toggleAnyGroup(id, currentState).catch(() => {});
             } else if (command === 'EXECUTE_SCENARIO') {
-                handleExecuteScenario(id).catch(() => {});
+                executeAnyScenario(id).catch(() => {});
             }
         });
         return () => { yandexApi.removeTrayCommandListener(); };
-    }, [handleToggleDevice, toggleAnyGroup, handleExecuteScenario]);
+    }, [handleToggleDevice, toggleAnyGroup, executeAnyScenario]);
 
     // --- 5. Polling-эффект (автосинхронизация) ---
     useEffect(() => {
         if (appState !== AppState.DASHBOARD || accounts.length === 0) return;
-        const POLLING_INTERVAL = 60000;
-        const pollingInterval = setInterval(() => {
+        // Часто, пока окно видно; в фоне (трей) реже. При возврате в окно сразу обновляем
+        const VISIBLE_INTERVAL = 15000;
+        const HIDDEN_INTERVAL = 60000;
+        let lastSync = Date.now();
+        const sync = () => {
+            lastSync = Date.now();
             refreshDashboardData(true).catch(err => {
                 console.error('Polling sync error:', err);
             });
-        }, POLLING_INTERVAL);
-        return () => { clearInterval(pollingInterval); };
+        };
+        const pollingInterval = setInterval(() => {
+            const due = document.hidden ? HIDDEN_INTERVAL : VISIBLE_INTERVAL;
+            if (Date.now() - lastSync >= due - 500) sync();
+        }, VISIBLE_INTERVAL);
+        const onVisible = () => { if (!document.hidden && Date.now() - lastSync > 3000) sync(); };
+        document.addEventListener('visibilitychange', onVisible);
+        window.addEventListener('focus', onVisible);
+        return () => {
+            clearInterval(pollingInterval);
+            document.removeEventListener('visibilitychange', onVisible);
+            window.removeEventListener('focus', onVisible);
+        };
     }, [appState, accounts.length, refreshDashboardData]);
 
     // --- Рендеринг ---
@@ -330,7 +368,8 @@ function App() {
                     onToggleGroupFavorite: (id: string) => toggleFavorite('group', id),
                     onToggleDevice: handleToggleDevice,
                     onToggleGroup: toggleAnyGroup,
-                    onExecuteScenario: handleExecuteScenario,
+                    onExecuteScenario: executeAnyScenario,
+                    automations,
                     onSetDeviceMode: handleSetDeviceMode,
                     onGetCameraStream: handleGetCameraStream,
                     onSetCameraPrivacy: handleSetCameraPrivacy,

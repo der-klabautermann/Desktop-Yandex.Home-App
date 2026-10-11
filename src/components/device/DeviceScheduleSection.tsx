@@ -1,10 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Clock, Plus, Trash2 } from 'lucide-react';
 import type { YandexDevice } from '../../types/index';
 import { useI18n } from '../../i18n/I18nContext';
-import {
-    ALL_DAYS, EMPTY_SCHEDULES, addSchedule, isValidTime, removeSchedule, schedulesFor, updateSchedule, type ScheduleConfig,
-} from '../../../core/schedules';
+import { useDashboardContext } from '../../contexts/DashboardContext';
+import { ALL_DAYS, addSchedule, isValidTime, removeSchedule, schedulesFor, updateSchedule } from '../../../core/schedules';
 
 /** Для каких устройств показываем расписание. */
 export const hasSchedule = (device: YandexDevice) => device.type.startsWith('devices.types.vacuum_cleaner')
@@ -17,36 +16,17 @@ const dayNames = (lang: string) => ALL_DAYS.map(day => {
     return name.replace(/\.$/, '');
 });
 
-/** Время уборки робота-пылесоса: Центр сам запускает его в выбранные дни. */
-export const DeviceScheduleSection: React.FC<{ device: YandexDevice }> = ({ device }) => {
+/** Список времён запуска с днями недели; цель: устройство или собственный сценарий. */
+export const ScheduleList: React.FC<{ targetId: string; defaultTime?: string }> = ({ targetId, defaultTime = '09:00' }) => {
+    const ctx = useDashboardContext();
     const { t, lang } = useI18n();
-    const [config, setConfig] = useState<ScheduleConfig | null>(null);
-    const latest = useRef<ScheduleConfig>(EMPTY_SCHEDULES);
-
-    useEffect(() => {
-        window.api?.schedules?.load()
-            .then(saved => {
-                const next = saved?.version === 1 ? saved : EMPTY_SCHEDULES;
-                latest.current = next;
-                setConfig(next);
-            })
-            .catch(() => setConfig(EMPTY_SCHEDULES));
-    }, []);
-
-    const update = useCallback((change: (current: ScheduleConfig) => ScheduleConfig) => {
-        const next = change(latest.current);
-        latest.current = next;
-        setConfig(next);
-        window.api?.schedules?.save(next).catch(err => console.error('Schedules save failed', err));
-    }, []);
-
-    if (!config || !window.api?.schedules) return null;
-    const list = schedulesFor(config, device.id);
+    const { config, update } = ctx.automations;
+    if (!config) return null;
+    const list = schedulesFor(config, targetId);
     const days = dayNames(lang);
 
     return (
-        <section className="dd-schedule">
-            <h3 title={t('schedule.hint')}>{t('schedule.title')}</h3>
+        <>
             {list.map(schedule => (
                 <div key={schedule.id} className={`dd-row ${schedule.enabled ? '' : 'is-paused'}`}>
                     <div className="dd-row-head">
@@ -83,9 +63,22 @@ export const DeviceScheduleSection: React.FC<{ device: YandexDevice }> = ({ devi
                     </div>
                 </div>
             ))}
-            <button className="dd-add" onClick={() => update(c => addSchedule(c, device.id, '09:00'))}>
+            <button className="dd-add" onClick={() => update(c => addSchedule(c, targetId, defaultTime))}>
                 <Plus className="w-4 h-4" /> {t('schedule.add')}
             </button>
+        </>
+    );
+};
+
+/** Время уборки робота-пылесоса: Центр сам запускает его в выбранные дни. */
+export const DeviceScheduleSection: React.FC<{ device: YandexDevice }> = ({ device }) => {
+    const ctx = useDashboardContext();
+    const { t } = useI18n();
+    if (!ctx.automations.config) return null;
+    return (
+        <section className="dd-schedule">
+            <h3 title={t('schedule.hint')}>{t('schedule.title')}</h3>
+            <ScheduleList targetId={device.id} />
         </section>
     );
 };

@@ -4,6 +4,7 @@ import { YandexUserInfoResponse, YandexHousehold, YandexModeAction, CameraStream
 import type { AccountSummary } from '../types/electron-api';
 import type { UseZonesReturn } from '../hooks/useZones';
 import type { UseActivityReturn } from '../hooks/useActivity';
+import type { UseAutomationsReturn } from '../hooks/useAutomations';
 
 export interface DashboardContextValue {
     // Данные
@@ -14,6 +15,8 @@ export interface DashboardContextValue {
     accounts: AccountSummary[];
     /** Зоны (этажи и комнаты) активного дома. */
     zones: UseZonesReturn;
+    /** Расписания и собственные сценарии. */
+    automations: UseAutomationsReturn;
 
     // Избранное
     favoriteDeviceIds: string[];

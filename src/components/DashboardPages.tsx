@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronRight, Droplets, Loader2, Plus, Power, SquareStack, Thermometer } from 'lucide-react';
+import { ChevronRight, Droplets, Loader2, Plus, Power, Settings2, SquareStack, Thermometer } from 'lucide-react';
 import type { YandexDevice, YandexGroup, YandexScenario } from '../types/index';
 import { useDashboardContext } from '../contexts/DashboardContext';
 import { UseDashboardStateReturn } from '../hooks/useDashboardState';
@@ -10,6 +10,8 @@ import { Pinned } from './Pinned';
 import { ZoneIcon } from './zones/zoneIcons';
 import { ZoneDialog } from './zones/ZoneDialog';
 import { GroupDialog } from './zones/GroupDialog';
+import { ScenarioDialog } from './zones/ScenarioDialog';
+import { isCustomScenarioId } from '../../core/scenarios';
 import { DeviceCardAdapter } from './cards/DeviceCardAdapter';
 import { ScenarioCard } from './cards/ScenarioCard';
 
@@ -134,18 +136,37 @@ export const GroupsPage: React.FC<{ groupsForHome: YandexGroup[]; devicesForHome
 export const ScenariosPage: React.FC<{ scenarios: YandexScenario[] }> = ({ scenarios }) => {
     const ctx = useDashboardContext();
     const { t } = useI18n();
-    if (scenarios.length === 0) return <div className="empty-state"><p>{t('dashboard.noScenarios')}</p></div>;
+    const [editing, setEditing] = useState<string | 'new' | null>(null);
+    // Собственные сценарии можно создавать, только если главный процесс умеет их хранить
+    const canCreate = Boolean(ctx.automations.config);
     return (
-        <div className="scenario-grid">
-            {scenarios.map(scenario => (
-                <ScenarioCard
-                    key={scenario.id}
-                    scenario={scenario}
-                    onExecute={ctx.onExecuteScenario}
-                    isFavorite={ctx.favoriteScenarioIds.includes(scenario.id)}
-                    onToggleFavorite={ctx.onToggleScenarioFavorite}
+        <>
+            {canCreate && <AddButton label={t('scenarioEditor.add')} onClick={() => setEditing('new')} />}
+            {scenarios.length === 0 && <div className="empty-state"><p>{t('dashboard.noScenarios')}</p></div>}
+            <div className="scenario-grid">
+                {scenarios.map(scenario => (
+                    <div key={scenario.id} className="scenario-slot">
+                        <ScenarioCard
+                            scenario={scenario}
+                            onExecute={ctx.onExecuteScenario}
+                            isFavorite={ctx.favoriteScenarioIds.includes(scenario.id)}
+                            onToggleFavorite={ctx.onToggleScenarioFavorite}
+                        />
+                        {isCustomScenarioId(scenario.id) && (
+                            <button className="scenario-edit" title={t('scenarioEditor.edit')} aria-label={t('scenarioEditor.edit')} onClick={() => setEditing(scenario.id)}>
+                                <Settings2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
+                ))}
+            </div>
+            {editing && (
+                <ScenarioDialog
+                    mode={editing === 'new' ? 'create' : 'edit'}
+                    scenarioId={editing === 'new' ? undefined : editing}
+                    onClose={() => setEditing(null)}
                 />
-            ))}
-        </div>
+            )}
+        </>
     );
 };

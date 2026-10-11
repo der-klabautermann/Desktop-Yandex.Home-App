@@ -1,9 +1,13 @@
 // Расписания: в заданное время по выбранным дням Центр сам включает устройство
-// (например, запускает уборку робота-пылесоса). Работает, пока запущено приложение.
+// (например, запускает уборку робота-пылесоса) или запускает собственный сценарий.
+// Работает, пока запущено приложение.
+import type { CustomScenario } from './scenarios';
 
 export interface Schedule {
   id: string;
-  deviceId: string;
+  /** Что запускать: устройство или собственный сценарий. */
+  deviceId?: string;
+  scenarioId?: string;
   /** Время запуска «ЧЧ:ММ» по местному времени. */
   time: string;
   /** Дни недели по ISO: 1 = понедельник … 7 = воскресенье. */
@@ -14,6 +18,8 @@ export interface Schedule {
 export interface ScheduleConfig {
   version: 1;
   schedules: Schedule[];
+  /** Собственные сценарии (дополнительно к сценариям сервисов). */
+  scenarios?: CustomScenario[];
 }
 
 export const EMPTY_SCHEDULES: ScheduleConfig = { version: 1, schedules: [] };
@@ -41,12 +47,18 @@ export const dueSchedules = (config: ScheduleConfig, lastCheck: Date, now: Date)
   });
 };
 
-export const schedulesFor = (config: ScheduleConfig, deviceId: string) =>
-  config.schedules.filter(s => s.deviceId === deviceId).sort((a, b) => a.time.localeCompare(b.time));
+/** Цель расписания: id устройства или собственного сценария. */
+const targetOf = (schedule: Schedule) => schedule.deviceId ?? schedule.scenarioId;
+const targetFields = (targetId: string) => (targetId.startsWith('cscen:') ? { scenarioId: targetId } : { deviceId: targetId });
 
-export const addSchedule = (config: ScheduleConfig, deviceId: string, time: string, days: number[] = ALL_DAYS): ScheduleConfig => ({
+export const schedulesFor = (config: ScheduleConfig, targetId: string) =>
+  config.schedules.filter(s => targetOf(s) === targetId).sort((a, b) => a.time.localeCompare(b.time));
+
+export const addSchedule = (config: ScheduleConfig, targetId: string, time: string, days: number[] = ALL_DAYS): ScheduleConfig => ({
   ...config,
-  schedules: [...config.schedules, { id: `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, deviceId, time, days, enabled: true }],
+  schedules: [...config.schedules, {
+    id: `s${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`, ...targetFields(targetId), time, days, enabled: true,
+  }],
 });
 
 export const updateSchedule = (config: ScheduleConfig, id: string, changes: Partial<Omit<Schedule, 'id' | 'deviceId'>>): ScheduleConfig => ({
@@ -59,8 +71,8 @@ export const removeSchedule = (config: ScheduleConfig, id: string): ScheduleConf
   schedules: config.schedules.filter(s => s.id !== id),
 });
 
-/** Убирает расписания удалённых устройств. */
-export const pruneSchedules = (config: ScheduleConfig, deviceIds: string[]): ScheduleConfig => ({
+/** Убирает все расписания устройства или сценария (например, после удаления). */
+export const removeSchedulesFor = (config: ScheduleConfig, targetId: string): ScheduleConfig => ({
   ...config,
-  schedules: config.schedules.filter(s => deviceIds.includes(s.deviceId)),
+  schedules: config.schedules.filter(s => targetOf(s) !== targetId),
 });

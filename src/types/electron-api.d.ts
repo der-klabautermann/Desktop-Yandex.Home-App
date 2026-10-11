@@ -50,6 +50,7 @@ export interface IYandexApi {
     hub: IHubApi;
     zones: IZonesApi;
     schedules?: ISchedulesApi;
+    scenarios?: { run: (scenarioId: string) => Promise<{ total: number; failed: string[] }> };
     platform?: string;
     setLanguage?: (lang: 'de' | 'en' | 'ru') => void;
     getCameraStream: (deviceId: string) => Promise<CameraStreamResult>;

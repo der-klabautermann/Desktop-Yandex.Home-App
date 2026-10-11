@@ -3377,3 +3377,37 @@ html.is-mac .content-head { padding-top: 58px; }
 }
 .dd-add:hover { border-color: var(--accent); color: var(--accent); border-style: solid; }
 .dd-schedule .dd-row:first-of-type { border-top: none; }
+/* Messwert, den das Gerät länger nicht gemeldet hat */
+.dd-reading-text time.is-stale { opacity: 1; color: var(--warning, #E0A23B); }
+
+/* Eigene Szenarien: Zahnrad zum Bearbeiten neben dem Stern */
+.scenario-slot { position: relative; display: flex; }
+.scenario-slot > .scenario-card { flex: 1; min-width: 0; }
+.scenario-slot:has(.scenario-edit) > .scenario-card { padding-right: 66px; }
+.scenario-edit {
+  position: absolute; top: 50%; right: 34px; transform: translateY(-50%); z-index: 6;
+  width: 26px; height: 26px; border-radius: 50%; border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: color-mix(in oklab, var(--fg) 8%, transparent); color: var(--muted); cursor: pointer;
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+.scenario-edit:hover { color: var(--accent); background: color-mix(in oklab, var(--accent) 14%, transparent); }
+
+/* Szenario-Editor */
+.scenario-dialog { width: min(520px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; }
+.scenario-pick { display: flex; flex-direction: column; border-radius: 12px; }
+.scenario-pick.is-selected { background: color-mix(in oklab, var(--accent) 6%, transparent); }
+.scenario-pick.is-selected .group-pick-item { border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.scenario-step { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 10px 10px 36px; }
+.scenario-step .segmented { flex-shrink: 0; }
+.zone-dialog .scenario-level { margin: 0; flex: 1; min-width: 140px; display: flex; align-items: center; gap: 10px; color: var(--fg-2, var(--fg)); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.zone-dialog .scenario-level .dd-slider {
+  padding: 0; border: none; border-radius: 999px; margin: 0;
+  background: linear-gradient(to right, var(--accent) var(--fill, 50%), color-mix(in oklab, var(--fg) 12%, transparent) var(--fill, 50%));
+}
+.scenario-step .segmented { width: auto; min-width: 0; flex: 0 0 150px; }
+.scenario-times .dd-add { align-self: flex-start; }
+.zone-dialog .scenario-level .dd-slider { flex: 1; }
+.scenario-times { display: flex; flex-direction: column; }
+.scenario-times .dd-row:first-of-type { border-top: none; }
+.zone-dialog .scenario-times .dd-time { padding: 4px 10px; font-size: 17px; }

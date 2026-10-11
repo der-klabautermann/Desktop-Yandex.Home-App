@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('api', {
         save: (config) => ipcRenderer.invoke('schedules:save', config),
     },
 
+    scenarios: {
+        run: (scenarioId) => ipcRenderer.invoke('scenarios:run', scenarioId),
+    },
+
     // Auto-launch methods
     isAutostartEnabled: () => ipcRenderer.invoke('autostart:isEnabled'),
     setAutostartEnabled: (enabled) => ipcRenderer.invoke('autostart:setEnabled', enabled), 

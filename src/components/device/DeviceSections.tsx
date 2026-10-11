@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { YandexDevice } from '../../types/index';
 import { useDashboardContext } from '../../contexts/DashboardContext';
 import { useI18n } from '../../i18n/I18nContext';
@@ -110,9 +110,23 @@ export const DeviceControlsSection: React.FC<{ device: YandexDevice }> = ({ devi
 };
 
 /** Все показания с временем последнего обновления. */
+/** Электрические показания: пока они открыты, обновляем их каждые несколько секунд. */
+const LIVE_INSTANCES = new Set(['power', 'voltage', 'amperage']);
+const LIVE_INTERVAL = 5000;
+/** Значение старше этого считаем устаревшим и помечаем. */
+const STALE_MS = 5 * 60_000;
+
 export const DeviceReadingsSection: React.FC<{ device: YandexDevice }> = ({ device }) => {
+    const ctx = useDashboardContext();
     const { t, lang } = useI18n();
     const properties = listProperties(device, t, lang);
+    const live = properties.some(p => LIVE_INSTANCES.has(p.instance)) && !device.unreachable;
+    const onRefresh = ctx.onRefresh;
+    useEffect(() => {
+        if (!live) return;
+        const timer = window.setInterval(() => { if (!document.hidden) onRefresh(true); }, LIVE_INTERVAL);
+        return () => window.clearInterval(timer);
+    }, [live, onRefresh]);
     if (properties.length === 0) return null;
     return (
         <section>
@@ -124,7 +138,12 @@ export const DeviceReadingsSection: React.FC<{ device: YandexDevice }> = ({ devi
                         <b>{property.value}</b>
                         <span>
                             {propertyLabel(property.instance, t)}
-                            {property.at !== null && <time>{formatAt(property.at, lang)}</time>}
+                            {property.at !== null && (
+                                <time
+                                    className={Date.now() - property.at > STALE_MS ? 'is-stale' : undefined}
+                                    title={Date.now() - property.at > STALE_MS ? t('modals.detail.stale') : undefined}
+                                >{formatAt(property.at, lang)}</time>
+                            )}
                         </span>
                     </div>
                 </div>

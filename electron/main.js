@@ -9,6 +9,7 @@ import {
     Hub,
     dueSchedules,
     EMPTY_SCHEDULES,
+    runScenarioSteps,
     createYandexProvider,
     createAqaraProvider,
     createHomeAssistantProvider,
@@ -547,7 +548,7 @@ if (!gotTheLock) {
             await fs.writeFile(zonesFile, JSON.stringify(config, null, 2));
         });
 
-        // Расписания (например, уборка пылесоса): хранит и выполняет само приложение
+        // Расписания (например, уборка пылесоса) и собственные сценарии: хранит и выполняет само приложение
         const schedulesFile = path.join(app.getPath('userData'), 'schedules.json');
         let schedules = EMPTY_SCHEDULES;
         const schedulesReady = fs.readFile(schedulesFile, 'utf8')
@@ -562,15 +563,26 @@ if (!gotTheLock) {
             schedules = config;
             await fs.writeFile(schedulesFile, JSON.stringify(config, null, 2));
         });
+        // Собственный сценарий: все шаги сразу; если не сработало ни одно устройство — ошибка
+        const runCustomScenario = async (scenarioId) => {
+            await schedulesReady;
+            const scenario = (schedules.scenarios ?? []).find(s => s.id === scenarioId);
+            if (!scenario) throw new Error('ERR_UNKNOWN_SCENARIO');
+            const result = await runScenarioSteps(hub, scenario.steps);
+            if (result.total > 0 && result.failed.length === result.total) throw new Error('ERR_SCENARIO_FAILED');
+            return result;
+        };
+        ipcMain.handle('scenarios:run', (_e, scenarioId) => runCustomScenario(scenarioId).catch(rethrow));
         let lastScheduleCheck = new Date();
         setInterval(() => {
             const now = new Date();
             const due = dueSchedules(schedules, lastScheduleCheck, now);
             lastScheduleCheck = now;
             for (const schedule of due) {
-                hub.toggleDevice(schedule.deviceId, true)
-                    .then(() => console.log(`Расписание ${schedule.time}: ${schedule.deviceId} запущен`))
-                    .catch(error => console.error(`Расписание ${schedule.time}: ${schedule.deviceId} не запустился`, error));
+                const target = schedule.scenarioId ?? schedule.deviceId;
+                const run = schedule.scenarioId ? runCustomScenario(schedule.scenarioId) : hub.toggleDevice(schedule.deviceId, true);
+                run.then(() => console.log(`Расписание ${schedule.time}: ${target} запущен`))
+                    .catch(error => console.error(`Расписание ${schedule.time}: ${target} не запустился`, error));
             }
         }, 20_000);
 

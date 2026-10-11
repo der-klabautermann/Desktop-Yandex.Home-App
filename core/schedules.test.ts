@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EMPTY_SCHEDULES, addSchedule, dueSchedules, isValidTime, removeSchedule, schedulesFor, updateSchedule } from './schedules';
+import { EMPTY_SCHEDULES, addSchedule, dueSchedules, isValidTime, removeSchedule, removeSchedulesFor, schedulesFor, updateSchedule } from './schedules';
 
 // 13.10.2026 ist ein Dienstag (ISO-Tag 2)
 const at = (day: number, hours: number, minutes: number, seconds = 0) => new Date(2026, 9, day, hours, minutes, seconds);
@@ -39,5 +39,15 @@ describe('schedules', () => {
     expect(schedulesFor(removeSchedule(two, id), 'vac').map(s => s.time)).toEqual(['07:15']);
     expect(isValidTime('24:00')).toBe(false);
     expect(isValidTime('07:05')).toBe(true);
+  });
+});
+
+describe('Zeitpläne für eigene Szenarien', () => {
+  it('ordnet Szenario-Zeiten dem Szenario zu, nicht einem Gerät', () => {
+    const config = addSchedule(addSchedule(EMPTY_SCHEDULES, 'cscen:abc', '22:00'), 'vac', '09:00');
+    expect(schedulesFor(config, 'cscen:abc')[0]).toMatchObject({ scenarioId: 'cscen:abc', time: '22:00' });
+    expect(schedulesFor(config, 'cscen:abc')[0].deviceId).toBeUndefined();
+    expect(schedulesFor(removeSchedulesFor(config, 'cscen:abc'), 'cscen:abc')).toHaveLength(0);
+    expect(schedulesFor(removeSchedulesFor(config, 'cscen:abc'), 'vac')).toHaveLength(1);
   });
 });
