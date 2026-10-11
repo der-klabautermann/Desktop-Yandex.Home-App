@@ -3,6 +3,7 @@
 // Хранятся вместе с расписаниями (schedules.json) и выполняются главным процессом.
 import type { YandexScenario } from '../src/types/index';
 import type { ModeAction } from './model';
+import type { DeviceTrigger } from './triggers';
 
 /** Когда выполнять шаг: сразу, через несколько минут после предыдущего или в заданное время. */
 export type StepWait =
@@ -25,6 +26,8 @@ export interface CustomScenario {
   householdId: string | null;
   /** Параллельные цепочки; внутри цепочки шаги идут по очереди. */
   branches?: ScenarioStep[][];
+  /** Старт по событиям устройств (кроме нажатия и расписания). */
+  triggers?: DeviceTrigger[];
   /** Старый формат (все шаги сразу): читаем, но больше не пишем. */
   steps?: ScenarioStep[];
 }
@@ -54,13 +57,18 @@ const cleanBranches = (branches: ScenarioStep[][]) =>
 export const newScenarioId = newId;
 
 export const addScenario = <T extends ScenarioHolder>(
-  config: T, scenario: { name: string; householdId: string | null; branches: ScenarioStep[][] }, id: string = newId(),
+  config: T, scenario: { name: string; householdId: string | null; branches: ScenarioStep[][]; triggers?: DeviceTrigger[] }, id: string = newId(),
 ): { config: T; id: string } => {
-  const created: CustomScenario = { id, name: scenario.name.trim(), householdId: scenario.householdId, branches: cleanBranches(scenario.branches) };
+  const created: CustomScenario = {
+    id, name: scenario.name.trim(), householdId: scenario.householdId, branches: cleanBranches(scenario.branches),
+    ...(scenario.triggers?.length ? { triggers: scenario.triggers } : {}),
+  };
   return { config: { ...config, scenarios: [...(config.scenarios ?? []), created] }, id };
 };
 
-export const updateScenario = <T extends ScenarioHolder>(config: T, id: string, changes: { name?: string; branches?: ScenarioStep[][] }): T => ({
+export const updateScenario = <T extends ScenarioHolder>(
+  config: T, id: string, changes: { name?: string; branches?: ScenarioStep[][]; triggers?: DeviceTrigger[] },
+): T => ({
   ...config,
   scenarios: (config.scenarios ?? []).map(s => {
     if (s.id !== id) return s;
@@ -69,6 +77,7 @@ export const updateScenario = <T extends ScenarioHolder>(config: T, id: string, 
       ...rest,
       name: changes.name !== undefined ? changes.name.trim() || s.name : s.name,
       branches: changes.branches !== undefined ? cleanBranches(changes.branches) : branchesOf(s),
+      triggers: changes.triggers !== undefined ? changes.triggers : s.triggers,
     };
   }),
 });

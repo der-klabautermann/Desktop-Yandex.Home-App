@@ -8,6 +8,8 @@ export interface HaState {
   entity_id: string;
   state: string;
   attributes: Record<string, any>;
+  /** Время последней смены состояния (ISO). */
+  last_changed?: string;
 }
 
 /** Строка из нашего шаблона: сущность, её зона (area), устройство и его имя. */
@@ -36,10 +38,15 @@ const floatProperty = (instance: string, value: number, unit: string): YandexPro
   type: 'devices.properties.float', retrievable: true, reportable: true, parameters: { instance, unit }, state: { instance, value },
 });
 
-const eventProperty = (instance: string, value: string, events: string[]): YandexProperty => ({
-  type: 'devices.properties.event', retrievable: true, reportable: true,
-  parameters: { instance, events: events.map(v => ({ value: v, name: v })) }, state: { instance, value },
-});
+/** changed — время смены состояния: по нему видно новое событие с тем же значением. */
+const eventProperty = (instance: string, value: string, events: string[], changed?: string): YandexProperty => {
+  const at = changed ? Date.parse(changed) : NaN;
+  return {
+    type: 'devices.properties.event', retrievable: true, reportable: true,
+    parameters: { instance, events: events.map(v => ({ value: v, name: v })) }, state: { instance, value },
+    ...(Number.isFinite(at) ? { last_updated: at / 1000 } : {}),
+  } as YandexProperty;
+};
 
 // Класс датчика HA -> показатель и единица в формате Яндекса
 const FLOAT_SENSORS: Record<string, { instance: string; unit: string }> = {
@@ -82,7 +89,7 @@ const propertyFor = (state: HaState): YandexProperty | null => {
   }
   if (domainOf(state.entity_id) === 'binary_sensor' && deviceClass && BINARY_SENSORS[deviceClass]) {
     const { instance, on, off } = BINARY_SENSORS[deviceClass];
-    return eventProperty(instance, state.state === 'on' ? on : off, [on, off]);
+    return eventProperty(instance, state.state === 'on' ? on : off, [on, off], state.last_changed);
   }
   return null;
 };

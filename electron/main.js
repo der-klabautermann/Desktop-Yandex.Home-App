@@ -11,6 +11,8 @@ import {
     EMPTY_SCHEDULES,
     branchesOf,
     runScenarioFlow,
+    firedScenarios,
+    snapshotOf,
     createYandexProvider,
     createAqaraProvider,
     createHomeAssistantProvider,
@@ -505,6 +507,8 @@ if (!gotTheLock) {
         };
 
         const rethrow = (error) => { throw new Error(error.message, { cause: error }); };
+        // Назначается ниже, когда загружены сценарии со стартом по событию
+        let observeHome = () => {};
 
         ipcMain.handle('hub:accounts', () => hub.accounts());
         ipcMain.handle('hub:connect', (_e, providerId, payload) => hub.connect(providerId, payload).catch(rethrow));
@@ -517,7 +521,9 @@ if (!gotTheLock) {
         });
         ipcMain.handle('hub:loadHome', (_e, options = {}) => {
             const retry = options.retry !== false;
-            return runSingleFlight(`loadHome:${retry}`, () => hub.loadHome({ retry })).catch(rethrow);
+            return runSingleFlight(`loadHome:${retry}`, () => hub.loadHome({ retry }))
+                .then(result => { observeHome(result); return result; })
+                .catch(rethrow);
         });
         ipcMain.handle('hub:toggleDevice', (_e, id, state) => hub.toggleDevice(id, state).catch(rethrow));
         ipcMain.handle('hub:setDeviceMode', (_e, id, actions, turnOn) => hub.setDeviceMode(id, actions, turnOn).catch(rethrow));
@@ -590,6 +596,32 @@ if (!gotTheLock) {
             return result;
         };
         ipcMain.handle('scenarios:run', (_e, scenarioId) => runCustomScenario(scenarioId).catch(rethrow));
+        // Старт по событиям устройств: сравниваем каждый новый опрос с предыдущим
+        let lastSnapshot = null;
+        let lastObserved = null;
+        observeHome = (result) => {
+            // Один и тот же результат (общий запрос окна и фонового опроса) смотрим один раз
+            if (!result?.data || result === lastObserved) return;
+            lastObserved = result;
+            const next = snapshotOf(result.data.devices ?? []);
+            const fired = firedScenarios(schedules.scenarios ?? [], lastSnapshot, next);
+            lastSnapshot = next;
+            for (const scenarioId of fired) {
+                runCustomScenario(scenarioId)
+                    .then(() => console.log(`Сценарий ${scenarioId} запущен событием`))
+                    .catch(error => console.error(`Сценарий ${scenarioId} не запустился по событию`, error));
+            }
+        };
+        // Пока есть сценарии со стартом по событию, опрашиваем сервисы чаще, даже если окно скрыто
+        const TRIGGER_POLL_MS = 5000;
+        setInterval(() => {
+            const watched = (schedules.scenarios ?? []).some(s => (s.triggers ?? []).length > 0);
+            if (!watched) return;
+            runSingleFlight('loadHome:false', () => hub.loadHome({ retry: false }))
+                .then(observeHome)
+                .catch(() => { /* сервис недоступен: попробуем в следующий раз */ });
+        }, TRIGGER_POLL_MS);
+
         let lastScheduleCheck = new Date();
         setInterval(() => {
             const now = new Date();

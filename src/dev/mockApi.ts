@@ -5,6 +5,7 @@
 import { createMockHome, createMockXiaomiHome } from './mockData';
 import { createShowroomHome } from './mockShowroom';
 import { branchesOf, runScenarioFlow } from '../../core/scenarios';
+import { firedScenarios, snapshotOf, type HomeSnapshot } from '../../core/triggers';
 import type { YandexUserInfoResponse } from '../types';
 
 type MockProvider = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
@@ -19,6 +20,7 @@ export function installMockApi() {
   const offline = new Set<MockProvider>(mode === 'outage' ? ['xiaomi'] : []);
   const delay = (ms = 250) => new Promise(resolve => setTimeout(resolve, ms));
   let pairingTimer: ReturnType<typeof setTimeout> | undefined;
+  let lastSnapshot: HomeSnapshot | null = null;
 
   const allDevices = () => showroom ? showroom.devices : [...homes.yandex.devices, ...homes.xiaomi.devices];
   const setOn = (id: string, value: boolean) => {
@@ -93,7 +95,13 @@ export function installMockApi() {
       loadHome: async () => {
         await delay();
         if (connected.size === 0) throw new Error('ERR_AUTH');
-        return { data: showroom ? structuredClone(showroom) : merged(), accounts: accounts() };
+        const data = showroom ? structuredClone(showroom) : merged();
+        // Как главный процесс: новые события устройств запускают собственные сценарии
+        const next = snapshotOf(data.devices);
+        const saved = JSON.parse(localStorage.getItem('mock_schedules') ?? 'null');
+        for (const id of firedScenarios(saved?.scenarios ?? [], lastSnapshot, next)) void (window as any).api.scenarios.run(id);
+        lastSnapshot = next;
+        return { data, accounts: accounts() };
       },
       toggleDevice: async (id: string, value: boolean) => { await delay(); setOn(id, value); },
       toggleGroup: async (_g: string, ids: string[], value: boolean) => { await delay(); ids.forEach(id => setOn(id, value)); },

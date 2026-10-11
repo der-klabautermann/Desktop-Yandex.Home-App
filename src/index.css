@@ -3451,22 +3451,34 @@ button.stat-chip.is-active:hover:not(:disabled) {
 .flow { display: flex; align-items: flex-start; width: max-content; min-width: 100%; }
 .flow-branches { display: flex; flex-direction: column; gap: 18px; }
 .flow-branch { position: relative; display: flex; align-items: center; height: var(--node-h); }
-/* Sammelschiene: verbindet den Start mit allen Strängen */
-.flow-branches.has-rail .flow-branch::before {
-  content: ''; position: absolute; left: 0; width: 2px; background: var(--flow-line);
-  top: -9px; bottom: -9px;
+/* Verbindung zwischen zwei Schritten: anklickbar zum Einfügen oder Trennen, beim Ziehen Ablageort */
+.flow-link {
+  position: relative; width: 40px; height: 30px; flex-shrink: 0; padding: 0; border: none; background: transparent;
+  color: var(--flow-line); cursor: pointer;
 }
-.flow-branches.has-rail .flow-branch:first-child::before { top: 50%; }
-.flow-branches.has-rail .flow-branch:last-child::before { bottom: 50%; }
-.flow-branches.has-rail .flow-branch:only-child::before { display: none; }
-.flow-branch.is-new::before { background: repeating-linear-gradient(180deg, var(--flow-line) 0 4px, transparent 4px 8px) !important; }
-
-.flow-link { position: relative; width: 34px; height: 2px; flex-shrink: 0; background: var(--flow-line); }
+.flow-link::before { content: ''; position: absolute; left: 0; right: 2px; top: 50%; height: 2px; margin-top: -1px; background: currentColor; border-radius: 2px; }
 .flow-link::after {
-  content: ''; position: absolute; right: -1px; top: -4px;
-  border-left: 7px solid var(--flow-line); border-top: 5px solid transparent; border-bottom: 5px solid transparent;
+  content: ''; position: absolute; right: 0; top: 50%; margin-top: -5px;
+  border-left: 8px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent;
 }
-.flow-link.is-dashed { background: repeating-linear-gradient(90deg, var(--flow-line) 0 5px, transparent 5px 9px); }
+.flow-link.is-tail { width: 30px; cursor: default; }
+.flow-link-dot {
+  position: absolute; left: 50%; top: 50%; transform: translate(-60%, -50%) scale(0.6); z-index: 1;
+  width: 20px; height: 20px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface); color: var(--accent); border: 1.5px solid var(--accent); opacity: 0;
+  transition: all var(--motion-fast) var(--ease-standard);
+}
+button.flow-link:hover, .flow-link.is-selected { color: var(--accent); }
+button.flow-link:hover .flow-link-dot, .flow-link.is-selected .flow-link-dot { opacity: 1; transform: translate(-60%, -50%) scale(1); }
+.flow-link.is-drop { color: var(--accent); }
+/* Pfeil vom Start: wird als runder Bogen im SVG gezeichnet, hier nur die Klickfläche */
+.flow-entry { width: 46px; height: 100%; }
+.flow-entry::before, .flow-entry::after { display: none; }
+.flow-entry.is-selected, .flow-entry:hover { background: color-mix(in oklab, var(--accent) 8%, transparent); border-radius: 10px; }
+.flow-entry.is-drop { background: color-mix(in oklab, var(--accent) 14%, transparent); border-radius: 10px; }
+.flow-entry-space { width: 46px; flex-shrink: 0; }
+.flow-branches { position: relative; }
+.flow-rail { position: absolute; left: 0; top: 0; color: var(--flow-line); pointer-events: none; overflow: visible; }
 
 .flow-node {
   position: relative; flex-shrink: 0; width: 204px; height: var(--node-h);
@@ -3480,7 +3492,7 @@ button.stat-chip.is-active:hover:not(:disabled) {
 .flow-node:hover { transform: translateY(-1px); border-color: color-mix(in oklab, var(--accent) 55%, var(--glass-line-strong)); }
 .flow-node.is-selected { border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent), 0 10px 24px -18px rgba(0, 0, 0, 0.6); }
 .flow-node.is-missing { border-style: dashed; opacity: 0.7; }
-.flow-node.is-trigger { width: 168px; border-color: var(--flow-start); }
+.flow-node.is-trigger { width: 200px; border-color: var(--flow-start); }
 .flow-node.is-trigger.is-selected { box-shadow: 0 0 0 3px color-mix(in oklab, var(--flow-start) 25%, transparent); }
 .flow-node.is-trigger + .flow-branches { margin-left: 0; }
 .flow-kicker { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--flow-start); font-weight: 600; }
@@ -3536,3 +3548,29 @@ button.stat-chip.is-active:hover:not(:disabled) {
 .flow-change-device summary::-webkit-details-marker { display: none; }
 .flow-change-device[open] summary { margin-bottom: 8px; }
 @media (max-width: 640px) { .flow-field { grid-template-columns: 1fr; gap: 6px; } }
+
+/* Start mit mehreren Auslösern, Ziehen von Schritten */
+.flow-node.is-trigger { height: auto; min-height: var(--node-h); justify-content: flex-start; gap: 3px; }
+.flow-trigger-line { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12.5px; color: var(--fg-2, var(--fg)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flow-trigger-line:first-of-type { font-size: 14px; font-weight: 600; color: var(--fg); }
+.flow-trigger-line svg { flex-shrink: 0; color: var(--flow-start); }
+.flow-node { touch-action: none; }
+.flow-node.is-dragged { opacity: 0.35; }
+.flow-dialog.is-dragging, .flow-dialog.is-dragging * { cursor: grabbing !important; }
+.flow-drag-ghost {
+  position: fixed; z-index: 1000; pointer-events: none; height: 62px; width: 190px;
+  transform: translate(-50%, -50%) rotate(-2deg); border-color: var(--accent);
+  box-shadow: 0 24px 40px -18px rgba(0, 0, 0, 0.7);
+}
+.flow-node.is-drop-before { box-shadow: -6px 0 0 -2px var(--accent); }
+.flow-add.is-drop, .flow-ghost.is-drop { border-color: var(--accent); color: var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent); }
+
+.flow-sub { margin-top: 6px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.flow-trigger-row { display: flex; align-items: center; gap: 10px; min-height: 36px; }
+.flow-trigger-row.is-static { font-size: 13.5px; color: var(--fg-2, var(--fg)); }
+.flow-trigger-row.is-static svg { color: var(--flow-start); }
+.flow-trigger-name { flex: 0 1 200px; min-width: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.zone-dialog .flow-select { flex: 1; min-width: 0; padding: 7px 10px; font-size: 13px; }
+.flow-trigger-actions, .flow-link-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.dd-add.is-disabled { opacity: 0.5; cursor: help; border-style: dashed; }
+.dd-add.is-disabled:hover { color: inherit; border-color: var(--glass-line-strong); border-style: dashed; }

@@ -12,7 +12,7 @@ export interface AqaraDeviceInfo {
   /** 1, 2 — шлюзы, 3 — дочерние устройства */
   modelType?: number;
 }
-export interface AqaraResourceValue { subjectId: string; resourceId: string; value: string }
+export interface AqaraResourceValue { subjectId: string; resourceId: string; value: string; timeStamp?: number | string }
 export interface AqaraScene { sceneId: string; name: string; positionId?: string }
 
 export interface AqaraSnapshot {
@@ -68,17 +68,19 @@ const floatProperty = (instance: string, value: number, unit: string): YandexPro
   parameters: { instance, unit }, state: { instance, value },
 });
 
-const eventProperty = (instance: string, value: string, events: string[]): YandexProperty => ({
+/** at — время события в мс: по нему видно повторное нажатие той же кнопки. */
+const eventProperty = (instance: string, value: string, events: string[], at?: number): YandexProperty => ({
   type: 'devices.properties.event', retrievable: true, reportable: true,
   parameters: { instance, events: events.map(v => ({ value: v, name: v })) }, state: { instance, value },
-});
+  ...(at ? { last_updated: at / 1000 } : {}),
+} as YandexProperty);
 
 const round = (value: number, digits = 2) => Math.round(value * 10 ** digits) / 10 ** digits;
 const miredToKelvin = (mired: number) => Math.round(1_000_000 / mired / 100) * 100;
 const kelvinToMired = (kelvin: number) => Math.round(1_000_000 / kelvin);
 
 /** Свойства (датчики) из значений ресурсов. */
-const propertiesFor = (type: string, values: Map<string, string>): YandexProperty[] => {
+const propertiesFor = (type: string, values: Map<string, string>, times: Map<string, number> = new Map()): YandexProperty[] => {
   const result: YandexProperty[] = [];
   const num = (resource: string) => (values.has(resource) ? Number(values.get(resource)) : NaN);
 
@@ -93,16 +95,16 @@ const propertiesFor = (type: string, values: Map<string, string>): YandexPropert
   const status = values.get(RES.status);
   if (status !== undefined) {
     const active = status === '1';
-    if (type === 'devices.types.sensor.motion') result.push(eventProperty('motion', active ? 'detected' : 'not_detected', ['detected', 'not_detected']));
-    if (type === 'devices.types.sensor.open') result.push(eventProperty('open', active ? 'opened' : 'closed', ['opened', 'closed']));
-    if (type === 'devices.types.sensor.water_leak') result.push(eventProperty('water_leak', active ? 'leak' : 'dry', ['leak', 'dry']));
-    if (type === 'devices.types.sensor.smoke') result.push(eventProperty('smoke', active ? 'detected' : 'not_detected', ['detected', 'not_detected']));
+    if (type === 'devices.types.sensor.motion') result.push(eventProperty('motion', active ? 'detected' : 'not_detected', ['detected', 'not_detected'], times.get(RES.status)));
+    if (type === 'devices.types.sensor.open') result.push(eventProperty('open', active ? 'opened' : 'closed', ['opened', 'closed'], times.get(RES.status)));
+    if (type === 'devices.types.sensor.water_leak') result.push(eventProperty('water_leak', active ? 'leak' : 'dry', ['leak', 'dry'], times.get(RES.status)));
+    if (type === 'devices.types.sensor.smoke') result.push(eventProperty('smoke', active ? 'detected' : 'not_detected', ['detected', 'not_detected'], times.get(RES.status)));
   }
 
   const button = values.get(RES.button);
   if (button !== undefined) {
     const event = { '1': 'click', '2': 'double_click', '16': 'long_press' }[button];
-    if (event) result.push(eventProperty('button', event, ['click', 'double_click', 'long_press']));
+    if (event) result.push(eventProperty('button', event, ['click', 'double_click', 'long_press'], times.get(RES.button)));
   }
   return result;
 };
@@ -130,9 +132,15 @@ export const buildAqaraHome = (snapshot: AqaraSnapshot): HomeData => {
   const roomById = new Map(rooms.map(r => [r.id, r]));
 
   const valuesByDevice = new Map<string, Map<string, string>>();
+  const timesByDevice = new Map<string, Map<string, number>>();
   for (const v of snapshot.values) {
     if (!valuesByDevice.has(v.subjectId)) valuesByDevice.set(v.subjectId, new Map());
     valuesByDevice.get(v.subjectId)!.set(v.resourceId, v.value);
+    const at = Number(v.timeStamp);
+    if (Number.isFinite(at) && at > 0) {
+      if (!timesByDevice.has(v.subjectId)) timesByDevice.set(v.subjectId, new Map());
+      timesByDevice.get(v.subjectId)!.set(v.resourceId, at);
+    }
   }
 
   const devices: YandexDevice[] = [];
@@ -170,7 +178,7 @@ export const buildAqaraHome = (snapshot: AqaraSnapshot): HomeData => {
     }
 
     const mainId = id(info.did);
-    devices.push({ id: mainId, name: info.deviceName, ...base, capabilities, properties: propertiesFor(type, values) });
+    devices.push({ id: mainId, name: info.deviceName, ...base, capabilities, properties: propertiesFor(type, values, timesByDevice.get(info.did)) });
     room?.devices.push(mainId);
 
     for (const [index, channel] of channels.slice(1).entries()) {
