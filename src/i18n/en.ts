@@ -16,7 +16,7 @@ export const en = {
     ru: 'Русский',
   },
   dashboard: {
-    search: 'Search device, room or zone',
+    search: 'Search',
     nothingFound: 'Nothing found',
     filter: { switchHome: 'Switch home' },
     defaultHomeName: 'My home',

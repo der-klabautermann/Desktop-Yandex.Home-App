@@ -48,10 +48,30 @@ export const WeatherProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setPlaceState(next);
         setWeather(null);
         try {
-            if (next) localStorage.setItem(PLACE_KEY, JSON.stringify(next));
-            else localStorage.removeItem(PLACE_KEY);
+            // «null» значит: место убрали вручную, автоматически больше не ищем
+            localStorage.setItem(PLACE_KEY, JSON.stringify(next));
         } catch { /* место просто не сохранится */ }
     }, []);
+
+    // Нет сохранённого места: один раз определяем примерное место по IP-адресу (без ключа и входа)
+    useEffect(() => {
+        let saved: string | null = null;
+        try { saved = localStorage.getItem(PLACE_KEY); } catch { return; }
+        if (saved !== null) return;
+        let cancelled = false;
+        void (async () => {
+            try {
+                const data = await (await fetch('https://get.geojs.io/v1/ip/geo.json')).json();
+                const latitude = Number(data?.latitude);
+                const longitude = Number(data?.longitude);
+                if (cancelled || !data?.city || !Number.isFinite(latitude) || !Number.isFinite(longitude)) return;
+                setPlace({ name: data.city, region: [data.region, data.country].filter(Boolean).join(', '), latitude, longitude });
+            } catch {
+                // Нет сети: место можно выбрать вручную
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [setPlace]);
 
     useEffect(() => {
         if (!place) return;

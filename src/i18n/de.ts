@@ -16,7 +16,7 @@ export const de = {
     ru: 'Русский',
   },
   dashboard: {
-    search: 'Gerät, Raum oder Zone suchen',
+    search: 'Suchen',
     nothingFound: 'Nichts gefunden',
     filter: { switchHome: 'Haus wechseln' },
     defaultHomeName: 'Mein Zuhause',
