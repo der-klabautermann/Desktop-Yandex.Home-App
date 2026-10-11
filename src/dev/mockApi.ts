@@ -4,7 +4,7 @@
 // без параметра только Яндекс.
 import { createMockHome, createMockXiaomiHome } from './mockData';
 import { createShowroomHome } from './mockShowroom';
-import { runScenarioSteps } from '../../core/scenarios';
+import { branchesOf, runScenarioFlow } from '../../core/scenarios';
 import type { YandexUserInfoResponse } from '../types';
 
 type MockProvider = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
@@ -147,7 +147,7 @@ export function installMockApi() {
         const saved = JSON.parse(localStorage.getItem('mock_schedules') ?? 'null');
         const scenario = saved?.scenarios?.find((s: { id: string }) => s.id === scenarioId);
         if (!scenario) throw new Error('ERR_UNKNOWN_SCENARIO');
-        return runScenarioSteps((window as any).api.hub, scenario.steps);
+        return runScenarioFlow((window as any).api.hub, branchesOf(scenario)).immediate;
       },
     },
     getCameraStream: async () => { throw new Error('CAM_NO_STREAM'); },

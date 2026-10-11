@@ -9,7 +9,8 @@ import {
     Hub,
     dueSchedules,
     EMPTY_SCHEDULES,
-    runScenarioSteps,
+    branchesOf,
+    runScenarioFlow,
     createYandexProvider,
     createAqaraProvider,
     createHomeAssistantProvider,
@@ -551,6 +552,8 @@ if (!gotTheLock) {
         // Расписания (например, уборка пылесоса) и собственные сценарии: хранит и выполняет само приложение
         const schedulesFile = path.join(app.getPath('userData'), 'schedules.json');
         let schedules = EMPTY_SCHEDULES;
+        // Идущие собственные сценарии: id → AbortController
+        const runningScenarios = new Map();
         const schedulesReady = fs.readFile(schedulesFile, 'utf8')
             .then(text => {
                 const saved = JSON.parse(text);
@@ -561,14 +564,28 @@ if (!gotTheLock) {
         ipcMain.handle('schedules:save', async (_e, config) => {
             if (config?.version !== 1 || !Array.isArray(config.schedules)) throw new Error('ERR_INVALID');
             schedules = config;
+            // Удалённый сценарий не должен доделывать отложенные шаги
+            for (const [scenarioId, controller] of runningScenarios) {
+                if (!(config.scenarios ?? []).some(s => s.id === scenarioId)) controller.abort();
+            }
             await fs.writeFile(schedulesFile, JSON.stringify(config, null, 2));
         });
-        // Собственный сценарий: все шаги сразу; если не сработало ни одно устройство — ошибка
+        // Собственный сценарий: цепочки идут в фоне; повторный запуск отменяет прежний.
+        // Ответ приходит после шагов «сразу»; если ни одно устройство не ответило — ошибка
         const runCustomScenario = async (scenarioId) => {
             await schedulesReady;
             const scenario = (schedules.scenarios ?? []).find(s => s.id === scenarioId);
             if (!scenario) throw new Error('ERR_UNKNOWN_SCENARIO');
-            const result = await runScenarioSteps(hub, scenario.steps);
+            runningScenarios.get(scenarioId)?.abort();
+            const controller = new AbortController();
+            runningScenarios.set(scenarioId, controller);
+            const flow = runScenarioFlow(hub, branchesOf(scenario), { signal: controller.signal });
+            flow.done
+                .then(done => {
+                    if (done.failed.length) console.error(`Сценарий ${scenario.name}: не ответили`, done.failed);
+                })
+                .finally(() => { if (runningScenarios.get(scenarioId) === controller) runningScenarios.delete(scenarioId); });
+            const result = await flow.immediate;
             if (result.total > 0 && result.failed.length === result.total) throw new Error('ERR_SCENARIO_FAILED');
             return result;
         };
