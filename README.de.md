@@ -22,6 +22,7 @@
 
 <p align="center">
   <a href="https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest"><img src="https://img.shields.io/badge/F%C3%BCr%20macOS%20herunterladen-f2a65a?style=for-the-badge&logo=apple&logoColor=black&labelColor=f2a65a" height="44" alt="Für macOS herunterladen"></a>
+  <a href="https://der-klabautermann.github.io/Desktop-Yandex.Home-App/"><img src="https://img.shields.io/badge/Demo%20im%20Browser%20ausprobieren-1f2933?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=1f2933" height="44" alt="Demo im Browser ausprobieren"></a>
 </p>
 
 <p align="center">
