@@ -449,6 +449,11 @@ export const en = {
     splitHint: 'The following steps become their own parallel branch',
     join: 'Attach to branch above',
     joinHint: 'This branch then runs after the branch above',
+    selectedCount: '{n} steps',
+    removeSelected: 'Delete selected',
+    multiTip: 'Shift-click adds single steps, dragging a frame on empty space selects several. Dragging moves all selected, Delete removes them.',
+    copyOf: 'Edited version of “{name}”',
+    copyHint: 'The original stays in the Yandex app and is hidden here. A voice command to Alice still starts the original.',
     saveHint: 'Name and at least one step are still missing',
   },
   scenarioEditor: {

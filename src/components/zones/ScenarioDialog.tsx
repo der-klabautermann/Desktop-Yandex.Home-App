@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Clock, Hand, Link2, Mic, Plus, Radio, Scissors, Search, Trash2, X, Zap } from 'lucide-react';
 import { useDashboardContext } from '../../contexts/DashboardContext';
@@ -9,7 +9,7 @@ import { propertyLabel } from '../../utils/deviceInfo';
 import { flattenTree } from '../../../core/zones';
 import { isGroupable } from '../../../core/groups';
 import {
-  addScenario, branchesOf, newScenarioId, removeScenario, updateScenario, type ScenarioStep, type StepWait,
+  addScenario, branchesOf, flowFromServiceSteps, newScenarioId, removeScenario, updateScenario, type ScenarioStep, type StepWait,
 } from '../../../core/scenarios';
 import { canTrigger, newTriggerId, triggerOptionsFor, type DeviceTrigger } from '../../../core/triggers';
 import { removeSchedulesFor, schedulesFor } from '../../../core/schedules';
@@ -21,33 +21,55 @@ import type { YandexDevice } from '../../types/index';
 interface ScenarioDialogProps {
   mode: 'create' | 'edit';
   scenarioId?: string;
+  /** Сценарий сервиса, который открыли для изменения: его шаги — начальная схема, своя версия заменит его в списке. */
+  source?: { id: string; name: string; steps?: unknown };
   onClose: () => void;
 }
 
-/** Что выбрано в схеме. link: стрелка перед шагом index (0 — стрелка от старта). */
-type Selection =
+/** Шаг в редакторе: uid нужен, чтобы выделять, перетаскивать и плавно двигать шаги. */
+type EditorStep = ScenarioStep & { uid: string };
+
+/** Что показано в панели настроек. link: стрелка перед шагом index (0 — стрелка от старта). */
+type Panel =
   | { kind: 'trigger' }
   | { kind: 'triggerPick' }
-  | { kind: 'step'; branch: number; index: number }
+  | { kind: 'steps' }
   | { kind: 'add'; branch: number; at?: number }
   | { kind: 'link'; branch: number; index: number };
 
-/** Куда положить перетаскиваемый шаг. */
+/** Куда положить перетаскиваемые шаги. */
 type DropTarget = { kind: 'at'; branch: number; at: number } | { kind: 'new' };
+
+interface DragState { uids: string[]; x: number; y: number; target: DropTarget | null }
 
 // Размеры схемы: по ним рисуются скруглённые стрелки от старта к цепочкам
 const NODE_H = 82;
 const NEW_H = 52;
 const ROW_GAP = 18;
 const ENTRY_W = 46;
+const PLACEHOLDER = '__placeholder';
+
+const makeUid = () => Math.random().toString(36).slice(2, 10);
+const withUids = (branches: ScenarioStep[][]): EditorStep[][] => branches.map(b => b.map(step => ({ ...step, uid: makeUid() })));
 
 const brightnessOf = (device?: YandexDevice) =>
   device?.capabilities.find(c => c.type === 'devices.capabilities.range' && (c.parameters as any)?.instance === 'brightness');
 
 const levelOf = (step: ScenarioStep) => Number(step.actions?.find(a => a.instance === 'brightness')?.value ?? 100);
 
+/** Пустые цепочки убираем, но одна (пустая) всегда остаётся местом для первого шага. */
+const tidy = (list: EditorStep[][]) => {
+  const kept = list.filter(b => b.length > 0);
+  return kept.length ? kept : [[]];
+};
+
+const isTyping = () => {
+  const el = document.activeElement as HTMLElement | null;
+  return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT' || el.isContentEditable);
+};
+
 /** Собственный сценарий как схема: старт слева, цепочки шагов вправо, параллельные цепочки друг под другом. */
-export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId, onClose }) => {
+export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId, source, onClose }) => {
   const ctx = useDashboardContext();
   const { t } = useI18n();
   const { config, update } = ctx.automations;
@@ -55,15 +77,17 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
   // У нового сценария id есть сразу, чтобы к нему можно было добавить время запуска
   const id = useRef(scenarioId ?? newScenarioId()).current;
 
-  const [name, setName] = useState(existing?.name ?? '');
-  const [branches, setBranches] = useState<ScenarioStep[][]>(() => {
-    const saved = existing ? branchesOf(existing) : [];
-    return saved.length ? saved : [[]];
+  const [name, setName] = useState(existing?.name ?? source?.name ?? '');
+  const [branches, setBranches] = useState<EditorStep[][]>(() => {
+    const saved = existing ? branchesOf(existing) : source ? flowFromServiceSteps(source.steps) ?? [] : [];
+    return saved.length ? withUids(saved) : [[]];
   });
   const [triggers, setTriggers] = useState<DeviceTrigger[]>(existing?.triggers ?? []);
-  const [selection, setSelection] = useState<Selection>(() => (existing ? { kind: 'trigger' } : { kind: 'add', branch: 0 }));
+  const [panel, setPanel] = useState<Panel>(() => (existing || source ? { kind: 'trigger' } : { kind: 'add', branch: 0 }));
+  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState('');
-  const [drag, setDrag] = useState<{ from: { branch: number; index: number }; x: number; y: number; target: DropTarget | null } | null>(null);
+  const [drag, setDrag] = useState<DragState | null>(null);
+  const [band, setBand] = useState<{ x0: number; y0: number; x1: number; y1: number } | null>(null);
   const justDragged = useRef(false);
 
   const devicesById = useMemo(() => new Map(ctx.data.devices.map(d => [d.id, d])), [ctx.data.devices]);
@@ -85,25 +109,24 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
 
   const stepCount = branches.reduce((sum, branch) => sum + branch.length, 0);
   const canSave = name.trim().length > 0 && stepCount > 0 && Boolean(config);
+  const allSteps = branches.flat();
+  const selectedSteps = allSteps.filter(step => selected.has(step.uid));
 
   // ---- Изменения схемы ----
-  const changeStep = (branch: number, index: number, patch: Partial<ScenarioStep>) =>
-    setBranches(prev => prev.map((b, bi) => bi !== branch ? b : b.map((step, si) => (si === index ? { ...step, ...patch } : step))));
+  const patchSteps = (uids: Set<string>, patch: (step: EditorStep) => Partial<ScenarioStep>) =>
+    setBranches(prev => prev.map(b => b.map(step => (uids.has(step.uid) ? { ...step, ...patch(step) } : step))));
 
-  /** Пустые цепочки убираем, но одна (пустая) всегда остаётся местом для первого шага. */
-  const tidy = (list: ScenarioStep[][]) => {
-    const kept = list.filter(b => b.length > 0);
-    return kept.length ? kept : [[]];
-  };
+  const selectOnly = (uid: string) => { setSelected(new Set([uid])); setPanel({ kind: 'steps' }); };
 
   const pickStepDevice = (deviceId: string) => {
-    if (selection.kind === 'add') {
-      const at = selection.at ?? branches[selection.branch]?.length ?? 0;
-      setBranches(prev => prev.map((b, bi) => (bi === selection.branch ? [...b.slice(0, at), { deviceId, on: true }, ...b.slice(at)] : b)));
-      setSelection({ kind: 'step', branch: selection.branch, index: at });
-    } else if (selection.kind === 'step') {
+    if (panel.kind === 'add') {
+      const at = panel.at ?? branches[panel.branch]?.length ?? 0;
+      const step: EditorStep = { deviceId, on: true, uid: makeUid() };
+      setBranches(prev => prev.map((b, bi) => (bi === panel.branch ? [...b.slice(0, at), step, ...b.slice(at)] : b)));
+      selectOnly(step.uid);
+    } else if (panel.kind === 'steps') {
       // Другое устройство: прежние настройки к нему не подходят
-      changeStep(selection.branch, selection.index, { deviceId, actions: undefined });
+      patchSteps(selected, () => ({ deviceId, actions: undefined }));
     }
     setQuery('');
   };
@@ -113,86 +136,114 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
     const first = device ? triggerOptionsFor(device)[0] : undefined;
     if (!first) return;
     setTriggers(prev => [...prev, { id: newTriggerId(), deviceId, ...first }]);
-    setSelection({ kind: 'trigger' });
+    setPanel({ kind: 'trigger' });
     setQuery('');
   };
 
-  const removeStep = (branch: number, index: number) => {
-    setBranches(prev => tidy(prev.map((b, bi) => (bi === branch ? b.filter((_, si) => si !== index) : b))));
-    setSelection({ kind: 'trigger' });
+  const removeSelected = () => {
+    if (selected.size === 0) return;
+    setBranches(prev => tidy(prev.map(b => b.filter(step => !selected.has(step.uid)))));
+    setSelected(new Set());
+    setPanel({ kind: 'trigger' });
   };
 
   const addBranch = () => {
     setBranches(prev => [...prev, []]);
-    setSelection({ kind: 'add', branch: branches.length });
+    setPanel({ kind: 'add', branch: branches.length });
   };
 
   /** Разорвать стрелку перед шагом index: хвост становится отдельной параллельной цепочкой. */
   const splitAt = (branch: number, index: number) => {
-    setBranches(prev => {
-      const head = prev[branch].slice(0, index);
-      const tail = prev[branch].slice(index);
-      return tidy([...prev.slice(0, branch), head, ...prev.slice(branch + 1), tail]);
-    });
-    setSelection({ kind: 'trigger' });
+    setBranches(prev => tidy([...prev.slice(0, branch), prev[branch].slice(0, index), ...prev.slice(branch + 1), prev[branch].slice(index)]));
+    setPanel({ kind: 'trigger' });
   };
 
   /** Соединить цепочку с концом цепочки над ней. */
   const joinUp = (branch: number) => {
     if (branch === 0) return;
     setBranches(prev => tidy(prev.map((b, bi) => (bi === branch - 1 ? [...b, ...prev[branch]] : bi === branch ? [] : b))));
-    setSelection({ kind: 'trigger' });
+    setPanel({ kind: 'trigger' });
   };
 
-  const moveStep = (from: { branch: number; index: number }, target: DropTarget) => {
-    setBranches(prev => {
-      const copy = prev.map(b => [...b]);
-      const [step] = copy[from.branch].splice(from.index, 1);
-      if (!step) return prev;
-      if (target.kind === 'new') {
-        copy.push([step]);
-      } else {
-        const at = target.branch === from.branch && target.at > from.index ? target.at - 1 : target.at;
-        copy[target.branch].splice(at, 0, step);
+  // Клавиши: Delete удаляет выделенное, Esc снимает выделение, Cmd/Ctrl+A выделяет все шаги
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (isTyping()) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selected.size > 0) { e.preventDefault(); removeSelected(); }
+      if (e.key === 'Escape' && selected.size > 0) { e.stopPropagation(); setSelected(new Set()); setPanel({ kind: 'trigger' }); }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a' && allSteps.length) {
+        e.preventDefault();
+        setSelected(new Set(allSteps.map(s => s.uid)));
+        setPanel({ kind: 'steps' });
       }
-      return tidy(copy);
-    });
-    setSelection({ kind: 'trigger' });
-  };
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  });
 
-  // ---- Перетаскивание шагов мышью ----
-  const targetAt = (x: number, y: number): DropTarget | null => {
+  // ---- Перетаскивание: схема сразу раздвигается под место вставки ----
+  const preview = useMemo<EditorStep[][]>(() => {
+    if (!drag) return branches;
+    const moving = new Set(drag.uids);
+    const rest = branches.map(b => b.filter(step => !moving.has(step.uid)));
+    if (!drag.target) return rest;
+    const holder: EditorStep = { uid: PLACEHOLDER, deviceId: '', on: true };
+    if (drag.target.kind === 'new') return [...rest, [holder]];
+    const { branch, at } = drag.target;
+    return rest.map((b, bi) => (bi === branch ? [...b.slice(0, at), holder, ...b.slice(at)] : b));
+  }, [branches, drag]);
+
+  const targetAt = (x: number, y: number, current: DropTarget | null): DropTarget | null => {
     const el = (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>('[data-drop]');
-    if (!el) return null;
+    if (!el) return current;
+    const kind = el.dataset.drop;
+    if (kind === 'placeholder') return current;
+    if (kind === 'new') return { kind: 'new' };
     const branch = Number(el.dataset.branch);
-    if (el.dataset.drop === 'new') return { kind: 'new' };
-    if (el.dataset.drop === 'node') {
+    if (kind === 'node') {
       const box = el.getBoundingClientRect();
-      const index = Number(el.dataset.index);
-      return { kind: 'at', branch, at: x < box.left + box.width / 2 ? index : index + 1 };
+      const pos = Number(el.dataset.pos);
+      return { kind: 'at', branch, at: x < box.left + box.width / 2 ? pos : pos + 1 };
     }
-    return { kind: 'at', branch, at: Number(el.dataset.index) };
+    return { kind: 'at', branch, at: Number(el.dataset.pos) };
   };
 
-  const startDrag = (branch: number, index: number, down: React.PointerEvent) => {
-    if (down.button !== 0) return;
+  const startDrag = (uid: string, down: React.PointerEvent) => {
+    if (down.button !== 0 || down.shiftKey || down.metaKey || down.ctrlKey) return;
+    down.stopPropagation();
     const startX = down.clientX;
     const startY = down.clientY;
-    let active = false;
-    let target: DropTarget | null = null;
+    // Тащим всё выделенное, если шаг в выделении; иначе только его
+    const uids = selected.has(uid) ? allSteps.filter(s => selected.has(s.uid)).map(s => s.uid) : [uid];
+    let state: DragState | null = null;
+    let frame = 0;
     const onMove = (e: PointerEvent) => {
-      if (!active && Math.hypot(e.clientX - startX, e.clientY - startY) < 6) return;
-      active = true;
-      target = targetAt(e.clientX, e.clientY);
-      setDrag({ from: { branch, index }, x: e.clientX, y: e.clientY, target });
+      if (!state && Math.hypot(e.clientX - startX, e.clientY - startY) < 6) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        state = { uids, x: e.clientX, y: e.clientY, target: targetAt(e.clientX, e.clientY, state?.target ?? null) };
+        setDrag(state);
+      });
     };
     const onUp = () => {
+      cancelAnimationFrame(frame);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
-      if (active) {
+      if (state) {
         justDragged.current = true;
         setTimeout(() => { justDragged.current = false; }, 0);
-        if (target) moveStep({ branch, index }, target);
+        const { target } = state;
+        if (target) {
+          const moving = new Set(uids);
+          const steps = allSteps.filter(s => moving.has(s.uid));
+          setBranches(prev => {
+            const rest = prev.map(b => b.filter(step => !moving.has(step.uid)));
+            if (target.kind === 'new') return tidy([...rest, steps]);
+            return tidy(rest.map((b, bi) => (bi === target.branch ? [...b.slice(0, target.at), ...steps, ...b.slice(target.at)] : b)));
+          });
+          setSelected(moving);
+          setPanel({ kind: 'steps' });
+        }
       }
       setDrag(null);
     };
@@ -200,16 +251,83 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
     window.addEventListener('pointerup', onUp);
   };
 
-  const dropsBefore = (branch: number, index: number) =>
-    drag?.target?.kind === 'at' && drag.target.branch === branch && drag.target.at === index;
+  // ---- Рамка выделения по пустому месту схемы ----
+  const nodeEls = useRef(new Map<string, HTMLElement>());
+  const startBand = (down: React.PointerEvent) => {
+    if (down.button !== 0 || (down.target as HTMLElement).closest('button, input, select, a')) return;
+    const additive = down.shiftKey || down.metaKey || down.ctrlKey;
+    const base = additive ? new Set(selected) : new Set<string>();
+    const x0 = down.clientX;
+    const y0 = down.clientY;
+    let moved = false;
+    const onMove = (e: PointerEvent) => {
+      if (!moved && Math.hypot(e.clientX - x0, e.clientY - y0) < 4) return;
+      moved = true;
+      const rect = { left: Math.min(x0, e.clientX), right: Math.max(x0, e.clientX), top: Math.min(y0, e.clientY), bottom: Math.max(y0, e.clientY) };
+      const next = new Set(base);
+      nodeEls.current.forEach((el, uid) => {
+        const box = el.getBoundingClientRect();
+        if (box.right > rect.left && box.left < rect.right && box.bottom > rect.top && box.top < rect.bottom) next.add(uid);
+      });
+      setSelected(next);
+      setBand({ x0, y0, x1: e.clientX, y1: e.clientY });
+    };
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      setBand(null);
+      if (!moved && !additive) {
+        // Щелчок по пустому месту снимает выделение
+        setSelected(new Set());
+        if (panel.kind === 'steps') setPanel({ kind: 'trigger' });
+      } else if (moved) {
+        setPanel({ kind: 'steps' });
+      }
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  };
+
+  const clickNode = (uid: string, e: React.MouseEvent) => {
+    if (justDragged.current) return;
+    if (e.shiftKey || e.metaKey || e.ctrlKey) {
+      setSelected(prev => {
+        const next = new Set(prev);
+        if (next.has(uid)) next.delete(uid); else next.add(uid);
+        return next;
+      });
+      setPanel({ kind: 'steps' });
+      return;
+    }
+    selectOnly(uid);
+  };
+
+  // ---- Плавное движение шагов при любой перестановке (FLIP) ----
+  const lastRects = useRef(new Map<string, DOMRect>());
+  useLayoutEffect(() => {
+    const next = new Map<string, DOMRect>();
+    nodeEls.current.forEach((el, uid) => {
+      const box = el.getBoundingClientRect();
+      next.set(uid, box);
+      const before = lastRects.current.get(uid);
+      if (!before) return;
+      const dx = before.left - box.left;
+      const dy = before.top - box.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'translate(0, 0)' }], {
+        duration: 240, easing: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+      });
+    });
+    lastRects.current = next;
+  });
 
   // ---- Сохранение ----
   const save = () => {
     if (!canSave) return;
-    // Яркость имеет смысл только при включении
+    // Яркость имеет смысл только при включении; uid убирает cleanBranches
     const clean = branches.map(branch => branch.map(step => (step.on ? step : { ...step, actions: undefined })));
     if (mode === 'create') {
-      update(current => addScenario(current, { name, householdId: ctx.activeHouseholdId, branches: clean, triggers }, id).config);
+      update(current => addScenario(current, { name, householdId: ctx.activeHouseholdId, branches: clean, triggers, replaces: source?.id }, id).config);
     } else {
       update(current => updateScenario(current, id, { name, branches: clean, triggers }));
     }
@@ -240,7 +358,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
   };
   const actionLabel = (step: ScenarioStep, device?: YandexDevice) => {
     if (!step.on) return t('scenarioEditor.off');
-    return brightnessOf(device) && step.actions?.length ? `${t('scenarioEditor.on')}, ${levelOf(step)} %` : t('scenarioEditor.on');
+    return brightnessOf(device) && step.actions?.some(a => a.instance === 'brightness') ? `${t('scenarioEditor.on')}, ${levelOf(step)} %` : t('scenarioEditor.on');
   };
   const eventLabel = (device: YandexDevice | undefined, instance: string, value: string) => {
     if (instance === 'on') return value === 'true' ? t('flow.turnedOn') : t('flow.turnedOff');
@@ -280,7 +398,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
 
   // ---- Панель настроек под схемой ----
   const inspector = (() => {
-    if (selection.kind === 'trigger') {
+    if (panel.kind === 'trigger') {
       return (
         <div className="flow-inspector">
           <h4 title={t('flow.triggerHint')}>{t('flow.start')}</h4>
@@ -318,7 +436,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
             );
           })}
           <div className="flow-trigger-actions">
-            <button className="dd-add" onClick={() => setSelection({ kind: 'triggerPick' })}>
+            <button className="dd-add" onClick={() => setPanel({ kind: 'triggerPick' })}>
               <Plus className="w-4 h-4" /> {t('flow.addTrigger')}
             </button>
             <span className="dd-add is-disabled" title={t('flow.voiceHint')}>
@@ -328,7 +446,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
         </div>
       );
     }
-    if (selection.kind === 'triggerPick') {
+    if (panel.kind === 'triggerPick') {
       return (
         <div className="flow-inspector">
           <h4>{t('flow.pickTriggerDevice')}</h4>
@@ -336,7 +454,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
         </div>
       );
     }
-    if (selection.kind === 'add') {
+    if (panel.kind === 'add') {
       return (
         <div className="flow-inspector">
           <h4>{t('flow.pickDevice')}</h4>
@@ -344,14 +462,14 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
         </div>
       );
     }
-    if (selection.kind === 'link') {
-      const { branch, index } = selection;
-      const inside = index > 0 && index < branches[branch].length;
+    if (panel.kind === 'link') {
+      const { branch, index } = panel;
+      const inside = index > 0 && index < (branches[branch]?.length ?? 0);
       return (
         <div className="flow-inspector">
           <h4>{t('flow.connection')}</h4>
           <div className="flow-link-actions">
-            <button className="dd-add" onClick={() => setSelection({ kind: 'add', branch, at: index })}>
+            <button className="dd-add" onClick={() => setPanel({ kind: 'add', branch, at: index })}>
               <Plus className="w-4 h-4" /> {t('flow.insertHere')}
             </button>
             {inside && (
@@ -368,18 +486,45 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
         </div>
       );
     }
-    const step = branches[selection.branch]?.[selection.index];
+
+    // Выделено несколько шагов: общие действия
+    if (selectedSteps.length > 1) {
+      const allOn = selectedSteps.every(s => s.on);
+      const allOff = selectedSteps.every(s => !s.on);
+      return (
+        <div className="flow-inspector">
+          <div className="flow-inspector-head">
+            <h4>{t('flow.selectedCount', { n: selectedSteps.length })}</h4>
+            <button className="zone-delete" onClick={removeSelected}><Trash2 className="w-3.5 h-3.5" /> {t('flow.removeSelected')}</button>
+          </div>
+          <div className="flow-fields">
+            <div className="flow-field">
+              <span>{t('flow.action')}</span>
+              <Segmented<'on' | 'off' | 'mixed'>
+                label={t('flow.action')}
+                value={allOn ? 'on' : allOff ? 'off' : 'mixed'}
+                options={[{ value: 'on', label: t('scenarioEditor.on') }, { value: 'off', label: t('scenarioEditor.off') }]}
+                onChange={value => patchSteps(selected, () => (value === 'on' ? { on: true } : { on: false, actions: undefined }))}
+              />
+            </div>
+          </div>
+          <p className="flow-tip">{t('flow.multiTip')}</p>
+        </div>
+      );
+    }
+
+    const step = selectedSteps[0];
     if (!step) return null;
     const device = devicesById.get(step.deviceId);
     const brightness = brightnessOf(device);
     const level = levelOf(step);
     const waitKind: 'now' | 'delay' | 'at' = step.wait?.kind ?? 'now';
+    const only = new Set([step.uid]);
     return (
       <div className="flow-inspector">
         <div className="flow-inspector-head">
           <h4>{device?.name ?? t('flow.missingDevice')}</h4>
-          <button className="dd-icon-btn" title={t('flow.removeStep')} aria-label={t('flow.removeStep')}
-            onClick={() => removeStep(selection.branch, selection.index)}>
+          <button className="dd-icon-btn" title={t('flow.removeStep')} aria-label={t('flow.removeStep')} onClick={removeSelected}>
             <Trash2 className="w-4 h-4" />
           </button>
         </div>
@@ -390,7 +535,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
               label={t('flow.action')}
               value={step.on}
               options={[{ value: true, label: t('scenarioEditor.on') }, { value: false, label: t('scenarioEditor.off') }]}
-              onChange={on => changeStep(selection.branch, selection.index, on ? { on } : { on, actions: undefined })}
+              onChange={on => patchSteps(only, () => (on ? { on } : { on, actions: undefined }))}
             />
           </div>
           {step.on && brightness && (
@@ -401,9 +546,12 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
                   type="range" className="dd-slider" min={1} max={100} value={level}
                   style={{ ['--fill' as any]: `${level}%` }}
                   aria-label={t('scenarioEditor.brightness')}
-                  onChange={e => changeStep(selection.branch, selection.index, {
-                    actions: [{ instance: 'brightness', value: Number(e.target.value), type: 'devices.capabilities.range' }],
-                  })}
+                  onChange={e => patchSteps(only, s => ({
+                    actions: [
+                      ...(s.actions ?? []).filter(a => a.instance !== 'brightness'),
+                      { instance: 'brightness', value: Number(e.target.value), type: 'devices.capabilities.range' },
+                    ],
+                  }))}
                 />
                 <span>{level} %</span>
               </label>
@@ -420,19 +568,19 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
                   { value: 'delay', label: t('flow.delay') },
                   { value: 'at', label: t('flow.clock') },
                 ]}
-                onChange={kind => changeStep(selection.branch, selection.index, {
-                  wait: kind === 'delay' ? { kind: 'delay', minutes: step.wait?.kind === 'delay' ? step.wait.minutes : 5 }
-                    : kind === 'at' ? { kind: 'at', time: step.wait?.kind === 'at' ? step.wait.time : '22:00' }
+                onChange={kind => patchSteps(only, s => ({
+                  wait: kind === 'delay' ? { kind: 'delay', minutes: s.wait?.kind === 'delay' ? s.wait.minutes : 5 }
+                    : kind === 'at' ? { kind: 'at', time: s.wait?.kind === 'at' ? s.wait.time : '22:00' }
                     : undefined,
-                })}
+                }))}
               />
               {step.wait?.kind === 'delay' && (
                 <label className="flow-minutes">
                   <input
                     type="number" min={1} max={1440} value={step.wait.minutes} aria-label={t('flow.minutes')}
-                    onChange={e => changeStep(selection.branch, selection.index, {
+                    onChange={e => patchSteps(only, () => ({
                       wait: { kind: 'delay', minutes: Math.min(1440, Math.max(1, Number(e.target.value) || 1)) },
-                    })}
+                    }))}
                   />
                   <span>{t('flow.minutes')}</span>
                 </label>
@@ -440,7 +588,7 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
               {step.wait?.kind === 'at' && (
                 <input
                   type="time" className="dd-time" value={step.wait.time} aria-label={t('flow.clock')}
-                  onChange={e => { if (e.target.value) changeStep(selection.branch, selection.index, { wait: { kind: 'at', time: e.target.value } }); }}
+                  onChange={e => { if (e.target.value) patchSteps(only, () => ({ wait: { kind: 'at', time: e.target.value } })); }}
                 />
               )}
             </div>
@@ -455,8 +603,8 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
   })();
 
   // ---- Скруглённые стрелки от старта к каждой цепочке ----
-  const showNewRow = stepCount > 0 && branches.every(b => b.length > 0);
-  const rowHeights = [...branches.map(() => NODE_H), ...(showNewRow ? [NEW_H] : [])];
+  const showNewRow = !drag && stepCount > 0 && branches.every(b => b.length > 0);
+  const rowHeights = [...preview.map(() => NODE_H), ...(showNewRow || (drag && drag.target?.kind !== 'new') ? [NEW_H] : [])];
   const rowCenters = rowHeights.map((h, i) => rowHeights.slice(0, i).reduce((sum, x) => sum + x + ROW_GAP, 0) + h / 2);
   const railHeight = rowHeights.reduce((sum, h) => sum + h, 0) + ROW_GAP * (rowHeights.length - 1);
   const startY = NODE_H / 2;
@@ -465,12 +613,41 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
     const r = 12;
     return `M0 ${startY} H6 Q${6 + r} ${startY} ${6 + r} ${startY + r} V${y - r} Q${6 + r} ${y} ${6 + 2 * r} ${y} H${ENTRY_W - 2}`;
   };
+  const dashedRow = rowHeights.length > preview.length ? rowHeights.length - 1 : -1;
 
   const linkClass = (branch: number, index: number) =>
-    `flow-link ${selection.kind === 'link' && selection.branch === branch && selection.index === index ? 'is-selected' : ''} ${dropsBefore(branch, index) ? 'is-drop' : ''}`;
+    `flow-link ${panel.kind === 'link' && panel.branch === branch && panel.index === index ? 'is-selected' : ''}`;
 
-  const dragged = drag ? branches[drag.from.branch]?.[drag.from.index] : undefined;
-  const draggedDevice = dragged ? devicesById.get(dragged.deviceId) : undefined;
+  const draggedSteps = drag ? allSteps.filter(s => drag.uids.includes(s.uid)) : [];
+
+  const renderNode = (step: EditorStep, bi: number, pos: number) => {
+    if (step.uid === PLACEHOLDER) {
+      return (
+        <div key={PLACEHOLDER} className="flow-node flow-placeholder" data-drop="placeholder"
+          ref={el => { if (el) nodeEls.current.set(PLACEHOLDER, el); else nodeEls.current.delete(PLACEHOLDER); }}>
+          {drag && drag.uids.length > 1 ? t('flow.selectedCount', { n: drag.uids.length }) : null}
+        </div>
+      );
+    }
+    const device = devicesById.get(step.deviceId);
+    return (
+      <button
+        key={step.uid}
+        ref={el => { if (el) nodeEls.current.set(step.uid, el); else nodeEls.current.delete(step.uid); }}
+        className={`flow-node ${selected.has(step.uid) ? 'is-selected' : ''} ${device ? '' : 'is-missing'}`}
+        data-drop="node" data-branch={bi} data-pos={pos}
+        onPointerDown={e => startDrag(step.uid, e)}
+        onClick={e => clickNode(step.uid, e)}
+      >
+        <span className="flow-node-title">
+          <span className="flow-node-icon">{device ? getIconForDevice(device.type) : null}</span>
+          <span className="flow-node-name">{device?.name ?? t('flow.missingDevice')}</span>
+        </span>
+        <span className={`flow-node-action ${step.on ? 'is-on' : ''}`}>{actionLabel(step, device)}</span>
+        <span className="flow-node-meta"><Clock className="w-3 h-3" /> {waitLabel(step.wait)}</span>
+      </button>
+    );
+  };
 
   return createPortal(
     <div className="zone-dialog-backdrop" onMouseDown={e => { if (e.target === e.currentTarget) cancel(); }}>
@@ -485,10 +662,11 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
           />
           <button className="header-btn" onClick={cancel} title={t('common.close')}><X className="w-4 h-4" /></button>
         </header>
+        {source && <p className="flow-source" title={t('flow.copyHint')}>{t('flow.copyOf', { name: source.name })}</p>}
 
-        <div className="flow-canvas">
+        <div className="flow-canvas" onPointerDown={startBand}>
           <div className="flow">
-            <button className={`flow-node is-trigger ${selection.kind === 'trigger' || selection.kind === 'triggerPick' ? 'is-selected' : ''}`} onClick={() => setSelection({ kind: 'trigger' })}>
+            <button className={`flow-node is-trigger ${panel.kind === 'trigger' || panel.kind === 'triggerPick' ? 'is-selected' : ''}`} onClick={() => setPanel({ kind: 'trigger' })}>
               <span className="flow-kicker">{t('flow.start')}</span>
               <span className="flow-trigger-line"><Hand className="w-3.5 h-3.5" /> {t('flow.byClick')}</span>
               {triggerSummary && <span className="flow-trigger-line"><Clock className="w-3.5 h-3.5" /> {triggerSummary}</span>}
@@ -511,62 +689,53 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
                 </defs>
                 {rowCenters.map((y, i) => (
                   <path
-                    key={i} d={entryPath(y)} fill="none" stroke="currentColor" strokeWidth="2" markerEnd="url(#flow-arrow)"
-                    strokeDasharray={showNewRow && i === rowCenters.length - 1 ? '5 4' : undefined}
+                    key={i} className="flow-rail-path" d={entryPath(y)} fill="none" stroke="currentColor" strokeWidth="2" markerEnd="url(#flow-arrow)"
+                    strokeDasharray={i === dashedRow ? '5 4' : undefined}
                   />
                 ))}
               </svg>
 
-              {branches.map((branch, bi) => (
-                <div key={bi} className="flow-branch">
+              {preview.map((branch, bi) => (
+                <div key={bi} className="flow-branch" data-drop="row" data-branch={bi} data-pos={branch.filter(s => s.uid !== PLACEHOLDER).length}>
                   <button
-                    className={`flow-entry ${linkClass(bi, 0)}`} data-drop="link" data-branch={bi} data-index={0}
-                    onClick={() => setSelection({ kind: 'link', branch: bi, index: 0 })} title={t('flow.connection')}
+                    className={`flow-entry ${linkClass(bi, 0)}`} data-drop="link" data-branch={bi} data-pos={0}
+                    onClick={() => setPanel({ kind: 'link', branch: bi, index: 0 })} title={t('flow.connection')}
                   />
-                  {branch.map((step, si) => {
-                    const device = devicesById.get(step.deviceId);
-                    const beingDragged = drag?.from.branch === bi && drag.from.index === si;
-                    return (
-                      <React.Fragment key={`${step.deviceId}-${si}`}>
-                        {si > 0 && (
-                          <button
-                            className={linkClass(bi, si)} data-drop="link" data-branch={bi} data-index={si}
-                            onClick={() => setSelection({ kind: 'link', branch: bi, index: si })} title={t('flow.connection')}
-                          ><span className="flow-link-dot"><Plus className="w-3 h-3" /></span></button>
-                        )}
-                        <button
-                          className={`flow-node ${isSelectedStep(selection, bi, si) ? 'is-selected' : ''} ${device ? '' : 'is-missing'} ${beingDragged ? 'is-dragged' : ''}`}
-                          data-drop="node" data-branch={bi} data-index={si}
-                          onPointerDown={e => startDrag(bi, si, e)}
-                          onClick={() => { if (!justDragged.current) setSelection({ kind: 'step', branch: bi, index: si }); }}
-                        >
-                          <span className="flow-node-title">
-                            <span className="flow-node-icon">{device ? getIconForDevice(device.type) : null}</span>
-                            <span className="flow-node-name">{device?.name ?? t('flow.missingDevice')}</span>
-                          </span>
-                          <span className={`flow-node-action ${step.on ? 'is-on' : ''}`}>{actionLabel(step, device)}</span>
-                          <span className="flow-node-meta"><Clock className="w-3 h-3" /> {waitLabel(step.wait)}</span>
-                        </button>
-                      </React.Fragment>
-                    );
-                  })}
-                  {branch.length > 0 && (
-                    <span className={`flow-link is-tail ${dropsBefore(bi, branch.length) ? 'is-drop' : ''}`} data-drop="link" data-branch={bi} data-index={branch.length} aria-hidden />
-                  )}
+                  {(() => {
+                    let pos = 0;
+                    return branch.map((step, si) => {
+                      const node = renderNode(step, bi, pos);
+                      const linkPos = pos;
+                      if (step.uid !== PLACEHOLDER) pos += 1;
+                      return (
+                        <React.Fragment key={step.uid}>
+                          {si > 0 && (
+                            <button
+                              className={linkClass(bi, linkPos)} data-drop="link" data-branch={bi} data-pos={linkPos}
+                              onClick={() => setPanel({ kind: 'link', branch: bi, index: linkPos })} title={t('flow.connection')}
+                            ><span className="flow-link-dot"><Plus className="w-3 h-3" /></span></button>
+                          )}
+                          {node}
+                        </React.Fragment>
+                      );
+                    });
+                  })()}
+                  {branch.length > 0 && <span className="flow-link is-tail" aria-hidden />}
                   <button
-                    className={`flow-add ${selection.kind === 'add' && selection.branch === bi && selection.at === undefined ? 'is-selected' : ''} ${dropsBefore(bi, branch.length) ? 'is-drop' : ''}`}
-                    data-drop="link" data-branch={bi} data-index={branch.length}
-                    onClick={() => setSelection({ kind: 'add', branch: bi })}
+                    ref={el => { const key = `add-${bi}`; if (el) nodeEls.current.set(key, el); else nodeEls.current.delete(key); }}
+                    className={`flow-add ${panel.kind === 'add' && panel.branch === bi && panel.at === undefined ? 'is-selected' : ''}`}
+                    data-drop="link" data-branch={bi} data-pos={branch.filter(s => s.uid !== PLACEHOLDER).length}
+                    onClick={() => setPanel({ kind: 'add', branch: bi })}
                     title={t('flow.addStep')} aria-label={t('flow.addStep')}
                   >
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
               ))}
-              {showNewRow && (
+              {(showNewRow || (drag && drag.target?.kind !== 'new')) && (
                 <div className="flow-branch is-new">
                   <span className="flow-entry-space" aria-hidden />
-                  <button className={`flow-ghost ${drag?.target?.kind === 'new' ? 'is-drop' : ''}`} data-drop="new" onClick={addBranch} title={t('flow.addBranchHint')}>
+                  <button className="flow-ghost" data-drop="new" onClick={addBranch} title={t('flow.addBranchHint')}>
                     <Plus className="w-4 h-4" /> {t('flow.addBranch')}
                   </button>
                 </div>
@@ -589,19 +758,30 @@ export const ScenarioDialog: React.FC<ScenarioDialogProps> = ({ mode, scenarioId
         </footer>
       </div>
 
-      {drag && dragged && (
-        <div className="flow-node flow-drag-ghost" style={{ left: drag.x, top: drag.y }}>
-          <span className="flow-node-title">
-            <span className="flow-node-icon">{draggedDevice ? getIconForDevice(draggedDevice.type) : null}</span>
-            <span className="flow-node-name">{draggedDevice?.name ?? t('flow.missingDevice')}</span>
-          </span>
-          <span className="flow-node-meta"><Clock className="w-3 h-3" /> {waitLabel(dragged.wait)}</span>
+      {drag && draggedSteps.length > 0 && (
+        <div className="flow-drag-stack" style={{ left: drag.x, top: drag.y }}>
+          {draggedSteps.slice(0, 3).map((step, i) => {
+            const device = devicesById.get(step.deviceId);
+            return (
+              <div key={step.uid} className="flow-node flow-drag-ghost" style={{ ['--i' as any]: i }}>
+                <span className="flow-node-title">
+                  <span className="flow-node-icon">{device ? getIconForDevice(device.type) : null}</span>
+                  <span className="flow-node-name">{device?.name ?? t('flow.missingDevice')}</span>
+                </span>
+                <span className="flow-node-meta"><Clock className="w-3 h-3" /> {waitLabel(step.wait)}</span>
+              </div>
+            );
+          })}
+          {draggedSteps.length > 1 && <span className="flow-drag-count">{draggedSteps.length}</span>}
         </div>
+      )}
+      {band && (
+        <div className="flow-band" style={{
+          left: Math.min(band.x0, band.x1), top: Math.min(band.y0, band.y1),
+          width: Math.abs(band.x1 - band.x0), height: Math.abs(band.y1 - band.y0),
+        }} />
       )}
     </div>,
     document.body,
   );
 };
-
-const isSelectedStep = (selection: Selection, branch: number, index: number) =>
-  selection.kind === 'step' && selection.branch === branch && selection.index === index;

@@ -59,6 +59,10 @@ function App() {
 
     const automations = useAutomations();
     const customScenarios = useMemo(() => scenariosAsYandex(automations.config?.scenarios ?? [], null), [automations.config]);
+    const replacedScenarioIds = useMemo(
+        () => new Set((automations.config?.scenarios ?? []).map(s => s.replaces).filter((id): id is string => Boolean(id))),
+        [automations.config],
+    );
 
     // Собственные группы и сценарии показываем рядом с группами и сценариями сервисов
     const viewData = useMemo(() => {
@@ -66,9 +70,10 @@ function App() {
         return {
             ...zones.home,
             groups: [...zones.home.groups, ...zones.customGroups],
-            scenarios: [...zones.home.scenarios, ...customScenarios],
+            // Сценарий сервиса, у которого есть своя изменённая версия, не показываем дважды
+            scenarios: [...zones.home.scenarios.filter(s => !replacedScenarioIds.has(s.id)), ...customScenarios],
         };
-    }, [zones.home, zones.customGroups, customScenarios]);
+    }, [zones.home, zones.customGroups, customScenarios, replacedScenarioIds]);
     // Собственный сценарий выполняет главный процесс; часть устройств могла не ответить
     const executeAnyScenario = useCallback(async (scenarioId: string) => {
         if (!isCustomScenarioId(scenarioId)) return handleExecuteScenario(scenarioId);

@@ -449,6 +449,11 @@ export const de = {
     splitHint: 'Die Schritte danach werden ein eigener paralleler Strang',
     join: 'An Strang darüber anhängen',
     joinHint: 'Dieser Strang läuft dann im Anschluss an den Strang darüber',
+    selectedCount: '{n} Schritte',
+    removeSelected: 'Ausgewählte löschen',
+    multiTip: 'Shift-Klick wählt einzelne Schritte dazu, ein Rahmen auf freier Fläche wählt mehrere. Ziehen verschiebt alle ausgewählten, Entf löscht sie.',
+    copyOf: 'Bearbeitete Fassung von „{name}“',
+    copyHint: 'Das Original bleibt in der Yandex-App erhalten und wird hier ausgeblendet. Ein Sprachbefehl an Alisa startet weiterhin das Original.',
     saveHint: 'Name und mindestens ein Schritt fehlen noch',
   },
   scenarioEditor: {

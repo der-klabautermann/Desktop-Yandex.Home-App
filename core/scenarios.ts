@@ -26,6 +26,8 @@ export interface CustomScenario {
   householdId: string | null;
   /** Параллельные цепочки; внутри цепочки шаги идут по очереди. */
   branches?: ScenarioStep[][];
+  /** Сценарий сервиса (например, Яндекса), который этот заменяет в списке. */
+  replaces?: string;
   /** Старт по событиям устройств (кроме нажатия и расписания). */
   triggers?: DeviceTrigger[];
   /** Старый формат (все шаги сразу): читаем, но больше не пишем. */
@@ -46,7 +48,8 @@ const newId = () => `cscen:${Date.now().toString(36)}${Math.random().toString(36
 const cleanBranches = (branches: ScenarioStep[][]) =>
   branches
     .map(branch => branch.map(step => {
-      const { wait, ...rest } = step;
+      // uid — служебная метка редактора, не сохраняем
+      const { wait, uid: _uid, ...rest } = step as ScenarioStep & { uid?: string };
       if (!wait) return rest;
       if (wait.kind === 'delay' && wait.minutes > 0) return { ...rest, wait: { kind: 'delay' as const, minutes: Math.round(wait.minutes) } };
       if (wait.kind === 'at' && /^([01]\d|2[0-3]):[0-5]\d$/.test(wait.time)) return { ...rest, wait };
@@ -57,11 +60,14 @@ const cleanBranches = (branches: ScenarioStep[][]) =>
 export const newScenarioId = newId;
 
 export const addScenario = <T extends ScenarioHolder>(
-  config: T, scenario: { name: string; householdId: string | null; branches: ScenarioStep[][]; triggers?: DeviceTrigger[] }, id: string = newId(),
+  config: T,
+  scenario: { name: string; householdId: string | null; branches: ScenarioStep[][]; triggers?: DeviceTrigger[]; replaces?: string },
+  id: string = newId(),
 ): { config: T; id: string } => {
   const created: CustomScenario = {
     id, name: scenario.name.trim(), householdId: scenario.householdId, branches: cleanBranches(scenario.branches),
     ...(scenario.triggers?.length ? { triggers: scenario.triggers } : {}),
+    ...(scenario.replaces ? { replaces: scenario.replaces } : {}),
   };
   return { config: { ...config, scenarios: [...(config.scenarios ?? []), created] }, id };
 };
@@ -173,4 +179,38 @@ export const runScenarioFlow = (runner: StepRunner, branches: ScenarioStep[][], 
   });
 
   return { immediate, done: Promise.all(branchRuns).then(snapshot) };
+};
+
+/**
+ * Шаги сценария сервиса (формат Яндекса: действия устройств и паузы) как одна цепочка.
+ * Пауза переходит в ожидание перед следующим шагом. null — шагов нет или их не прочитать.
+ */
+export const flowFromServiceSteps = (steps: unknown): ScenarioStep[][] | null => {
+  if (!Array.isArray(steps)) return null;
+  const branch: ScenarioStep[] = [];
+  let pendingMs = 0;
+  for (const raw of steps as any[]) {
+    if (raw?.type === 'scenarios.steps.delay') {
+      pendingMs += Number(raw.parameters?.delay_ms) || 0;
+      continue;
+    }
+    for (const item of raw?.parameters?.items ?? []) {
+      if (item?.type && item.type !== 'step.action.item.device') continue;
+      const deviceId = item?.value?.id ?? item?.id;
+      if (typeof deviceId !== 'string') continue;
+      const capabilities: any[] = item?.value?.capabilities ?? [];
+      const onOff = capabilities.find(c => c?.type === 'devices.capabilities.on_off');
+      const on = onOff?.state?.value !== false;
+      const actions = capabilities
+        .filter(c => c?.type !== 'devices.capabilities.on_off' && c?.state?.instance !== undefined && c?.state?.value !== undefined)
+        .map(c => ({ type: c.type, instance: c.state.instance, value: c.state.value }));
+      const step: ScenarioStep = { deviceId, on, ...(on && actions.length ? { actions } : {}) };
+      if (pendingMs > 0) {
+        step.wait = { kind: 'delay', minutes: Math.max(1, Math.round(pendingMs / 60_000)) };
+        pendingMs = 0;
+      }
+      branch.push(step);
+    }
+  }
+  return branch.length ? [branch] : null;
 };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addScenario, branchesOf, isCustomScenarioId, removeScenario, runScenarioFlow, scenariosAsYandex, updateScenario, waitMs,
+  addScenario, branchesOf, flowFromServiceSteps, isCustomScenarioId, removeScenario, runScenarioFlow, scenariosAsYandex, updateScenario, waitMs,
 } from './scenarios';
 
 const lamp = { deviceId: 'yandex-lamp', on: true, actions: [{ instance: 'brightness', value: 20, type: 'devices.capabilities.range' }] };
@@ -87,5 +87,29 @@ describe('Ablauf', () => {
     controller.abort();
     await flow.done;
     expect(calls).toEqual(['a']);
+  });
+});
+
+describe('Yandex-Szenario übernehmen', () => {
+  it('liest Aktionen und Pausen', () => {
+    const flow = flowFromServiceSteps([
+      { type: 'scenarios.steps.actions.v2', parameters: { items: [
+        { id: 'lamp', type: 'step.action.item.device', value: { id: 'lamp', capabilities: [
+          { type: 'devices.capabilities.on_off', state: { instance: 'on', value: true } },
+          { type: 'devices.capabilities.range', state: { instance: 'brightness', value: 40 } },
+        ] } },
+      ] } },
+      { type: 'scenarios.steps.delay', parameters: { delay_ms: 180000 } },
+      { type: 'scenarios.steps.actions.v2', parameters: { items: [
+        { id: 'plug', type: 'step.action.item.device', value: { id: 'plug', capabilities: [
+          { type: 'devices.capabilities.on_off', state: { instance: 'on', value: false } },
+        ] } },
+      ] } },
+    ]);
+    expect(flow).toEqual([[
+      { deviceId: 'lamp', on: true, actions: [{ type: 'devices.capabilities.range', instance: 'brightness', value: 40 }] },
+      { deviceId: 'plug', on: false, wait: { kind: 'delay', minutes: 3 } },
+    ]]);
+    expect(flowFromServiceSteps(undefined)).toBeNull();
   });
 });

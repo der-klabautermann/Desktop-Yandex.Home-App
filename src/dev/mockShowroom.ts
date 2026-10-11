@@ -163,6 +163,21 @@ const DEVICES: Spec[] = [
     [float('temperature', 11.4, 'unit.temperature.celsius'), float('humidity', 78, 'unit.percent'), battery(55)]],
 ];
 
+const yandexStep = (items: Array<[id: string, on: boolean, brightness?: number]>) => ({
+  type: 'scenarios.steps.actions.v2',
+  parameters: {
+    items: items.map(([id, on, brightness]) => ({
+      id, type: 'step.action.item.device',
+      value: {
+        id, capabilities: [
+          { type: 'devices.capabilities.on_off', state: { instance: 'on', value: on } },
+          ...(brightness ? [{ type: 'devices.capabilities.range', state: { instance: 'brightness', value: brightness } }] : []),
+        ],
+      },
+    })),
+  },
+});
+
 const PREFIX: Record<Provider, string> = { yandex: '', aqara: 'aqara:', homeassistant: 'homeassistant:' };
 const MAKER: Record<Provider, string> = { yandex: 'Yandex', aqara: 'Aqara', homeassistant: 'Xiaomi' };
 
@@ -187,8 +202,15 @@ export const createShowroomHome = (): YandexUserInfoResponse => {
     }] as any,
     devices,
     scenarios: [
-      { id: 'sc-movie', name: 'Filmabend', is_active: true, provider_id: 'yandex' },
-      { id: 'sc-night', name: 'Gute Nacht', is_active: true, provider_id: 'yandex' },
+      // Шаги в формате Яндекса: действия устройств и пауза, как их отдаёт сервис
+      { id: 'sc-movie', name: 'Filmabend', is_active: true, provider_id: 'yandex', steps: [
+        yandexStep([['ceiling', false], ['floor-lamp', true, 30], ['tv', true]]),
+      ] },
+      { id: 'sc-night', name: 'Gute Nacht', is_active: true, provider_id: 'yandex', steps: [
+        yandexStep([['tv', false], ['floor-lamp', false]]),
+        { type: 'scenarios.steps.delay', parameters: { delay_ms: 180000 } },
+        yandexStep([['ceiling', false], ['bedside', true, 10]]),
+      ] },
       { id: 'aqara:sc-away', name: 'Alle weg', is_active: true, provider_id: 'aqara' },
     ] as any,
   };

@@ -3379,17 +3379,16 @@ html.is-mac .content-head { padding-top: 58px; }
 /* Messwert, den das Gerät länger nicht gemeldet hat */
 .dd-reading-text time.is-stale { opacity: 1; color: var(--warning, #E0A23B); }
 
-/* Eigene Szenarien: Zahnrad zum Bearbeiten neben dem Stern */
-.scenario-slot { position: relative; display: flex; }
-.scenario-slot > .scenario-card { flex: 1; min-width: 0; }
-.scenario-slot:has(.scenario-edit) > .scenario-card { padding-right: 66px; }
+/* Szenarien: Zahnrad zum Bearbeiten links neben dem Stern, erscheint beim Darüberfahren */
+.scenario-card:has(.scenario-edit) { padding-right: 62px; }
 .scenario-edit {
-  position: absolute; top: 50%; right: 34px; transform: translateY(-50%); z-index: 6;
-  width: 26px; height: 26px; border-radius: 50%; border: none;
+  position: absolute; top: 50%; right: 32px; transform: translateY(-50%); z-index: 6;
+  width: 24px; height: 24px; border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
-  background: color-mix(in oklab, var(--fg) 8%, transparent); color: var(--muted); cursor: pointer;
+  color: var(--muted); cursor: pointer; opacity: 0;
   transition: all var(--motion-fast) var(--ease-standard);
 }
+.scenario-card:hover .scenario-edit, .scenario-edit:focus-visible { opacity: 1; }
 .scenario-edit:hover { color: var(--accent); background: color-mix(in oklab, var(--accent) 14%, transparent); }
 
 /* Szenario-Editor */
@@ -3574,3 +3573,35 @@ button.flow-link:hover .flow-link-dot, .flow-link.is-selected .flow-link-dot { o
 .flow-trigger-actions, .flow-link-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .dd-add.is-disabled { opacity: 0.5; cursor: help; border-style: dashed; }
 .dd-add.is-disabled:hover { color: inherit; border-color: var(--glass-line-strong); border-style: dashed; }
+
+/* Mehrfachauswahl, Rahmen und flüssiges Ziehen im Szenario-Editor */
+.flow-canvas { user-select: none; -webkit-user-select: none; }
+.flow-placeholder {
+  display: flex; align-items: center; justify-content: center; cursor: default;
+  border: 1.5px dashed var(--accent); background: color-mix(in oklab, var(--accent) 8%, transparent);
+  color: var(--accent); font-size: 12.5px; box-shadow: none;
+  animation: flowPlaceholderIn 200ms var(--ease-standard);
+}
+.flow-placeholder:hover { transform: none; }
+@keyframes flowPlaceholderIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.flow-drag-stack { position: fixed; z-index: 1000; pointer-events: none; transform: translate(-50%, -50%); }
+.flow-drag-ghost {
+  position: absolute; left: 0; top: 0; height: 62px; width: 190px; transform: translate(calc(-50% + var(--i) * 6px), calc(-50% + var(--i) * 6px)) rotate(-2deg);
+  border-color: var(--accent); box-shadow: 0 24px 40px -18px rgba(0, 0, 0, 0.7);
+  z-index: calc(3 - var(--i));
+}
+.flow-drag-count {
+  position: absolute; left: 82px; top: -44px; z-index: 5; min-width: 24px; height: 24px; padding: 0 7px; border-radius: 999px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--accent); color: var(--accent-on); font-size: 12px; font-weight: 700;
+}
+.flow-band {
+  position: fixed; z-index: 999; pointer-events: none; border-radius: 6px;
+  border: 1.5px solid var(--accent); background: color-mix(in oklab, var(--accent) 12%, transparent);
+}
+.flow-rail-path { transition: d 240ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.flow-tip { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.flow-source { margin: -2px 0 0; font-size: 12.5px; color: var(--muted); }
+/* Szenario-Editor oben verankert: wechselnde Einstellungen darunter lassen das Fenster nicht springen */
+.zone-dialog-backdrop:has(.flow-dialog) { align-items: flex-start; padding-top: max(24px, 6vh); }
+.flow-dialog { max-height: calc(100vh - max(24px, 6vh) - 24px); }
