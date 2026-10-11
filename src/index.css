@@ -3339,9 +3339,8 @@ html.is-mac[data-scene] .sidebar-header { padding-top: 12px; }
 .content-header { align-items: flex-start; }
 .content-header .content-actions { margin-top: calc((1.05 * 34px * var(--display-scale, 1) - 40px) / 2); }
 html.is-mac .content-head { padding-top: 58px; }
-/* Die Menüliste reicht bis unten: Klicks auf leere Flächen gehen zum Wetter darunter durch */
-.sidebar > .sidebar-nav { pointer-events: none; padding-bottom: 96px; }
-.sidebar > .sidebar-nav > * { pointer-events: auto; }
+/* Die Menüliste endet über dem Wetter: nichts überlappt, und das Wetter bleibt anklickbar */
+.sidebar > .sidebar-nav { margin-bottom: 84px; min-height: 0; }
 
 /* Reinigungszeiten des Saugroboters */
 .dd-time {
@@ -3411,3 +3410,17 @@ html.is-mac .content-head { padding-top: 58px; }
 .scenario-times { display: flex; flex-direction: column; }
 .scenario-times .dd-row:first-of-type { border-top: none; }
 .zone-dialog .scenario-times .dd-time { padding: 4px 10px; font-size: 17px; }
+
+/* Kontrast: Dienst-Abzeichen auf Fotokacheln immer auf dunklem Grund */
+.device-card.tile.has-art .provider-badge,
+.device-card.tile.has-art.is-on .provider-badge {
+  color: #FFFFFF; background: rgba(0, 0, 0, 0.5); border-color: rgba(255, 255, 255, 0.28);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+}
+/* Gewählter Modus oder Tag bleibt beim Darüberfahren lesbar: nur leicht aufhellen statt Schrift einfärben */
+.dd-chip.is-active:hover:not(:disabled),
+.dd-day.is-active:hover:not(:disabled),
+button.stat-chip.is-active:hover:not(:disabled) {
+  color: var(--accent-on); border-color: var(--accent);
+  background: color-mix(in oklab, var(--accent) 88%, #FFFFFF);
+}
