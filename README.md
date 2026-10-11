@@ -1,207 +1,154 @@
-# ПК-приложение для управления Умным Домом Яндекс
+<p align="center">
+  <img src="docs/assets/readme/logo.png" width="128" alt="Smart Central logo">
+</p>
 
-> **Это модифицированная версия** приложения [Desktop-Yandex.Home-App](https://github.com/onegamerstory/Desktop-Yandex.Home-App) от «История Одного Геймера» (лицензия MIT).
->
-> Что изменено:
-> - 7 цветовых тем в стиле сервисов Яндекса («Моя волна», «Алиса», «Музыка», «Дом», «Ночной город», «Плюс», «Бирюза») с автосменой по выбранному интервалу или одной закреплённой темой (кнопка с палитрой в шапке);
-> - новое оформление: стеклянные карточки, включённые устройства «светятся», шрифты Unbounded и Onest;
-> - если доступ к связке ключей macOS запрещён, приложение показывает ввод токена, а не бесконечную загрузку;
-> - на macOS скрытое окно снова открывается при повторном запуске приложения.
+<h1 align="center">Smart Central</h1>
 
-Приложение для ПК, которое позволяет управлять Умным домом Яндекс: запуск сценариев, включение/выключение устройств.
+<p align="center">
+  One desktop hub for Yandex, Aqara, Home Assistant and Xiaomi.<br>
+  All your rooms, devices and scenarios in one window. Free, open source and local-first.
+</p>
 
-В процессе написания приложения использовалась официальная документация [API Яндекс Умный Дом](https://yandex.ru/dev/dialogs/smart-home/doc/ru/concepts/platform-quickstart)
+<p align="center">
+  <b>English</b>&nbsp;&nbsp;&nbsp;<a href="README.de.md">Deutsch</a>&nbsp;&nbsp;&nbsp;<a href="README.ru.md">Русский</a>
+</p>
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/onegamerstory/Desktop-Yandex.Home-App/total)
-![GitHub Repo stars](https://img.shields.io/github/stars/onegamerstory/Desktop-Yandex.Home-App)
-![GitHub Release](https://img.shields.io/github/v/release/onegamerstory/Desktop-Yandex.Home-App)
+<p align="center">
+  <a href="https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest"><img src="https://img.shields.io/github/v/release/der-klabautermann/Desktop-Yandex.Home-App?label=release&color=f2a65a" alt="Latest release"></a>
+  <a href="https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases"><img src="https://img.shields.io/github/downloads/der-klabautermann/Desktop-Yandex.Home-App/total?color=f2a65a" alt="Downloads"></a>
+  <a href="#install"><img src="https://img.shields.io/badge/macOS-12%2B%20Apple%20Silicon%20%26%20Intel-black" alt="macOS 12 and newer"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License MIT"></a>
+</p>
 
+<p align="center">
+  <a href="https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest"><img src="https://img.shields.io/badge/Download%20for%20macOS-f2a65a?style=for-the-badge&logo=apple&logoColor=black&labelColor=f2a65a" height="44" alt="Download for macOS"></a>
+</p>
 
-# 🎯 Возможности
-- 🖥️ Работа на всех ПК-платформах: Windows, MacOS, Linux
-- ⚡ Запуск сценариев
-- 🔌 Включение/выключение устройств умного дома
-- ⭐ Сохранение устройства, группы устройств или сценария в список "Избранных"
-- 📥 Работа с "Избранными" устройствами/сценариями через трей
-- 🔄 Обновление состояния устройств каждые 30 секунд
-- 🌈 Настройка освещения: яркость, температура света, цвет света
-- 🌡️ Настройка климата (кондиционеры): температура, режим работы, направление воздуха
-- 👁️‍🗨️ Поддержка камер видеонаблюдения Яндекс
-- 🏠🏠 Поддержка нескольких домов
-- 🚀 Автозапуск при старте ПК
-- 🔄🖥️ Автоматическая проверка доступных обновлений при запуске приложения
-- 🌐 Повторные попытки подключиться при отсутствии интернет-соединения
-- 🌓 Темная/светлая темы
+<p align="center">
+  <a href="#everything-it-does">Features</a>&nbsp;&nbsp;&nbsp;
+  <a href="#install">Install</a>&nbsp;&nbsp;&nbsp;
+  <a href="#connect-your-services">Connect services</a>&nbsp;&nbsp;&nbsp;
+  <a href="#private-by-default">Privacy</a>&nbsp;&nbsp;&nbsp;
+  <a href="#build-from-source">Build from source</a>
+</p>
 
-#  🔑 Получение токена Умного дома Яндекс
+<p align="center">
+  <img src="docs/assets/readme/en/home-cabin.jpg" width="880" alt="Living room with device tiles in front of the animated cabin background">
+</p>
 
-## 1. Создаем/регистрируем приложение на сервере авторизации Яндекс OAuth 
+Smart homes rarely come from one vendor. A Yandex Station in the living room, Aqara sensors in the hallway, a Xiaomi robot vacuum running through Home Assistant: every vendor ships its own app, its own rooms and its own scenarios. Smart Central brings them into one desktop window. Devices from different services sit side by side in the same room, can be grouped together and can be switched by one scenario.
 
-Переходим по [ссылке](https://passport.yandex.ru/auth?retpath=https%3A%2F%2Foauth.yandex.ru%2Fclient%2Fnew%2F&noreturn=1) на Яндекс OAuth.
+## Everything it does
 
-Нажимаем `Создать приложение` или сайт сам предложит это сделать. Выбираем пункт `Для доступа к API или отладки`:
+### One home for all your services
 
-<img width="465" height="439" alt="image" src="https://github.com/user-attachments/assets/6eb53c26-2aa2-4b95-a812-ab4e198c9432" />
+- **Yandex Smart Home, Aqara, Home Assistant and Xiaomi** (Xiaomi through Home Assistant's official integration) in one view.
+- **Rooms and zones.** Use the rooms of your services or create your own: floors, areas, a garden. Rename devices and move them between rooms without touching the original apps.
+- **Groups across services.** A Yandex lamp and an Aqara plug can be one group with one switch.
+- **Add and remove devices.** Pairing through supported hubs, or a direct link to the service's own setup page.
+- **Outages stay visible.** If a service is unreachable, its devices stay in place, greyed out with their last known state.
 
-На странице заполняем название (любое), а ниже в поле `Доступ к данным` сами прописываем два доступа: 
-- `iot:view`
-- `iot:control`
+### Devices
 
-<img width="639" height="324" alt="image" src="https://github.com/user-attachments/assets/0f48040c-a19d-42f1-9c3a-d3a72783f224" />
+- **Tiles with photos.** Every device type has its own picture, with a day and a night version. The icon on a tile is the power button, a click opens the details.
+- **Controls.** Brightness, color temperature, color, modes, climate settings, curtains and more, depending on what the device supports.
+- **Live energy readings.** Power, voltage and current refresh every few seconds while a device is open. Values a device has not reported for over five minutes are marked as stale.
+- **Search, filters, sensors and cameras** each have their own page. Favorites are available from the menu bar.
 
+<p align="center">
+  <img src="docs/assets/readme/en/device-detail.jpg" width="880" alt="Robot vacuum with suction power, cleaning mode and weekly cleaning times">
+</p>
 
-## 2. Получаем токен для нашего приложения
+- **Robot vacuum schedules.** Pick times and weekdays, Smart Central starts the cleaning.
 
-После того, как приложение будет создано, нужно перейти по адресу:
+### Scenarios as a flowchart
 
-`https://oauth.yandex.ru/authorize?response_type=token&client_id=<идентификатор приложения>`
+<p align="center">
+  <img src="docs/assets/readme/en/scenario-editor.jpg" width="880" alt="Scenario editor with a start node, steps in a row and a parallel branch">
+</p>
 
-В качестве идентификатора приложения подставляем `ClientID` нашего приложения **(не забудьте удалить скобки** `<>`**)**:
-<img width="1150" height="400" alt="image" src="https://github.com/user-attachments/assets/43bc0afb-340c-4113-ac93-e75e8651714e" />
+- **Mix services freely.** A Yandex lamp, an Aqara plug and a Home Assistant light in one scenario.
+- **Triggers.** Start on click, at fixed times on chosen weekdays, or when a device reports something: motion detected, a button pressed (single, double, long), a door opened, a leak, smoke, or a device being switched on or off.
+- **Steps with timing.** Every step runs immediately, after a wait (for example 10 minutes after the previous step) or at a clock time.
+- **Parallel branches** start at the same time and run their steps independently.
+- **Edit like a diagram.** Drag tiles, select several with Shift or a selection frame, insert steps into a connection, split a branch or attach it to the one above.
+- **Edit Yandex scenarios.** Open an existing Yandex scenario with all its devices and pauses, change it, and your version replaces it in the list.
 
-После перехода по этой ссылке, мы попадаем на страницу с токеном - копируем его и сохраняем в укромном месте!
-<img width="1150" height="119" alt="image" src="https://github.com/user-attachments/assets/786aa06a-5c06-4ac9-8635-e0da62a92575" />
+### Looks
 
+<p align="center">
+  <img src="docs/assets/readme/en/home-village.jpg" width="880" alt="Kitchen tiles in front of a snowy mountain village">
+</p>
 
-# 🚀 Установка приложения
+- **Animated backgrounds.** A cabin and a mountain village, each in four seasons and in day and night versions. The season follows the calendar, day and night follow the real sunset at your location. Panels turn into clear glass.
+- **Eight color themes**, fixed or rotating, plus fonts to choose from.
+- **Weather** for your location in the sidebar, found automatically on first start.
+- **English, German and Russian.**
 
-## 1. Установка
+<p align="center">
+  <img src="docs/assets/readme/en/settings.jpg" width="880" alt="Appearance settings with day and night, backgrounds, seasons and color themes">
+</p>
 
-Скачиваем установщик, выложенный на [странице релизов](https://github.com/onegamerstory/Desktop-Yandex.Home-App/releases), запускаем его.
+## Install
 
-### Информация для macOS
+1. Download the installer from the [latest release](https://github.com/der-klabautermann/Desktop-Yandex.Home-App/releases/latest):
+   - `Smart Central Setup vX.Y.Z-arm64.dmg` for Macs with Apple silicon (M1 and newer)
+   - `Smart Central Setup vX.Y.Z-x64.dmg` for Macs with an Intel processor
 
-В релизах два установщика:
+   Not sure which one? Apple menu, About This Mac: "Chip" means Apple silicon, "Processor" means Intel.
+2. Open the `.dmg` and drag Smart Central into Applications.
+3. **First start.** Smart Central is not notarized by Apple yet, so macOS asks before opening it. Right-click the app, choose **Open**, then **Open** again. On newer macOS versions: try to open it once, then go to System Settings, Privacy & Security, and click **Open Anyway**.
 
-- `...-arm64.dmg` — Mac с чипом Apple (M1/M2/M3/M4)
-- `...-x64.dmg` — Mac с процессором Intel
+   If macOS says the app is damaged, run this once in Terminal:
 
-Чип можно посмотреть в «Об этом Mac». Если скачать не ту архитектуру, система напишет, что приложение не поддерживается этим компьютером.
+   ```bash
+   xattr -dr com.apple.quarantine "/Applications/Smart Central.app"
+   ```
 
-После установки `.dmg` файла при запуске приложения вы можете получите сообщение о том, что оно **_повреждено_**.
+Smart Central checks for new releases on start and tells you when an update is available.
 
-Так как я не являюсь зарегистрированным разработчиком, и моей поделки нет в AppStore, то следует обойти блокировку неподписанного приложения - ваш Mac не доверяет моему приложению, которое официально не подписано, и блокирует его при запуске.
+Windows and Linux are supported by the code base but there are no ready-made installers yet. See [Build from source](#build-from-source).
 
-В Терминале выполните команду: 
+## Connect your services
 
-`xattr -d com.apple.quarantine /Applications/Yandex\ Smart\ Home\ Control.app`
+Open **System** in the sidebar and add a service. Each one has a step-by-step guide inside the app.
 
-Или с правами суперпользователя/администратора, добавив вначало `sudo`:
+| Service | What you need |
+|---|---|
+| **Yandex Smart Home** | An OAuth token. Create an app at [oauth.yandex.ru](https://oauth.yandex.ru/client/new/) ("for API access or debugging") with the permissions `iot:view` and `iot:control`, paste its Client ID into Smart Central and open the token page from there. For camera streams the app additionally asks you to confirm a QR code with the Yandex app. |
+| **Aqara** | A free developer account at [developer.aqara.com](https://developer.aqara.com/). Create a project in the region of your Aqara Home account, then enter App ID, Key ID, App Key and your Aqara account. Aqara sends a confirmation code. |
+| **Home Assistant** | The address of your Home Assistant (for example `http://homeassistant.local:8123`) and a long-lived access token from your Home Assistant profile. |
+| **Xiaomi** | Add your Xiaomi devices to Home Assistant with the official Xiaomi Home integration, then connect Home Assistant. |
 
-`sudo xattr -d com.apple.quarantine /Applications/Yandex\ Smart\ Home\ Control.app`
+## Private by default
 
-### Информация для Linux
+- **No account, no telemetry, no own server.** Everything Smart Central knows stays on your computer.
+- **Credentials live in the system keychain** (macOS Keychain), never in plain files.
+- **Network traffic** goes only to the services you connect, to [Open-Meteo](https://open-meteo.com/) for the weather, once to [GeoJS](https://www.geojs.io/) to guess your location on first start (you can change or remove it), and to GitHub to check for new releases.
 
-Если вы используете файл .AppImage для установки программы и получаете ошибку, в которой упоминается sandbox, тогда для запуска нужно добавить ключик `--no-sandbox`:
+## Good to know
 
-`./Yandex.Smart.Home.Control.Setup.vX.Y.Z.AppImage --no-sandbox`
+- **Schedules and automations run while Smart Central is running.** Closing the window keeps it in the menu bar. If your Mac sleeps through a start time, the start is caught up only within five minutes.
+- **Device triggers** are checked every five seconds, so a reaction can take a few seconds.
+- **Alice voice commands** cannot start Smart Central scenarios directly, because Yandex does not share them with other apps. Workaround: create a Yandex scenario with your phrase that switches a device, and use "device is turned on" as the trigger in Smart Central.
+- **Edited Yandex scenarios** are stored in Smart Central. The original stays in the Yandex app, and a voice command to Alice still runs the original.
+- **Readings are only as fresh as the device reports them.** Some plugs report every few minutes, which is why stale values are marked.
 
+## Build from source
 
-### Информация для Windows
+Requires Node.js 22 or newer.
 
-Приложение автоматически установится в директорию пользователя: 
-`C:\Users\<user>\AppData\Local\Programs\`
+```bash
+git clone https://github.com/der-klabautermann/Desktop-Yandex.Home-App.git
+cd Desktop-Yandex.Home-App
+npm install
+npm run electron-dev
+```
 
-На рабочем столе и в меню пуск появится иконка программы.
+- `npm test` runs the test suite.
+- `npm run dev` opens the interface in a browser with demo data. Add `?mock=all` to the address to get a showroom home with every supported device type.
+- `npm run dist` builds installers for the current platform with electron-builder (Windows: NSIS, Linux: AppImage).
 
-## 2. Использование
+## Credits and license
 
-При запуске приложения отобразится экран входа, где основным параметром входа будет являться токен Умного дома Яндекс.
-
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/e68eee4d-4daa-4ef8-bf88-f2224f257ae3" />
-
-Если в умном доме есть камеры, то приложение запросит у вас дополнительное подтверждение через Яндекс для доступа к видеопотоку: 
-
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/58dd36f8-e41a-4e29-8736-a73680d60db7" />
-
-Пример видеопотока с камеры: 
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/b86fd6ad-274c-421c-baaf-5d8aa52e2d00" />
-
-После пользователь попадает в основное окно со всеми устройствами и сценариями Умного дома, которые были настроены через приложение **"Умный дом с Алисой"**
-
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/152b50ba-df2d-4489-81db-c93154cf4bbd" />
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/263c7eac-8e3d-48a1-8e94-07db4a63b9df" />
-
-### 2.1. Боковое меню
-
-На боковом меню отображена вся структура умного дома отдельными категориями (комнаты, группы, сценарии, датчики), а также имеется возможность переключиться между несколькими домами: 
-
-<img width="1479" height="972" alt="image" src="https://github.com/user-attachments/assets/405ffba8-d02d-4b4f-925d-c1d51b029e91" />
-
-### 2.2. Датчики
-
-Возможность вывода необходимой информации на датчик через меню настроек для конкретного устройства:
-
-<img width="750" height="642" alt="image" src="https://github.com/user-attachments/assets/d45ecdb4-e806-45e6-be17-fe4792f7384a" />
-<img width="612" height="641" alt="image" src="https://github.com/user-attachments/assets/78813953-a649-47e3-afef-fc8b140fb48d" />
-
-А при добавлении датчика в "Избранное" все показатели будут отображаться в трее:
-
-<img width="419" height="137" alt="image" src="https://github.com/user-attachments/assets/8fbd046a-ff86-4062-a749-18fb7f3407fe" />
-
-### 2.3. Управление светом
-
-У световых устройств и групп световых устройств есть возможность настройки яркости, температуры и цвета освещения: 
-
-<img width="575" height="589" alt="image" src="https://github.com/user-attachments/assets/c2e71de6-9529-4fa4-ac33-768051e50f22" />
-<img width="552" height="468" alt="image" src="https://github.com/user-attachments/assets/0e7f5a3e-64e8-4eba-8139-0857239b425b" />
-
-### 2.4. Управление температурой
-
-У таких устройств, как кондиционеры, вентиляторы и термостаты есть возможность настройки температуры, скорости обдува и переключение режимов в зависимости от особенностей устройства:
-
-<img width="543" height="514" alt="image" src="https://github.com/user-attachments/assets/f1b29d6a-2f3e-43b7-8c14-5658b672b192" />
-
-<img width="537" height="645" alt="image" src="https://github.com/user-attachments/assets/8328bbdd-3018-4da6-a2a2-c4ea37774fea" />
-
-### 2.5. Избранное
-
-Все устройства или сценарии, добавленные в Избранное, становятся доступными в трее. Если это устройство с переключением состояний (ВКЛ/ВЫКЛ) или сценарий, то можно управлять запуском/отключением прямо из трей:
-
-<img width="207" height="185" alt="image" src="https://github.com/user-attachments/assets/0d39f13d-a98e-438a-a825-2571c94c2559" />
-
-
-## 3. Удаление
-
-Программа удаляется классическим образом для вашей ОС - через список установленных программ
-
-<img width="1043" height="243" alt="image" src="https://github.com/user-attachments/assets/2a53221b-2625-4c08-a04e-2ba4ed6194fe" />
-
-
-# 🔐 Безопасность
-
-## Где и как хранятся токены пользователя?
-
-Приложение использует два токена. Оба хранятся в защищённом хранилище, управляемом операционной системой (через [keytar](https://github.com/atom/node-keytar)), в зашифрованном виде.
-
-| Запись в хранилище | Назначение | Как попадает в хранилище |
-|---|---|---|
-| `SmartHomeControlApp/YandexToken` | OAuth-токен Умного дома — управление устройствами, сценариями | Вводится вручную на экране входа |
-| `SmartHomeControlApp/YandexXToken` | X-Token для Quasar API — просмотр камер | Получается один раз через QR-авторизацию (при первом открытии камеры или при истечении) |
-
-Краткоживущий JWT для WebRTC-потока камеры **не сохраняется** в хранилище: он запрашивается у сервера при каждом подключении и обновляется автоматически во время просмотра.
-
-X-Token **не продлевается автоматически**. При истечении или ошибке авторизации приложение удаляет его из хранилища и предлагает пройти QR-авторизацию заново.
-
-### Для Windows
-
-<img width="749" height="623" alt="image" src="https://github.com/user-attachments/assets/f54c49c6-5865-4301-984f-19c8bc8cf4ac" />
-
-
-1. Откройте `Диспетчер учетных данных` (или `Credential Manager`)
-2. Перейдите на вкладку `Учетные данные Windows` (`Windows Credentials`)
-3. В разделе `Общие учетные данные` найдите записи `SmartHomeControlApp/YandexToken` и `SmartHomeControlApp/YandexXToken`
-
-## Как удалить токены из хранилища?
-
-- Нажать кнопку `Выхода` в верхнем углу приложения — удаляются оба токена
-- Вручную удалить записи из хранилища
-
-
-#  🔗 Ссылки и поддержка
-
-Поддержать проект можно подпиской на мои соц.сети или донатом:
-- Подписка или донат на [Boosty](https://boosty.to/onegamerstory)
-- Донат на странице [Donatty](https://donatty.com/onegamerstory)
-- [Телеграм-канал](https://t.me/onegamerstory) для связи со мной
-- Мой [YouTube-канал](https://youtube.com/@onegamerstory)
+Smart Central started as a fork of [Desktop-Yandex.Home-App](https://github.com/onegamerstory/Desktop-Yandex.Home-App) by История Одного Геймера and has since grown into a multi-service hub. Released under the [MIT license](LICENSE).

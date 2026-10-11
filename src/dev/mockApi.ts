@@ -4,6 +4,7 @@
 // без параметра только Яндекс.
 import { createMockHome, createMockXiaomiHome } from './mockData';
 import { createShowroomHome } from './mockShowroom';
+import { localizeShowroom } from './showroomNames';
 import { branchesOf, runScenarioFlow } from '../../core/scenarios';
 import { firedScenarios, snapshotOf, type HomeSnapshot } from '../../core/triggers';
 import type { YandexUserInfoResponse } from '../types';
@@ -13,7 +14,8 @@ type MockProvider = 'yandex' | 'xiaomi' | 'aqara' | 'homeassistant';
 export function installMockApi() {
   const mode = new URLSearchParams(location.search).get('mock') ?? 'single';
   const homes: Record<'yandex' | 'xiaomi', YandexUserInfoResponse> = { yandex: createMockHome(), xiaomi: createMockXiaomiHome() };
-  const showroom = mode === 'all' ? createShowroomHome() : null;
+  // Названия выставки на языке интерфейса (для снимков экрана)
+  const showroom = mode === 'all' ? localizeShowroom(createShowroomHome(), localStorage.getItem('app_language') ?? 'de') : null;
   const connected = new Set<MockProvider>(
     mode === 'empty' ? [] : mode === 'single' ? ['yandex'] : showroom ? ['yandex', 'aqara', 'homeassistant'] : ['yandex', 'xiaomi'],
   );
